@@ -1,0 +1,144 @@
+@import "tailwindcss";
+
+/* ---------- Fonts (self-hosted for offline use) ---------- */
+@font-face {
+  font-family: "Noto Sans Gujarati";
+  src: url("/fonts/NotoSansGujarati.ttf") format("truetype");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Inter";
+  src: url("/fonts/InterVariable.ttf") format("truetype");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ---------- Design tokens ---------- */
+@theme {
+  --font-gu: "Noto Sans Gujarati", "Inter", system-ui, sans-serif;
+  --font-num: "Inter", "Noto Sans Gujarati", system-ui, sans-serif;
+
+  --color-paper: #f7f4ec;
+  --color-paper-dim: #efe9da;
+  --color-surface: #ffffff;
+  --color-ink: #1f2a1e;
+  --color-ink-soft: #56604f;
+  --color-ink-faint: #8a9184;
+  --color-border: #e3dcc9;
+
+  --color-crop-50: #eaf3ec;
+  --color-crop-100: #cde3d3;
+  --color-crop-400: #3f8464;
+  --color-crop-500: #2f6b4f;
+  --color-crop-600: #245740;
+  --color-crop-700: #1b4331;
+
+  --color-saffron-100: #fbe6c4;
+  --color-saffron-400: #ec9b3b;
+  --color-saffron-500: #de8925;
+  --color-saffron-600: #b96f1a;
+
+  --color-soil-100: #ecdfce;
+  --color-soil-400: #a67a45;
+  --color-soil-500: #8b5e34;
+  --color-soil-600: #6f4a29;
+
+  --color-loss-100: #f6dcd7;
+  --color-loss-400: #c96257;
+  --color-loss-500: #b5423a;
+  --color-loss-600: #93332c;
+
+  --shadow-card: 0 1px 2px rgba(31, 42, 30, 0.06), 0 6px 20px -6px rgba(31, 42, 30, 0.12);
+  --shadow-float: 0 10px 30px -8px rgba(31, 42, 30, 0.35);
+
+  --radius-card: 16px;
+  --radius-control: 14px;
+}
+
+.dark {
+  --color-paper: #121c16;
+  --color-paper-dim: #0d1610;
+  --color-surface: #1a251d;
+  --color-ink: #edeadd;
+  --color-ink-soft: #b7c0ae;
+  --color-ink-faint: #7c8a76;
+  --color-border: #2a3a2c;
+
+  --color-crop-50: #17271d;
+  --color-crop-100: #1f3527;
+  --color-crop-400: #59b587;
+  --color-crop-500: #4fa47a;
+  --color-crop-600: #3f8867;
+  --color-crop-700: #cde3d3;
+
+  --color-saffron-100: #3a2c14;
+  --color-saffron-400: #f0ad57;
+  --color-saffron-500: #eea23e;
+  --color-saffron-600: #f6c98a;
+
+  --color-soil-100: #2c2113;
+  --color-soil-400: #c49660;
+  --color-soil-500: #c19563;
+  --color-soil-600: #dab488;
+
+  --color-loss-100: #3a1f1c;
+  --color-loss-400: #e2887c;
+  --color-loss-500: #e07568;
+  --color-loss-600: #ec9b90;
+
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px -8px rgba(0, 0, 0, 0.55);
+  --shadow-float: 0 12px 32px -6px rgba(0, 0, 0, 0.6);
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+html { color-scheme: light; }
+html.dark { color-scheme: dark; }
+
+body {
+  margin: 0;
+  font-family: var(--font-gu);
+  background: var(--color-paper);
+  color: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior-y: none;
+}
+
+#root {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+button, input, select, textarea { font-family: inherit; }
+
+::selection { background: var(--color-crop-100); }
+
+.tnum {
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+.stitch-top {
+  background-image: repeating-linear-gradient(
+    to right,
+    var(--color-border) 0,
+    var(--color-border) 6px,
+    transparent 6px,
+    transparent 13px
+  );
+  background-position: top;
+  background-size: 100% 2px;
+  background-repeat: no-repeat;
+}
+
+@media print {
+  #app-shell-nav, #app-shell-fab { display: none !important; }
+}
