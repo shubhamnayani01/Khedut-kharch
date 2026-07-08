@@ -1,5 +1,6 @@
 import { useRef, useState, type ReactNode } from "react";
 import { useAppData } from "../context/AppDataContext";
+import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import { useInstallPrompt } from "../hooks/useInstallPrompt";
 import { TopBar, Screen, BottomNav } from "../components/ui/AppShell";
@@ -28,12 +29,45 @@ function formatBytes(n: number) {
 
 export default function Settings() {
   const { settings, updateSettings, exportBackup, importBackup, clearAllData, seasons, expenses } = useAppData();
+  const { user, loading: authLoading, signInWithGoogle, signOutUser } = useAuth();
   const { show } = useToast();
   const { canInstall, installed, promptInstall } = useInstallPrompt();
   const fileRef = useRef<HTMLInputElement>(null);
   const [confirmClear, setConfirmClear] = useState(false);
+  const [authBusy, setAuthBusy] = useState(false);
 
   const usage = storage.estimateUsageBytes();
+
+  const getAuthErrorMessage = (error: unknown) => {
+    const code = (error as { code?: string })?.code;
+    if (code === "auth/network-request-failed") return "ઇન્ટરનેટ કનેક્શન તપાસો";
+    if (code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request") return "સાઇન ઇન પ્રક્રિયા બંધ કરી";
+    if (code === "auth/popup-blocked" || code === "auth/operation-not-supported-in-this-environment") return "ગૂગલ સાઇન ઇનની પ્રક્રિયા માટે રીડાયરેક્ટ કરવામાં આવી રહી છે";
+    return "ગૂગલ સાઇન ઇનમાં ભૂલ આવી છે";
+  };
+
+  const handleGoogleSignIn = async () => {
+    setAuthBusy(true);
+    try {
+      await signInWithGoogle();
+    } catch (error) {
+      show(getAuthErrorMessage(error), "error");
+    } finally {
+      setAuthBusy(false);
+    }
+  };
+
+  const handleSignOut = async () => {
+    setAuthBusy(true);
+    try {
+      await signOutUser();
+      show("સાઇન આઉટ થયો");
+    } catch {
+      show("સાઇન આઉટ કરતી વખતે ભૂલ થઈ", "error");
+    } finally {
+      setAuthBusy(false);
+    }
+  };
 
   const handleExport = () => {
     const payload = exportBackup();
@@ -90,6 +124,41 @@ export default function Settings() {
             onClick={() => updateSettings({ theme: "system" })}
             last
           />
+        </Card>
+
+        <SectionLabel>ગૂગલ લોગઈન</SectionLabel>
+        <Card className="p-4 mb-5">
+          {authLoading ? (
+            <p className="text-[14px] text-[var(--color-ink-faint)]">લૉગીન સ્થિતિ ચકાસી રહી છે...</p>
+          ) : user ? (
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-14 h-14 rounded-full overflow-hidden bg-[var(--color-paper-dim)] flex items-center justify-center text-[var(--color-ink-faint)]">
+                  {user.photoURL ? (
+                    <img src={user.photoURL} alt="profile" className="w-full h-full object-cover" />
+                  ) : (
+                    <span>{user.displayName?.slice(0, 1) ?? "G"}</span>
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[15px] font-semibold text-[var(--color-ink)]">{user.displayName ?? "Google વપરાશકર્તા"}</p>
+                  <p className="text-[13px] text-[var(--color-ink-faint)] break-words">{user.email ?? "વપરાશકર્તા ઇમેલ ઉપલબ્ધ નથી"}</p>
+                </div>
+              </div>
+              <Button variant="outline" fullWidth size="md" onClick={handleSignOut} disabled={authBusy}>
+                Sign Out
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <p className="text-[14px] text-[var(--color-ink-faint)]">
+                તમારા ગૂગલ એકાઉન્ટથી લોગઈન કરો અને પેજ રિફ્રેશ પછી પણ સત્ર જાળવો.
+              </p>
+              <Button fullWidth size="md" onClick={handleGoogleSignIn} disabled={authBusy}>
+                {authBusy ? "પ્રક્રિયા ચાલે છે..." : "Continue with Google"}
+              </Button>
+            </div>
+          )}
         </Card>
 
         <SectionLabel>બેકઅપ</SectionLabel>

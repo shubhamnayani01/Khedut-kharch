@@ -13,6 +13,7 @@
     "@hookform/resolvers": "^5.4.0",
     "@tailwindcss/postcss": "^4.3.2",
     "autoprefixer": "^10.5.2",
+    "firebase": "^12.15.0",
     "git": "^0.1.5",
     "postcss": "^8.5.16",
     "react": "^19.2.7",
