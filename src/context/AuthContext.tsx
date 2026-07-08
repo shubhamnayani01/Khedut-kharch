@@ -10,13 +10,31 @@ import {
   type AuthError,
   type User,
 } from "firebase/auth";
-import { auth } from "../firebase";
+import { doc, serverTimestamp, setDoc } from "firebase/firestore";
+import { auth, db } from "../firebase";
 
 interface AuthContextValue {
   user: User | null;
   loading: boolean;
   signInWithGoogle: () => Promise<void>;
   signOutUser: () => Promise<void>;
+}
+
+async function saveUserProfile(user: User) {
+  try {
+    const userProfile = {
+      uid: user.uid,
+      name: user.displayName ?? null,
+      email: user.email ?? null,
+      photoURL: user.photoURL ?? null,
+      createdAt: serverTimestamp(),
+      lastLoginAt: serverTimestamp(),
+    };
+
+    await setDoc(doc(db, "users", user.uid), userProfile, { merge: true });
+  } catch (error: unknown) {
+    console.error("Failed to save user profile to Firestore:", error);
+  }
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -29,6 +47,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const unsubscribe = onAuthStateChanged(
       auth,
       (nextUser) => {
+        if (nextUser) {
+          saveUserProfile(nextUser);
+        }
+
         setUser(nextUser);
         setLoading(false);
       },
@@ -46,7 +68,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await setPersistence(auth, browserLocalPersistence);
 
     try {
-      await signInWithPopup(auth, provider);
+      const result = await signInWithPopup(auth, provider);
+      await saveUserProfile(result.user);
     } catch (error: unknown) {
       const code = (error as AuthError)?.code;
       if (
