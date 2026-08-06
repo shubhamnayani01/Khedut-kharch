@@ -7,6 +7,7 @@ import { EmptyState } from "../components/ui/EmptyState";
 import { ChartIcon } from "../components/icons/UIIcons";
 import { formatCurrency } from "../lib/format";
 import { categoryTotals, monthlyExpenseSeries, seasonIncome, seasonProfit, totalExpenses } from "../lib/calc";
+import WeatherCard from "../components/weather/WeatherCard";
 
 const PIE_COLORS = [
   "var(--color-crop-500)",
@@ -48,6 +49,7 @@ export default function Statistics() {
       <>
         <TopBar title="આંકડા" />
         <Screen>
+          <WeatherCard />
           <EmptyState icon={<ChartIcon size={26} />} title="હજુ કોઈ માહિતી નથી" description="ખેતી ઉમેરો એટલે અહીં આંકડા દેખાશે." />
         </Screen>
         <BottomNav />
@@ -59,6 +61,7 @@ export default function Statistics() {
     <>
       <TopBar title="આંકડા" />
       <Screen>
+        <WeatherCard />
         <div className="grid grid-cols-2 gap-3 mb-4">
           <StatCard label="કુલ ખેતી" value={String(seasons.length)} />
           <StatCard label="ચાલુ ખેતી" value={String(activeCount)} />
