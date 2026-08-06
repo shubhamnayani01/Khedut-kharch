@@ -249,3 +249,94 @@ export function FieldIcon(p: IconProps) {
     </svg>
   );
 }
+
+export function ShieldIcon(p: IconProps) {
+  return (
+    <svg {...svgProps(p.size, p.strokeWidth)} className={p.className}>
+      <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
+    </svg>
+  );
+}
+
+export function RefreshIcon(p: IconProps) {
+  return (
+    <svg {...svgProps(p.size, p.strokeWidth)} className={p.className}>
+      <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+      <path d="M3 3v5h5" />
+    </svg>
+  );
+}
+
+export function CheckCircleIcon(p: IconProps) {
+  return (
+    <svg {...svgProps(p.size, p.strokeWidth)} className={p.className}>
+      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+      <path d="m9 11 3 3L22 4" />
+    </svg>
+  );
+}
+
+export function XCircleIcon(p: IconProps) {
+  return (
+    <svg {...svgProps(p.size, p.strokeWidth)} className={p.className}>
+      <circle cx="12" cy="12" r="10" />
+      <path d="m15 9-6 6" />
+      <path d="m9 9 6 6" />
+    </svg>
+  );
+}
+
+export function SmartphoneIcon(p: IconProps) {
+  return (
+    <svg {...svgProps(p.size, p.strokeWidth)} className={p.className}>
+      <rect width="14" height="20" x="5" y="2" rx="2" ry="2" />
+      <path d="M12 18h.01" />
+    </svg>
+  );
+}
+
+export function PaperclipIcon(p: IconProps) {
+  return (
+    <svg {...svgProps(p.size, p.strokeWidth)} className={p.className}>
+      <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+    </svg>
+  );
+}
+
+export function HourglassIcon(p: IconProps) {
+  return (
+    <svg {...svgProps(p.size, p.strokeWidth)} className={p.className}>
+      <path d="M5 22h14" />
+      <path d="M5 2h14" />
+      <path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22" />
+      <path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2" />
+    </svg>
+  );
+}
+
+export function LockIcon(p: IconProps) {
+  return (
+    <svg {...svgProps(p.size, p.strokeWidth)} className={p.className}>
+      <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+    </svg>
+  );
+}
+
+export function MessageCircleIcon(p: IconProps) {
+  return (
+    <svg {...svgProps(p.size, p.strokeWidth)} className={p.className}>
+      <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" />
+    </svg>
+  );
+}
+
+export function PinIcon(p: IconProps) {
+  return (
+    <svg {...svgProps(p.size, p.strokeWidth)} className={p.className}>
+      <path d="M12 17v5" />
+      <path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z" />
+    </svg>
+  );
+}
+

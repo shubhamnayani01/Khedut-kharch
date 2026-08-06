@@ -62,6 +62,7 @@ export interface FarmingSeason {
 export interface AppSettings {
   theme: "light" | "dark" | "system";
   onboardingSeen: boolean;
+  language?: "gu" | "en" | "hi";
 }
 
 export interface BackupPayload {
@@ -79,3 +80,40 @@ export const CROP_COLORS: Record<string, { bg: string; text: string; dot: string
 };
 
 export const COLOR_TAG_KEYS = ["crop", "saffron", "soil"] as const;
+
+// ─── Membership ───────────────────────────────────────────────────────────────
+
+export const ADMIN_EMAIL = "shubhamnayani01@gmail.com";
+
+export type MembershipStatus = "Pending" | "Active" | "Expired" | "Rejected";
+
+// ─── Donation ─────────────────────────────────────────────────────────────────
+
+export type DonationStatus = "Skipped" | "Pending" | "Approved" | "Rejected";
+
+export interface DonationRecord {
+  donationId: string;
+  uid: string;
+  transactionId: string;
+  screenshotUrl: string;
+  note?: string;
+  status: DonationStatus;
+  createdAt: number;
+}
+
+export interface UserMembership {
+  membershipStatus: MembershipStatus;
+  membershipType: "Annual";
+  membershipAmount: 300;
+  paymentProof?: string;         // Firebase Storage download URL
+  paymentMethod?: string;
+  paymentReference?: string;
+  paymentSubmittedAt?: number;   // timestamp ms
+  membershipStartedAt?: number;
+  membershipExpiresAt?: number;
+  membershipApprovedAt?: number;
+  approvedBy?: string;
+  renewalCount: number;
+  donationStatus?: DonationStatus; // lightweight mirror of latest donation status
+}
+

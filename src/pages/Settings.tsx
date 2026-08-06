@@ -1,4 +1,6 @@
+
 import { useRef, useState, type ReactNode } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAppData } from "../context/AppDataContext";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
@@ -20,6 +22,9 @@ import {
 } from "../components/icons/UIIcons";
 import type { BackupPayload } from "../types";
 import { storage } from "../lib/storage";
+import { collection, query, where, getDocs, limit, orderBy } from "firebase/firestore";
+import { db } from "../firebase";
+import { useEffect } from "react";
 
 function formatBytes(n: number) {
   if (n < 1024) return `${n} B`;
@@ -29,33 +34,46 @@ function formatBytes(n: number) {
 
 export default function Settings() {
   const { settings, updateSettings, exportBackup, importBackup, clearAllData, seasons, expenses } = useAppData();
-  const { user, loading: authLoading, signInWithGoogle, signOutUser } = useAuth();
+  const { user, signOutUser, isAdmin } = useAuth();
+  const navigate = useNavigate();
   const { show } = useToast();
   const { canInstall, installed, promptInstall } = useInstallPrompt();
   const fileRef = useRef<HTMLInputElement>(null);
   const [confirmClear, setConfirmClear] = useState(false);
   const [authBusy, setAuthBusy] = useState(false);
+  const [donationRecord, setDonationRecord] = useState<any>(null);
+  const [checkingDonation, setCheckingDonation] = useState(true);
+
+  useEffect(() => {
+    if (!user?.uid) {
+      setCheckingDonation(false);
+      return;
+    }
+    const checkDonation = async () => {
+      try {
+        const q = query(
+          collection(db, "donations"),
+          where("uid", "==", user.uid),
+          where("status", "==", "Approved"),
+          orderBy("createdAt", "desc"),
+          limit(1)
+        );
+        const snap = await getDocs(q);
+        if (!snap.empty) {
+          setDonationRecord(snap.docs[0].data());
+        } else {
+          setDonationRecord(null);
+        }
+      } catch (err) {
+        console.error("Error fetching donation:", err);
+      } finally {
+        setCheckingDonation(false);
+      }
+    };
+    checkDonation();
+  }, [user]);
 
   const usage = storage.estimateUsageBytes();
-
-  const getAuthErrorMessage = (error: unknown) => {
-    const code = (error as { code?: string })?.code;
-    if (code === "auth/network-request-failed") return "ઇન્ટરનેટ કનેક્શન તપાસો";
-    if (code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request") return "સાઇન ઇન પ્રક્રિયા બંધ કરી";
-    if (code === "auth/popup-blocked" || code === "auth/operation-not-supported-in-this-environment") return "ગૂગલ સાઇન ઇનની પ્રક્રિયા માટે રીડાયરેક્ટ કરવામાં આવી રહી છે";
-    return "ગૂગલ સાઇન ઇનમાં ભૂલ આવી છે";
-  };
-
-  const handleGoogleSignIn = async () => {
-    setAuthBusy(true);
-    try {
-      await signInWithGoogle();
-    } catch (error) {
-      show(getAuthErrorMessage(error), "error");
-    } finally {
-      setAuthBusy(false);
-    }
-  };
 
   const handleSignOut = async () => {
     setAuthBusy(true);
@@ -126,40 +144,118 @@ export default function Settings() {
           />
         </Card>
 
-        <SectionLabel>ગૂગલ લોગઈન</SectionLabel>
+        {/* Account */}
+        <SectionLabel>એકાઉન્ટ</SectionLabel>
         <Card className="p-4 mb-5">
-          {authLoading ? (
-            <p className="text-[14px] text-[var(--color-ink-faint)]">લૉગીન સ્થિતિ ચકાસી રહી છે...</p>
-          ) : user ? (
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="w-14 h-14 rounded-full overflow-hidden bg-[var(--color-paper-dim)] flex items-center justify-center text-[var(--color-ink-faint)]">
-                  {user.photoURL ? (
-                    <img src={user.photoURL} alt="profile" className="w-full h-full object-cover" />
-                  ) : (
-                    <span>{user.displayName?.slice(0, 1) ?? "G"}</span>
-                  )}
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[15px] font-semibold text-[var(--color-ink)]">{user.displayName ?? "Google વપરાશકર્તા"}</p>
-                  <p className="text-[13px] text-[var(--color-ink-faint)] break-words">{user.email ?? "વપરાશકર્તા ઇમેલ ઉપલબ્ધ નથી"}</p>
-                </div>
-              </div>
-              <Button variant="outline" fullWidth size="md" onClick={handleSignOut} disabled={authBusy}>
-                Sign Out
-              </Button>
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-12 h-12 rounded-full overflow-hidden bg-[var(--color-paper-dim)] flex items-center justify-center text-[var(--color-ink-faint)]">
+              {user?.photoURL ? (
+                <img src={user.photoURL} alt="profile" className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-lg">{user?.displayName?.slice(0, 1) ?? "U"}</span>
+              )}
             </div>
-          ) : (
-            <div className="space-y-4">
-              <p className="text-[14px] text-[var(--color-ink-faint)]">
-                તમારા ગૂગલ એકાઉન્ટથી લોગઈન કરો અને પેજ રિફ્રેશ પછી પણ સત્ર જાળવો.
+            <div className="min-w-0">
+              <p className="text-[15px] font-semibold text-[var(--color-ink)] truncate">
+                {user?.displayName ?? "Google વપરાશકર્તા"}
               </p>
-              <Button fullWidth size="md" onClick={handleGoogleSignIn} disabled={authBusy}>
-                {authBusy ? "પ્રક્રિયા ચાલે છે..." : "Continue with Google"}
-              </Button>
+              <p className="text-[12.5px] text-[var(--color-ink-faint)] truncate">
+                {user?.email ?? ""}
+              </p>
             </div>
-          )}
+          </div>
+          <Button variant="outline" fullWidth size="md" onClick={handleSignOut} disabled={authBusy}>
+            {authBusy ? "..." : "Sign Out"}
+          </Button>
         </Card>
+
+        {/* Support Status */}
+        <SectionLabel>સહયોગ</SectionLabel>
+        <Card className="p-4 mb-5">
+          {(() => {
+            if (checkingDonation) {
+              return (
+                <div className="flex items-center justify-center p-4">
+                  <span className="text-[13px] text-[var(--color-ink-faint)]">તપાસી રહ્યા છે...</span>
+                </div>
+              );
+            }
+
+            if (donationRecord) {
+              return (
+                <>
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-[14px] text-[var(--color-ink-soft)]">સહયોગ સ્થિતિ</span>
+                    <span className="text-[13px] font-semibold px-3 py-1 rounded-full bg-[var(--color-crop-100)] text-[var(--color-crop-600)]">
+                      સહયોગી (Supporter)
+                    </span>
+                  </div>
+                  {donationRecord.createdAt && (
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-[14px] text-[var(--color-ink-soft)]">દાનની તારીખ</span>
+                      <span className="text-[14px] font-medium text-[var(--color-ink)] tnum">
+                        {new Date(donationRecord.createdAt).toLocaleDateString("gu-IN")}
+                      </span>
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-[14px] text-[var(--color-ink-soft)]">દાનની રકમ</span>
+                    <span className="text-[14px] font-medium text-[var(--color-ink)]">
+                      ₹{donationRecord.amount ?? 300}
+                    </span>
+                  </div>
+                  <div className="mt-2 pt-3 border-t border-[var(--color-border)]">
+                    <p className="text-[13px] text-[var(--color-crop-700)] leading-relaxed">
+                      ખેડૂત ખર્ચને સહયોગ કરવા બદલ આભાર. તમારું દાન આ પ્રોજેક્ટને ચાલુ રાખવા માટે અમૂલ્ય છે.
+                    </p>
+                  </div>
+                </>
+              );
+            }
+
+            return (
+              <>
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-[14px] text-[var(--color-ink-soft)]">સહયોગ સ્થિતિ</span>
+                  <span className="text-[13px] font-semibold px-3 py-1 rounded-full bg-[var(--color-paper-dim)] text-[var(--color-ink-soft)]">
+                    કોઈ દાન નથી (No Donation Yet)
+                  </span>
+                </div>
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-[14px] text-[var(--color-ink-soft)]">દાનની તારીખ</span>
+                  <span className="text-[14px] font-medium text-[var(--color-ink-faint)]">—</span>
+                </div>
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-[14px] text-[var(--color-ink-soft)]">દાનની રકમ</span>
+                  <span className="text-[14px] font-medium text-[var(--color-ink-faint)]">—</span>
+                </div>
+                <div className="mt-2 pt-3 border-t border-[var(--color-border)]">
+                  <p className="text-[13px] text-[var(--color-ink-soft)] leading-relaxed mb-3">
+                    તમે ખેડૂત ખર્ચનો મફત ઉપયોગ કરી રહ્યા છો. દાન કરવું વૈકલ્પિક છે અને તે એપની જાળવણી અને નવા ફીચર્સ ઉમેરવામાં મદદ કરે છે.
+                  </p>
+                  <Button variant="primary" fullWidth onClick={() => navigate("/membership/payment")}>
+                    ખેડૂત ખર્ચને સહયોગ કરો
+                  </Button>
+                </div>
+              </>
+            );
+          })()}
+        </Card>
+
+        {/* Admin Panel link — only visible to admin */}
+        {isAdmin && (
+          <>
+            <SectionLabel>એડ્મિન</SectionLabel>
+            <Card className="p-2 mb-5">
+              <ActionRow
+                icon={<InfoIcon size={19} />}
+                label="Admin Panel — Membership Management"
+                onClick={() => navigate("/admin")}
+                last
+              />
+            </Card>
+          </>
+        )}
 
         <SectionLabel>બેકઅપ</SectionLabel>
         <Card className="p-2 mb-5">
@@ -222,7 +318,7 @@ export default function Settings() {
             </div>
           </div>
           <p className="text-[13.5px] text-[var(--color-ink-faint)] leading-relaxed mt-2">
-            આ એપ સંપૂર્ણપણે તમારા ફોનમાં જ કામ કરે છે. કોઈ ડેટા ઇન્ટરનેટ પર મોકલવામાં આવતો નથી.
+            કચ્છ ખેડૂત ખર્ચ — સુરક્ષિત ક્લાઉડ બેકઅપ સાથેનો સમુદાય આધારિત પ્રોજેક્ટ.
           </p>
         </Card>
 
