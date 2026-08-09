@@ -254,12 +254,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const skipDonation = useCallback(async () => {
     if (!user) throw new Error("Not authenticated");
-    await updateDoc(doc(db, "users", user.uid), {
+
+    // Write to Firestore
+    await setDoc(doc(db, "users", user.uid), {
       membershipStatus: "Active",
       membershipStartedAt: serverTimestamp(),
-      membershipExpiresAt: null, // No expiration for skipped donations
+      membershipExpiresAt: null,
       donationStatus: "Skipped",
-    });
+    }, { merge: true });
+
+    // Optimistically update local state RIGHT NOW so that when we navigate("/")
+    // the AuthGuard sees Active status immediately — without waiting for the
+    // Firestore onSnapshot to fire (which can take 200-500ms, causing a redirect loop).
+    setMembership((prev) => ({
+      membershipType: "Annual",
+      membershipAmount: 300,
+      renewalCount: prev?.renewalCount ?? 0,
+      ...prev,
+      membershipStatus: "Active",
+      membershipExpiresAt: null,
+    } as UserMembership));
   }, [user]);
 
   const value = useMemo(

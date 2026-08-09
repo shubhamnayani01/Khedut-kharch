@@ -575,41 +575,51 @@ export default function MembershipPayment() {
               fontWeight: 600,
               boxShadow: submitting ? "none" : "0 4px 14px rgba(47,107,79,0.3)",
               transition: "all 0.2s",
+              touchAction: "manipulation",
             }}
           >
             {submitting ? "સબમિટ કરી રહ્યા છે..." : "દાનની પુષ્ટિ માટે સબમિટ કરો"}
           </button>
-
-          <button
-            onClick={async () => {
-              try {
-                setSubmitting(true);
-                await skipDonation();
-                navigate("/", { replace: true });
-              } catch (e) {
-                console.error(e);
-                setError("સ્કીપ કરવામાં ભૂલ આવી. ફરી પ્રયાસ કરો.");
-                setSubmitting(false);
-              }
-            }}
-            disabled={submitting}
-            style={{
-              width: "100%",
-              height: "52px",
-              marginTop: "12px",
-              borderRadius: "14px",
-              background: "transparent",
-              color: submitting ? "var(--color-ink-faint)" : "var(--color-ink-soft)",
-              border: "1.5px solid var(--color-border)",
-              cursor: submitting ? "not-allowed" : "pointer",
-              fontSize: "15px",
-              fontWeight: 600,
-              transition: "all 0.2s",
-            }}
-          >
-            હમણાં નહીં, આગળ વધો
-          </button>
         </div>
+
+        {/* Skip donation - placed OUTSIDE the form card for clear separation */}
+        <button
+          id="skip-donation-btn"
+          onClick={async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            try {
+              setSubmitting(true);
+              await skipDonation();
+              navigate("/", { replace: true });
+            } catch (err: unknown) {
+              console.error("Skip donation error:", err);
+              const msg = err instanceof Error ? err.message : String(err);
+              setError(`સ્કીપ કરવામાં ભૂલ: ${msg}`);
+              setSubmitting(false);
+            }
+          }}
+          disabled={submitting}
+          style={{
+            width: "100%",
+            height: "52px",
+            marginTop: "20px",
+            borderRadius: "14px",
+            background: "transparent",
+            color: submitting ? "var(--color-ink-faint)" : "var(--color-ink-soft)",
+            border: "1.5px solid var(--color-border)",
+            cursor: submitting ? "not-allowed" : "pointer",
+            fontSize: "15px",
+            fontWeight: 600,
+            transition: "all 0.2s",
+            touchAction: "manipulation",
+            WebkitTapHighlightColor: "transparent",
+            position: "relative",
+            zIndex: 5,
+          }}
+        >
+          હમણાં નહીં, આગળ વધો
+        </button>
       </div>
     </div>
   );

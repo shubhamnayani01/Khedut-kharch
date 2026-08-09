@@ -116,7 +116,7 @@ body {
   flex-direction: column;
 }
 
-button, input, select, textarea { font-family: inherit; }
+button, input, select, textarea { font-family: inherit; touch-action: manipulation; }
 
 ::selection { background: var(--color-crop-100); }
 
