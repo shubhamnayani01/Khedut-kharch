@@ -17,6 +17,9 @@ import MembershipPayment from "./pages/membership/MembershipPayment";
 import MembershipPending from "./pages/membership/MembershipPending";
 import MembershipExpired from "./pages/membership/MembershipExpired";
 import AdminPanel from "./pages/admin/AdminPanel";
+import Wallet from "./pages/wallet/Wallet";
+import UploadDocument from "./pages/wallet/UploadDocument";
+import CompatibilityChecker from "./pages/compatibility/CompatibilityChecker";
 
 const Statistics = lazy(() => import("./pages/Statistics"));
 
@@ -159,6 +162,30 @@ export default function App() {
               element={
                 <AuthGuard>
                   <Settings />
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="/wallet"
+              element={
+                <AuthGuard>
+                  <Wallet />
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="/wallet/upload"
+              element={
+                <AuthGuard>
+                  <UploadDocument />
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="/compatibility"
+              element={
+                <AuthGuard>
+                  <CompatibilityChecker />
                 </AuthGuard>
               }
             />

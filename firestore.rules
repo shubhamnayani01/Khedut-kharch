@@ -1,0 +1,78 @@
+rules_version = '2';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Khedut Kharch — Firestore Security Rules
+//
+// Paths used by the app:
+//   /users/{uid}                           – user profile + membership fields
+//   /users/{uid}/seasons/{id}              – farming seasons (AppDataContext)
+//   /users/{uid}/expenses/{id}             – expense records (AppDataContext)
+//   /users/{uid}/documents/{id}            – wallet documents (base64, Firestore-only)
+//   /donations/{id}                        – donation records (Settings page reads)
+// ─────────────────────────────────────────────────────────────────────────────
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Helper functions ─────────────────────────────────────────────────────
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.email == "shubhamnayani01@gmail.com";
+    }
+
+    // ── /users/{uid} ─────────────────────────────────────────────────────────
+    // Users can read and update their own document.
+    // Admin can read all user documents (for the AdminPanel).
+    // Users cannot delete their own profile document.
+    match /users/{uid} {
+      allow read: if isOwner(uid) || isAdmin();
+
+      // Create own profile (first sign-in via saveUserProfile)
+      allow create: if isOwner(uid);
+
+      // Update own profile (membership payment, skipDonation, auto-expire, etc.)
+      // Admin can update any user document (approve / reject membership).
+      allow update: if isOwner(uid) || isAdmin();
+
+      // Nobody deletes a user profile document via client
+      allow delete: if false;
+
+      // ── /users/{uid}/seasons/{seasonId} ──────────────────────────────────
+      match /seasons/{seasonId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      // ── /users/{uid}/expenses/{expenseId} ────────────────────────────────
+      match /expenses/{expenseId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      // ── /users/{uid}/documents/{documentId} ──────────────────────────────
+      // Khedut Wallet: PDF/image stored as base64 string directly in Firestore.
+      // File size is capped at 500 KB on the client before upload.
+      match /documents/{documentId} {
+        allow read, create, delete: if isOwner(uid);
+
+        // Updates are not used by the wallet (documents are immutable after upload).
+        allow update: if isOwner(uid);
+      }
+    }
+
+    // ── /donations/{donationId} ──────────────────────────────────────────────
+    // Settings page queries donations by uid using where("uid", "==", user.uid).
+    // Users may only read their own donation records.
+    // Writes to donations are currently done by the admin or backend only —
+    // keep write closed for regular users.
+    match /donations/{donationId} {
+      allow read: if isSignedIn() && resource.data.uid == request.auth.uid;
+      allow write: if isAdmin();
+    }
+  }
+}

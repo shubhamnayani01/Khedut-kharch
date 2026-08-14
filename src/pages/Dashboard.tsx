@@ -5,6 +5,7 @@ import { Screen, Fab, BottomNav } from "../components/ui/AppShell";
 import { SeasonCard } from "../components/SeasonCard";
 import { EmptyState } from "../components/ui/EmptyState";
 import { SearchIcon, NotebookIcon, CloseIcon } from "../components/icons/UIIcons";
+import { WalletIcon, FlaskIcon } from "../components/icons/ModuleIcons";
 import { formatCurrency } from "../lib/format";
 import { totalExpenses } from "../lib/calc";
 
@@ -46,6 +47,35 @@ export default function Dashboard() {
             <div className="rounded-[var(--radius-card)] bg-[var(--color-soil-500)] text-white p-4">
               <p className="text-[13px] opacity-90">કુલ ખર્ચ</p>
               <p className="text-[20px] font-bold mt-1 tnum">{formatCurrency(totalSpent)}</p>
+            </div>
+          </div>
+        )}
+
+        {isLoaded && (
+          <div className="mb-6">
+            <h2 className="text-[15px] font-semibold text-[var(--color-ink)] mb-3 px-1">ખેડૂત સાધનો</h2>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() => navigate("/wallet")}
+                className="flex flex-col items-start p-4 rounded-[var(--radius-card)] bg-[var(--color-surface)] border border-[var(--color-border)] shadow-sm active:scale-95 transition-transform text-left"
+              >
+                <div className="w-10 h-10 rounded-full bg-[var(--color-crop-50)] flex items-center justify-center text-[var(--color-crop-500)] mb-3">
+                  <WalletIcon size={20} />
+                </div>
+                <h3 className="text-[14.5px] font-semibold text-[var(--color-ink)] mb-1">ખેડૂત વોલેટ</h3>
+                <p className="text-[12px] text-[var(--color-ink-faint)] leading-tight">તમારા જરૂરી દસ્તાવેજો સાચવો</p>
+              </button>
+              
+              <button
+                onClick={() => navigate("/compatibility")}
+                className="flex flex-col items-start p-4 rounded-[var(--radius-card)] bg-[var(--color-surface)] border border-[var(--color-border)] shadow-sm active:scale-95 transition-transform text-left"
+              >
+                <div className="w-10 h-10 rounded-full bg-[var(--color-saffron-100)] flex items-center justify-center text-[var(--color-saffron-600)] mb-3">
+                  <FlaskIcon size={20} />
+                </div>
+                <h3 className="text-[14.5px] font-semibold text-[var(--color-ink)] mb-1">દવા મિશ્રણ ચેકર</h3>
+                <p className="text-[12px] text-[var(--color-ink-faint)] leading-tight">ખાતર અને દવા ચેક કરો</p>
+              </button>
             </div>
           </div>
         )}

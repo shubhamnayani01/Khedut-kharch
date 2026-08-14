@@ -81,6 +81,31 @@ export const CROP_COLORS: Record<string, { bg: string; text: string; dot: string
 
 export const COLOR_TAG_KEYS = ["crop", "saffron", "soil"] as const;
 
+// ─── Documents ────────────────────────────────────────────────────────────────
+
+export type DocumentCategory =
+  | "Aadhaar"
+  | "PAN"
+  | "Land Records"
+  | "Soil Health Card"
+  | "Crop Insurance"
+  | "Farmer ID"
+  | "Loan Documents"
+  | "Purchase Bills"
+  | "Sale Receipts"
+  | "Other";
+
+export interface UserDocument {
+  id: string;
+  uid: string;
+  name: string;
+  category: DocumentCategory;
+  size: number;       // bytes
+  fileType: string;   // e.g. "image/jpeg", "application/pdf"
+  base64Data: string; // full data URL: "data:<mime>;base64,..."
+  createdAt: number;  // ms since epoch
+}
+
 // ─── Membership ───────────────────────────────────────────────────────────────
 
 export const ADMIN_EMAIL = "shubhamnayani01@gmail.com";

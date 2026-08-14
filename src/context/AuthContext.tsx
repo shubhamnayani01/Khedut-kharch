@@ -26,12 +26,7 @@ import {
   setDoc,
   updateDoc,
 } from "firebase/firestore";
-import {
-  ref,
-  uploadBytes,
-  getDownloadURL,
-} from "firebase/storage";
-import { auth, db, firebaseStorage } from "../firebase";
+import { auth, db } from "../firebase";
 import type { UserMembership, MembershipStatus } from "../types";
 import { ADMIN_EMAIL } from "../types";
 
@@ -220,14 +215,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
 
-      // Upload proof to Firebase Storage
-      const ext = fileToUpload.name.split(".").pop() ?? "jpg";
-      const storageRef = ref(
-        firebaseStorage,
-        `payment-proofs/${user.uid}/${Date.now()}.${ext}`
-      );
-      const uploadSnap = await uploadBytes(storageRef, fileToUpload);
-      const proofURL = await getDownloadURL(uploadSnap.ref);
+      // Convert proof to base64
+      const proofURL = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(fileToUpload);
+      });
 
       // Current membership data for renewal count
       const currentCount = membership?.renewalCount ?? 0;
@@ -272,7 +266,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       renewalCount: prev?.renewalCount ?? 0,
       ...prev,
       membershipStatus: "Active",
-      membershipExpiresAt: null,
+      membershipExpiresAt: undefined,
     } as UserMembership));
   }, [user]);
 
