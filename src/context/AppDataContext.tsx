@@ -244,7 +244,7 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     }
   }, [settings.theme]);
 
-  const cleanFirestorePayload = (obj: Record<string, unknown>) => {
+  const cleanFirestorePayload = <T extends object>(obj: T): Record<string, unknown> => {
     const out: Record<string, unknown> = {};
     for (const [k, v] of Object.entries(obj)) {
       if (v !== undefined) out[k] = v;

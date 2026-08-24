@@ -5,14 +5,14 @@ import { TopBar, Screen } from "../../components/ui/AppShell";
 import { Button } from "../../components/ui/Button";
 import { Dialog } from "../../components/ui/Dialog";
 import { TextInput, NumberInput } from "../../components/ui/Field";
-import { RupeeIcon, TrashIcon } from "../../components/icons/UIIcons";
+import { TrashIcon } from "../../components/icons/UIIcons";
 import { formatCurrency, formatDateDMY, todayISO } from "../../lib/format";
 import { useToast } from "../../context/ToastContext";
 
 export default function BhaagidarDetails() {
   const { id, bhaagidarId } = useParams();
   const navigate = useNavigate();
-  const { getSeason, bhaagidarsForSeason, ledgersForBhaagidar, addAdvanceLedger, expensesForSeason, workersForSeason, deleteBhaagidar, deleteAdvanceLedger } = useAppData();
+  const { getSeason, bhaagidarsForSeason, ledgersForBhaagidar, addAdvanceLedger, deleteBhaagidar, deleteAdvanceLedger } = useAppData();
   const { show } = useToast();
   const season = getSeason(id!);
   

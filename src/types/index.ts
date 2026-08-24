@@ -3,6 +3,7 @@ export type ExpenseCategory =
   | "fertilizer"
   | "pesticide"
   | "diesel"
+  | "labor"
   | "irrigation"
   | "transport"
   | "rent"
@@ -14,6 +15,7 @@ export const EXPENSE_CATEGORIES: { id: ExpenseCategory; label: string }[] = [
   { id: "fertilizer", label: "ખાતર" },
   { id: "pesticide", label: "જંતુનાશક દવા" },
   { id: "diesel", label: "ડીઝલ" },
+  { id: "labor", label: "મજૂરી" },
   { id: "irrigation", label: "સિંચાઈ" },
   { id: "transport", label: "પરિવહન" },
   { id: "rent", label: "ભાડું" },

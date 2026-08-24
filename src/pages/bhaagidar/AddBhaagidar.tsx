@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -16,7 +15,8 @@ const bhaagidarSchema = z.object({
   notes: z.string().optional(),
 });
 
-type BhaagidarFormValues = z.infer<typeof bhaagidarSchema>;
+type BhaagidarFormInput = z.input<typeof bhaagidarSchema>;
+type BhaagidarFormValues = z.output<typeof bhaagidarSchema>;
 
 export default function AddBhaagidar() {
   const navigate = useNavigate();
@@ -26,7 +26,7 @@ export default function AddBhaagidar() {
   
   const season = getSeason(id!);
 
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<BhaagidarFormValues>({
+  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<BhaagidarFormInput, unknown, BhaagidarFormValues>({
     resolver: zodResolver(bhaagidarSchema),
     defaultValues: {
       name: "",

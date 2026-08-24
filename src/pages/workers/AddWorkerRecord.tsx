@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -50,8 +49,8 @@ export default function AddWorkerRecord() {
     },
   });
 
-  const workersCount = watch("workersCount") || 0;
-  const dailyWage = watch("dailyWage") || 0;
+  const workersCount = Number(watch("workersCount")) || 0;
+  const dailyWage = Number(watch("dailyWage")) || 0;
   const totalCost = workersCount * dailyWage;
 
   if (!season) {
