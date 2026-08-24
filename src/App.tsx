@@ -20,6 +20,13 @@ import AdminPanel from "./pages/admin/AdminPanel";
 import Wallet from "./pages/wallet/Wallet";
 import UploadDocument from "./pages/wallet/UploadDocument";
 import CompatibilityChecker from "./pages/compatibility/CompatibilityChecker";
+import ExpensesTab from "./pages/expenses/ExpensesTab";
+import WorkersTab from "./pages/workers/WorkersTab";
+import AddWorkerRecord from "./pages/workers/AddWorkerRecord";
+import BhaagidarTab from "./pages/bhaagidar/BhaagidarTab";
+import AddBhaagidar from "./pages/bhaagidar/AddBhaagidar";
+import BhaagidarDetails from "./pages/bhaagidar/BhaagidarDetails";
+import MoreMenu from "./pages/MoreMenu";
 
 const Statistics = lazy(() => import("./pages/Statistics"));
 
@@ -154,6 +161,70 @@ export default function App() {
                   <Suspense fallback={<LoadingSpinner />}>
                     <Statistics />
                   </Suspense>
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="/expenses"
+              element={
+                <AuthGuard>
+                  <ExpensesTab />
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="/workers"
+              element={
+                <AuthGuard>
+                  <WorkersTab />
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="/crop/:id/workers/new"
+              element={
+                <AuthGuard>
+                  <AddWorkerRecord />
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="/crop/:id/workers/:workerId/edit"
+              element={
+                <AuthGuard>
+                  <AddWorkerRecord />
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="/bhaagidar"
+              element={
+                <AuthGuard>
+                  <BhaagidarTab />
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="/crop/:id/bhaagidar/new"
+              element={
+                <AuthGuard>
+                  <AddBhaagidar />
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="/crop/:id/bhaagidar/:bhaagidarId"
+              element={
+                <AuthGuard>
+                  <BhaagidarDetails />
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="/more"
+              element={
+                <AuthGuard>
+                  <MoreMenu />
                 </AuthGuard>
               }
             />

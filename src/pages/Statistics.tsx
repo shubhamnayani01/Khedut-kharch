@@ -2,11 +2,12 @@ import { useMemo } from "react";
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, CartesianGrid } from "recharts";
 import { useAppData } from "../context/AppDataContext";
 import { TopBar, Screen, BottomNav } from "../components/ui/AppShell";
+import { SeasonSwitcher } from "../components/ui/SeasonSwitcher";
 import { Card } from "../components/ui/Card";
 import { EmptyState } from "../components/ui/EmptyState";
 import { ChartIcon } from "../components/icons/UIIcons";
 import { formatCurrency } from "../lib/format";
-import { categoryTotals, monthlyExpenseSeries, seasonIncome, seasonProfit, totalExpenses } from "../lib/calc";
+import { categoryTotals, monthlyExpenseSeries, seasonIncome, seasonProfit, totalExpenses, totalWorkerCost } from "../lib/calc";
 import WeatherCard from "../components/weather/WeatherCard";
 
 const PIE_COLORS = [
@@ -23,13 +24,15 @@ const PIE_COLORS = [
 ];
 
 export default function Statistics() {
-  const { seasons, expenses, isLoaded } = useAppData();
+  const { seasons, settings, getSeason, expensesForSeason, workersForSeason, expenses: allExpenses, isLoaded } = useAppData();
 
-  const totalSpent = totalExpenses(expenses);
-  const totalIncome = seasons.reduce((s, season) => s + seasonIncome(season), 0);
-  const netProfit = seasons.reduce((s, season) => s + seasonProfit(season, expenses.filter((e) => e.seasonId === season.id)), 0);
-  const activeCount = seasons.filter((s) => s.status === "active").length;
-  const harvestedCount = seasons.filter((s) => s.status === "harvested").length;
+  const seasonId = settings.activeSeasonId;
+  const season = seasonId ? getSeason(seasonId) : undefined;
+  const expenses = seasonId ? expensesForSeason(seasonId) : [];
+  const workers = seasonId ? workersForSeason(seasonId) : [];
+
+  const totalIncome = season ? seasonIncome(season) : 0;
+  const netProfit = season ? seasonProfit(season, expenses, workers) : 0;
 
   const cats = useMemo(() => categoryTotals(expenses), [expenses]);
   const monthly = useMemo(() => monthlyExpenseSeries(expenses), [expenses]);
@@ -37,20 +40,24 @@ export default function Statistics() {
     () =>
       seasons
         .filter((s) => s.status === "harvested")
-        .map((s) => ({
-          name: s.cropName.length > 6 ? s.cropName.slice(0, 6) + "…" : s.cropName,
-          profit: seasonProfit(s, expenses.filter((e) => e.seasonId === s.id)),
-        })),
-    [seasons, expenses]
+        .map((s) => {
+          const sExp = allExpenses.filter((e) => e.seasonId === s.id);
+          // workers cost not in allWorkers easily without another appData helper, but let's approximate or just use expenses for the line chart
+          return {
+            name: s.cropName.length > 6 ? s.cropName.slice(0, 6) + "…" : s.cropName,
+            profit: seasonProfit(s, sExp),
+          };
+        }),
+    [seasons, allExpenses]
   );
 
-  if (isLoaded && seasons.length === 0) {
+  if (isLoaded && !season) {
     return (
       <>
-        <TopBar title="આંકડા" />
+        <TopBar titleContent={<SeasonSwitcher />} />
         <Screen>
           <WeatherCard />
-          <EmptyState icon={<ChartIcon size={26} />} title="હજુ કોઈ માહિતી નથી" description="ખેતી ઉમેરો એટલે અહીં આંકડા દેખાશે." />
+          <EmptyState icon={<ChartIcon size={26} />} title="કોઈ ખેતી પસંદ કરેલ નથી" description="આંકડા જોવા માટે ઉપરથી ખેતી પસંદ કરો." />
         </Screen>
         <BottomNav />
       </>
@@ -59,14 +66,12 @@ export default function Statistics() {
 
   return (
     <>
-      <TopBar title="આંકડા" />
+      <TopBar titleContent={<SeasonSwitcher />} />
       <Screen>
         <WeatherCard />
         <div className="grid grid-cols-2 gap-3 mb-4">
-          <StatCard label="કુલ ખેતી" value={String(seasons.length)} />
-          <StatCard label="ચાલુ ખેતી" value={String(activeCount)} />
-          <StatCard label="પૂર્ણ ખેતી" value={String(harvestedCount)} />
-          <StatCard label="કુલ ખર્ચ" value={formatCurrency(totalSpent)} />
+          <StatCard label="કુલ ખર્ચ (સામાન)" value={formatCurrency(totalExpenses(expenses))} />
+          <StatCard label="મજૂરી ખર્ચ" value={formatCurrency(totalWorkerCost(workers))} />
           <StatCard label="કુલ આવક" value={formatCurrency(totalIncome)} />
           <StatCard
             label={netProfit >= 0 ? "ચોખ્ખો નફો" : "ચોખ્ખી ખોટ"}

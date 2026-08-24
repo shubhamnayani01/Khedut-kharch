@@ -3,7 +3,6 @@ export type ExpenseCategory =
   | "fertilizer"
   | "pesticide"
   | "diesel"
-  | "labor"
   | "irrigation"
   | "transport"
   | "rent"
@@ -15,13 +14,50 @@ export const EXPENSE_CATEGORIES: { id: ExpenseCategory; label: string }[] = [
   { id: "fertilizer", label: "ખાતર" },
   { id: "pesticide", label: "જંતુનાશક દવા" },
   { id: "diesel", label: "ડીઝલ" },
-  { id: "labor", label: "મજૂરી" },
   { id: "irrigation", label: "સિંચાઈ" },
   { id: "transport", label: "પરિવહન" },
   { id: "rent", label: "ભાડું" },
   { id: "electricity", label: "વીજળી" },
   { id: "other", label: "અન્ય" },
 ];
+
+export type WorkType = "નિંદામણ" | "કાપણી" | "વાવેતર" | "દવા છંટકાવ" | "ખાતર આપવું" | "સિંચાઈ" | "અન્ય";
+
+export interface WorkerRecord {
+  id: string;
+  seasonId: string;
+  date: string; // ISO yyyy-mm-dd
+  workersCount: number;
+  workType: WorkType;
+  dailyWage: number;
+  total: number;
+  notes?: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface BhaagidarProfile {
+  id: string;
+  seasonId: string;
+  name: string;
+  mobile?: string;
+  sharePercentage: number;
+  notes?: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface AdvanceLedger {
+  id: string;
+  bhaagidarId: string;
+  seasonId: string;
+  date: string; // ISO yyyy-mm-dd
+  amount: number;
+  type: "credit" | "debit"; // debit = money given, credit = money returned
+  note?: string;
+  createdAt: number;
+  updatedAt: number;
+}
 
 export interface Expense {
   id: string;
@@ -63,6 +99,7 @@ export interface AppSettings {
   theme: "light" | "dark" | "system";
   onboardingSeen: boolean;
   language?: "gu" | "en" | "hi";
+  activeSeasonId?: string;
 }
 
 export interface BackupPayload {
@@ -70,6 +107,9 @@ export interface BackupPayload {
   exportedAt: string;
   seasons: FarmingSeason[];
   expenses: Expense[];
+  workers: WorkerRecord[];
+  bhaagidars: BhaagidarProfile[];
+  advanceLedgers: AdvanceLedger[];
   settings: AppSettings;
 }
 

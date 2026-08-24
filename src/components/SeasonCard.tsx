@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useAppData } from "../context/AppDataContext";
 import type { FarmingSeason } from "../types";
 import { CROP_COLORS } from "../types";
 import { Card } from "./ui/Card";
@@ -13,9 +14,14 @@ export function SeasonCard({ season, expenses }: { season: FarmingSeason; expens
   const isHarvested = season.status === "harvested";
   const profit = isHarvested ? seasonProfit(season, expenses) : 0;
   const income = isHarvested ? seasonIncome(season) : 0;
+  const { setActiveSeason } = useAppData();
 
   return (
-    <Link to={`/crop/${season.id}`} className="block active:scale-[0.99] transition-transform duration-150">
+    <Link 
+      to={`/crop/${season.id}`} 
+      onClick={() => setActiveSeason(season.id)}
+      className="block active:scale-[0.99] transition-transform duration-150"
+    >
       <Card stitched className="p-5 relative overflow-hidden">
         <div
           className="absolute left-0 top-0 bottom-0 w-1.5"

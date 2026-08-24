@@ -1,4 +1,4 @@
-import type { Expense, ExpenseCategory, FarmingSeason } from "../types";
+import type { Expense, ExpenseCategory, FarmingSeason, WorkerRecord } from "../types";
 import { EXPENSE_CATEGORIES } from "../types";
 
 export function totalExpenses(expenses: Expense[]): number {
@@ -18,14 +18,18 @@ export function seasonIncome(season: FarmingSeason): number {
   return season.harvest.totalProductionKg * season.harvest.sellingPricePerKg + (season.harvest.otherIncome || 0);
 }
 
-export function seasonProfit(season: FarmingSeason, expenses: Expense[]): number {
-  return seasonIncome(season) - totalExpenses(expenses);
+export function totalWorkerCost(workers: WorkerRecord[]): number {
+  return workers.reduce((sum, w) => sum + w.total, 0);
 }
 
-export function profitPercentage(season: FarmingSeason, expenses: Expense[]): number {
-  const exp = totalExpenses(expenses);
+export function seasonProfit(season: FarmingSeason, expenses: Expense[], workers: WorkerRecord[] = []): number {
+  return seasonIncome(season) - (totalExpenses(expenses) + totalWorkerCost(workers));
+}
+
+export function profitPercentage(season: FarmingSeason, expenses: Expense[], workers: WorkerRecord[] = []): number {
+  const exp = totalExpenses(expenses) + totalWorkerCost(workers);
   if (exp <= 0) return 0;
-  return (seasonProfit(season, expenses) / exp) * 100;
+  return (seasonProfit(season, expenses, workers) / exp) * 100;
 }
 
 export function monthlyExpenseSeries(expenses: Expense[]): { key: string; label: string; total: number }[] {

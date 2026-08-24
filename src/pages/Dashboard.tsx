@@ -7,10 +7,10 @@ import { EmptyState } from "../components/ui/EmptyState";
 import { SearchIcon, NotebookIcon, CloseIcon } from "../components/icons/UIIcons";
 import { WalletIcon, FlaskIcon } from "../components/icons/ModuleIcons";
 import { formatCurrency } from "../lib/format";
-import { totalExpenses } from "../lib/calc";
+import { totalExpenses, totalWorkerCost } from "../lib/calc";
 
 export default function Dashboard() {
-  const { seasons, expenses, isLoaded } = useAppData();
+  const { seasons, expenses, workers, isLoaded } = useAppData();
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<"all" | "active" | "harvested">("all");
@@ -27,8 +27,13 @@ export default function Dashboard() {
     return list;
   }, [seasons, query, filter]);
 
-  const activeCount = seasons.filter((s) => s.status === "active").length;
-  const totalSpent = totalExpenses(expenses);
+  const activeSeasons = seasons.filter((s) => s.status === "active");
+  const activeSeasonIds = new Set(activeSeasons.map(s => s.id));
+  const activeCount = activeSeasons.length;
+  
+  const activeExpenses = expenses.filter(e => activeSeasonIds.has(e.seasonId));
+  const activeWorkers = workers.filter(w => activeSeasonIds.has(w.seasonId));
+  const totalSpent = totalExpenses(activeExpenses) + totalWorkerCost(activeWorkers);
 
   return (
     <>

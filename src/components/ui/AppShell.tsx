@@ -1,23 +1,32 @@
 import React from "react";
-import { NavLink, useNavigate } from "react-router-dom";
-import { BackIcon, HomeIcon, ChartIcon, SettingsIcon, PlusIcon } from "../icons/UIIcons";
+import { NavLink, useNavigate, useLocation } from "react-router-dom";
+import { BackIcon, HomeIcon, RupeeIcon, UserIcon, UsersIcon, MenuIcon, PlusIcon } from "../icons/UIIcons";
 
 export function TopBar({
   title,
+  titleContent,
   onBack,
   right,
+  hideBack,
 }: {
-  title: string;
+  title?: string;
+  titleContent?: React.ReactNode;
   onBack?: () => void;
   right?: React.ReactNode;
+  hideBack?: boolean;
 }) {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const isRootRoute = location.pathname === "/";
+  const shouldShowBack = onBack !== undefined || (!isRootRoute && hideBack !== true);
+
   return (
     <header className="sticky top-0 z-30 bg-[var(--color-paper)]/95 backdrop-blur border-b border-[var(--color-border)]">
       <div className="flex items-center gap-2 h-16 px-3 max-w-2xl mx-auto">
-        {onBack !== undefined ? (
+        {shouldShowBack ? (
           <button
-            onClick={onBack ?? (() => navigate(-1))}
+            onClick={onBack ?? (() => navigate("/"))}
             aria-label="પાછળ જાઓ"
             className="w-11 h-11 flex items-center justify-center rounded-full active:bg-[var(--color-paper-dim)] text-[var(--color-ink)] shrink-0"
           >
@@ -26,7 +35,9 @@ export function TopBar({
         ) : (
           <div className="w-2" />
         )}
-        <h1 className="flex-1 text-[19px] font-semibold text-[var(--color-ink)] truncate">{title}</h1>
+        <div className="flex-1 min-w-0">
+          {titleContent ? titleContent : <h1 className="text-[19px] font-semibold text-[var(--color-ink)] truncate">{title}</h1>}
+        </div>
         {right}
       </div>
     </header>
@@ -35,8 +46,10 @@ export function TopBar({
 
 const navItems = [
   { to: "/", label: "ડેશબોર્ડ", icon: HomeIcon, end: true },
-  { to: "/statistics", label: "આંકડા", icon: ChartIcon, end: false },
-  { to: "/settings", label: "સેટિંગ્સ", icon: SettingsIcon, end: false },
+  { to: "/expenses", label: "ખર્ચ", icon: RupeeIcon, end: false },
+  { to: "/workers", label: "મજૂર", icon: UserIcon, end: false },
+  { to: "/bhaagidar", label: "ભાગીદાર", icon: UsersIcon, end: false },
+  { to: "/more", label: "વધુ", icon: MenuIcon, end: false },
 ];
 
 export function BottomNav() {
@@ -45,7 +58,7 @@ export function BottomNav() {
       id="app-shell-nav"
       className="sticky bottom-0 z-30 bg-[var(--color-surface)]/95 backdrop-blur border-t border-[var(--color-border)] pb-[env(safe-area-inset-bottom)]"
     >
-      <div className="max-w-2xl mx-auto grid grid-cols-3">
+      <div className="max-w-2xl mx-auto grid grid-cols-5">
         {navItems.map((item) => (
           <NavLink
             key={item.to}

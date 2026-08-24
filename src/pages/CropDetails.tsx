@@ -24,12 +24,13 @@ import { CROP_COLORS, EXPENSE_CATEGORIES } from "../types";
 export default function CropDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { getSeason, expensesForSeason, deleteSeason } = useAppData();
+  const { getSeason, expensesForSeason, workersForSeason, deleteSeason } = useAppData();
   const { show } = useToast();
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const season = getSeason(id!);
   const expenses = season ? expensesForSeason(season.id) : [];
+  const workers = season ? workersForSeason(season.id) : [];
 
   if (!season) {
     return (
@@ -43,11 +44,11 @@ export default function CropDetails() {
   }
 
   const color = CROP_COLORS[season.colorTag] || CROP_COLORS.crop;
-  const spent = totalExpenses(expenses);
+  const spent = totalExpenses(expenses) + workers.reduce((sum, w) => sum + w.total, 0);
   const cats = categoryTotals(expenses);
   const isHarvested = season.status === "harvested";
   const income = seasonIncome(season);
-  const profit = seasonProfit(season, expenses);
+  const profit = seasonProfit(season, expenses, workers);
   const recent = [...expenses].sort((a, b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt).slice(0, 5);
 
   return (

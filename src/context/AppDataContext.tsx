@@ -10,6 +10,9 @@ import type {
   Expense,
   FarmingSeason,
   Harvest,
+  WorkerRecord,
+  BhaagidarProfile,
+  AdvanceLedger
 } from "../types";
 
 const DEFAULT_SETTINGS: AppSettings = { theme: "system", onboardingSeen: false };
@@ -17,8 +20,13 @@ const DEFAULT_SETTINGS: AppSettings = { theme: "system", onboardingSeen: false }
 interface AppDataContextValue {
   seasons: FarmingSeason[];
   expenses: Expense[];
+  workers: WorkerRecord[];
+  bhaagidars: BhaagidarProfile[];
+  advanceLedgers: AdvanceLedger[];
   settings: AppSettings;
   isLoaded: boolean;
+
+  setActiveSeason: (id: string | undefined) => void;
 
   addSeason: (input: Omit<FarmingSeason, "id" | "status" | "createdAt" | "updatedAt">) => FarmingSeason;
   updateSeason: (id: string, patch: Partial<FarmingSeason>) => void;
@@ -30,6 +38,20 @@ interface AppDataContextValue {
   updateExpense: (id: string, patch: Partial<Expense>) => void;
   deleteExpense: (id: string) => void;
   expensesForSeason: (seasonId: string) => Expense[];
+
+  addWorker: (input: Omit<WorkerRecord, "id" | "createdAt" | "updatedAt">) => WorkerRecord;
+  updateWorker: (id: string, patch: Partial<WorkerRecord>) => void;
+  deleteWorker: (id: string) => void;
+  workersForSeason: (seasonId: string) => WorkerRecord[];
+
+  addBhaagidar: (input: Omit<BhaagidarProfile, "id" | "createdAt" | "updatedAt">) => BhaagidarProfile;
+  updateBhaagidar: (id: string, patch: Partial<BhaagidarProfile>) => void;
+  deleteBhaagidar: (id: string) => void;
+  bhaagidarsForSeason: (seasonId: string) => BhaagidarProfile[];
+
+  addAdvanceLedger: (input: Omit<AdvanceLedger, "id" | "createdAt" | "updatedAt">) => AdvanceLedger;
+  deleteAdvanceLedger: (id: string) => void;
+  ledgersForBhaagidar: (bhaagidarId: string) => AdvanceLedger[];
 
   updateSettings: (patch: Partial<AppSettings>) => void;
 
@@ -43,27 +65,33 @@ const AppDataContext = createContext<AppDataContextValue | null>(null);
 export function AppDataProvider({ children }: { children: React.ReactNode }) {
   const [seasons, setSeasons] = useState<FarmingSeason[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [workers, setWorkers] = useState<WorkerRecord[]>([]);
+  const [bhaagidars, setBhaagidars] = useState<BhaagidarProfile[]>([]);
+  const [advanceLedgers, setAdvanceLedgers] = useState<AdvanceLedger[]>([]);
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
     setSeasons(storage.getSeasons() as FarmingSeason[]);
     setExpenses(storage.getExpenses() as Expense[]);
+    setWorkers(storage.getWorkers() as WorkerRecord[]);
+    setBhaagidars(storage.getBhaagidars() as BhaagidarProfile[]);
+    setAdvanceLedgers(storage.getAdvanceLedgers() as AdvanceLedger[]);
     setSettings(storage.getSettings(DEFAULT_SETTINGS) as AppSettings);
     setIsLoaded(true);
   }, []);
 
   const cloudLoadAttempted = useRef(false);
 
-  const normalizeFirestoreExpense = useCallback((data: Record<string, unknown>, id: string): Expense => {
-    const valueToNumber = (value: unknown) => {
-      if (typeof value === "number") return value;
-      if (value && typeof value === "object" && "toMillis" in value && typeof (value as any).toMillis === "function") {
-        return (value as any).toMillis();
-      }
-      return Date.now();
-    };
+  const valueToNumber = (value: unknown) => {
+    if (typeof value === "number") return value;
+    if (value && typeof value === "object" && "toMillis" in value && typeof (value as any).toMillis === "function") {
+      return (value as any).toMillis();
+    }
+    return Date.now();
+  };
 
+  const normalizeFirestoreExpense = useCallback((data: Record<string, unknown>, id: string): Expense => {
     return {
       id,
       seasonId: String(data.seasonId ?? ""),
@@ -78,14 +106,6 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const normalizeFirestoreSeason = useCallback((data: Record<string, unknown>, id: string): FarmingSeason => {
-    const valueToNumber = (value: unknown) => {
-      if (typeof value === "number") return value;
-      if (value && typeof value === "object" && "toMillis" in value && typeof (value as any).toMillis === "function") {
-        return (value as any).toMillis();
-      }
-      return Date.now();
-    };
-
     return {
       id,
       cropName: String(data.cropName ?? ""),
@@ -102,119 +122,114 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
+  const normalizeWorker = useCallback((data: Record<string, unknown>, id: string): WorkerRecord => ({
+    id,
+    seasonId: String(data.seasonId ?? ""),
+    date: String(data.date ?? ""),
+    workersCount: Number(data.workersCount ?? 0),
+    workType: String(data.workType ?? "") as any,
+    dailyWage: Number(data.dailyWage ?? 0),
+    total: Number(data.total ?? 0),
+    notes: typeof data.notes === "string" ? data.notes : undefined,
+    createdAt: valueToNumber(data.createdAt),
+    updatedAt: valueToNumber(data.updatedAt),
+  }), []);
+
+  const normalizeBhaagidar = useCallback((data: Record<string, unknown>, id: string): BhaagidarProfile => ({
+    id,
+    seasonId: String(data.seasonId ?? ""),
+    name: String(data.name ?? ""),
+    mobile: typeof data.mobile === "string" ? data.mobile : undefined,
+    sharePercentage: Number(data.sharePercentage ?? 0),
+    notes: typeof data.notes === "string" ? data.notes : undefined,
+    createdAt: valueToNumber(data.createdAt),
+    updatedAt: valueToNumber(data.updatedAt),
+  }), []);
+
+  const normalizeAdvanceLedger = useCallback((data: Record<string, unknown>, id: string): AdvanceLedger => ({
+    id,
+    bhaagidarId: String(data.bhaagidarId ?? ""),
+    seasonId: String(data.seasonId ?? ""),
+    date: String(data.date ?? ""),
+    amount: Number(data.amount ?? 0),
+    type: String(data.type ?? "debit") as "credit" | "debit",
+    note: typeof data.note === "string" ? data.note : undefined,
+    createdAt: valueToNumber(data.createdAt),
+    updatedAt: valueToNumber(data.updatedAt),
+  }), []);
+
   const migrateLocalSeasonsToFirestore = useCallback(async (localSeasons: FarmingSeason[]) => {
     const currentUser = auth.currentUser;
     if (!currentUser || localSeasons.length === 0) return;
-
     try {
-      console.log("Migrating local seasons to Firestore:", localSeasons.length);
       await Promise.all(
-        localSeasons.map((season) => {
-          const payload: Record<string, unknown> = {
-            ...season,
-            createdAt: season.createdAt,
-            updatedAt: season.updatedAt,
-          };
-          return setDoc(doc(db, "users", currentUser.uid, "seasons", season.id), cleanFirestorePayload(payload), {
-            merge: true,
-          });
-        })
+        localSeasons.map((season) =>
+          setDoc(doc(db, "users", currentUser.uid, "seasons", season.id), cleanFirestorePayload(season), { merge: true })
+        )
       );
-    } catch (error: unknown) {
-      console.error("Failed to migrate local seasons to Firestore:", error);
+    } catch (error) {
+      console.error("Failed to migrate seasons:", error);
     }
   }, []);
 
-  const loadSeasonsFromFirestore = useCallback(async () => {
+  const loadCollection = useCallback(async <T,>(
+    collectionName: string,
+    normalizer: (data: Record<string, unknown>, id: string) => T,
+    setter: React.Dispatch<React.SetStateAction<T[]>>,
+    migrator?: () => Promise<void>
+  ) => {
     const currentUser = auth.currentUser;
     if (!currentUser) return;
-
     try {
-      const snapshot = await getDocs(collection(db, "users", currentUser.uid, "seasons"));
-      console.log("Authenticated UID:", currentUser.uid, "Seasons loaded count:", snapshot.size);
-      if (snapshot.empty) {
-        const localSeasons = storage.getSeasons() as FarmingSeason[];
-        if (localSeasons.length === 0) {
-          console.log("No Firestore seasons found and no local seasons available.");
-          return;
-        }
-
-        console.log("No Firestore seasons found, migrating local seasons to Firestore");
-        await migrateLocalSeasonsToFirestore(localSeasons);
+      const snapshot = await getDocs(collection(db, "users", currentUser.uid, collectionName));
+      if (snapshot.empty && migrator) {
+        await migrator();
         return;
       }
-
-      const firestoreSeasons = snapshot.docs.map((docSnapshot) =>
-        normalizeFirestoreSeason(docSnapshot.data(), docSnapshot.id)
-      );
-      console.log("setSeasons executed", firestoreSeasons.length);
-      setSeasons(firestoreSeasons);
-    } catch (error: unknown) {
-      console.error("Failed to load seasons from Firestore:", error);
-    }
-  }, [migrateLocalSeasonsToFirestore, normalizeFirestoreSeason]);
-
-  const loadExpensesFromFirestore = useCallback(async () => {
-    const currentUser = auth.currentUser;
-    if (!currentUser) return;
-
-    try {
-      const snapshot = await getDocs(collection(db, "users", currentUser.uid, "expenses"));
-      console.log("Authenticated UID:", currentUser.uid, "Expenses loaded count:", snapshot.size);
-      if (snapshot.empty) {
-        console.log("No Firestore expenses found, keeping local expenses");
-        return;
+      if (!snapshot.empty) {
+        setter(snapshot.docs.map((d) => normalizer(d.data(), d.id)));
       }
-
-      const firestoreExpenses: Expense[] = snapshot.docs.map((docSnapshot) =>
-        normalizeFirestoreExpense(docSnapshot.data(), docSnapshot.id)
-      );
-
-      console.log("setExpenses executed", firestoreExpenses.length);
-      setExpenses(firestoreExpenses);
-    } catch (error: unknown) {
-      console.error("Failed to load expenses from Firestore:", error);
+    } catch (error) {
+      console.error(`Failed to load ${collectionName}:`, error);
     }
-  }, [normalizeFirestoreExpense]);
+  }, []);
+
+  const loadSeasonsFromFirestore = useCallback(() => {
+    return loadCollection("seasons", normalizeFirestoreSeason, setSeasons, async () => {
+      const local = storage.getSeasons() as FarmingSeason[];
+      if (local.length > 0) await migrateLocalSeasonsToFirestore(local);
+    });
+  }, [loadCollection, normalizeFirestoreSeason, migrateLocalSeasonsToFirestore]);
 
   useEffect(() => {
     if (!isLoaded || cloudLoadAttempted.current) return;
-
-    const runCloudLoad = async (user: { uid: string }) => {
-      console.log("Authenticated UID:", user.uid);
+    const runCloudLoad = async () => {
       cloudLoadAttempted.current = true;
       await loadSeasonsFromFirestore();
-      await loadExpensesFromFirestore();
+      await loadCollection("expenses", normalizeFirestoreExpense, setExpenses);
+      await loadCollection("workers", normalizeWorker, setWorkers);
+      await loadCollection("bhaagidars", normalizeBhaagidar, setBhaagidars);
+      await loadCollection("advanceLedgers", normalizeAdvanceLedger, setAdvanceLedgers);
     };
 
     const currentUser = auth.currentUser;
     if (currentUser) {
-      void runCloudLoad(currentUser);
+      void runCloudLoad();
       return;
     }
-
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user && !cloudLoadAttempted.current) {
-        void runCloudLoad(user);
-      }
+      if (user && !cloudLoadAttempted.current) void runCloudLoad();
     });
-
     return unsubscribe;
-  }, [isLoaded, loadExpensesFromFirestore, loadSeasonsFromFirestore]);
+  }, [isLoaded, loadSeasonsFromFirestore, loadCollection, normalizeFirestoreExpense, normalizeWorker, normalizeBhaagidar, normalizeAdvanceLedger]);
 
-  useEffect(() => {
-    if (isLoaded) storage.setSeasons(seasons);
-  }, [seasons, isLoaded]);
+  useEffect(() => { if (isLoaded) storage.setSeasons(seasons); }, [seasons, isLoaded]);
+  useEffect(() => { if (isLoaded) storage.setExpenses(expenses); }, [expenses, isLoaded]);
+  useEffect(() => { if (isLoaded) storage.setWorkers(workers); }, [workers, isLoaded]);
+  useEffect(() => { if (isLoaded) storage.setBhaagidars(bhaagidars); }, [bhaagidars, isLoaded]);
+  useEffect(() => { if (isLoaded) storage.setAdvanceLedgers(advanceLedgers); }, [advanceLedgers, isLoaded]);
+  useEffect(() => { if (isLoaded) storage.setSettings(settings); }, [settings, isLoaded]);
 
-  useEffect(() => {
-    if (isLoaded) storage.setExpenses(expenses);
-  }, [expenses, isLoaded]);
-
-  useEffect(() => {
-    if (isLoaded) storage.setSettings(settings);
-  }, [settings, isLoaded]);
-
-  // apply theme to document
   useEffect(() => {
     const root = document.documentElement;
     const apply = (dark: boolean) => root.classList.toggle("dark", dark);
@@ -237,150 +252,142 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     return out;
   };
 
-  const saveExpenseToFirestore = useCallback(async (expense: Expense, preserveCreatedAt = false) => {
+  const saveToFirestore = useCallback(async (collectionName: string, item: any, preserveCreatedAt = false) => {
     const currentUser = auth.currentUser;
     if (!currentUser) return;
-
     try {
-      const payload: Record<string, unknown> = {
-        ...expense,
-        createdAt: preserveCreatedAt ? expense.createdAt : serverTimestamp(),
+      const payload = {
+        ...item,
+        createdAt: preserveCreatedAt ? item.createdAt : serverTimestamp(),
         updatedAt: serverTimestamp(),
       };
-
-      const cleaned = cleanFirestorePayload(payload);
-      await setDoc(doc(db, "users", currentUser.uid, "expenses", expense.id), cleaned, { merge: true });
-    } catch (error: unknown) {
-      console.error("Failed to sync expense to Firestore:", error);
+      await setDoc(doc(db, "users", currentUser.uid, collectionName, item.id), cleanFirestorePayload(payload), { merge: true });
+    } catch (error) {
+      console.error(`Failed to sync ${collectionName}:`, error);
     }
   }, []);
 
-  const saveSeasonToFirestore = useCallback(async (season: FarmingSeason, preserveCreatedAt = false) => {
+  const deleteFromFirestore = useCallback(async (collectionName: string, id: string) => {
     const currentUser = auth.currentUser;
     if (!currentUser) return;
-
     try {
-      const payload: Record<string, unknown> = {
-        ...season,
-        createdAt: preserveCreatedAt ? season.createdAt : serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      };
-
-      const cleaned = cleanFirestorePayload(payload);
-      await setDoc(doc(db, "users", currentUser.uid, "seasons", season.id), cleaned, { merge: true });
-    } catch (error: unknown) {
-      console.error("Failed to sync season to Firestore:", error);
+      await deleteDoc(doc(db, "users", currentUser.uid, collectionName, id));
+    } catch (error) {
+      console.error(`Failed to delete from ${collectionName}:`, error);
     }
   }, []);
 
-  const deleteExpenseFromFirestore = useCallback(async (id: string) => {
-    const currentUser = auth.currentUser;
-    if (!currentUser) return;
-
-    try {
-      await deleteDoc(doc(db, "users", currentUser.uid, "expenses", id));
-    } catch (error: unknown) {
-      console.error("Failed to delete expense from Firestore:", error);
-    }
+  const setActiveSeason = useCallback((id: string | undefined) => {
+    setSettings(s => ({ ...s, activeSeasonId: id }));
   }, []);
 
-  const deleteSeasonFromFirestore = useCallback(async (id: string) => {
-    const currentUser = auth.currentUser;
-    if (!currentUser) return;
-
-    try {
-      await deleteDoc(doc(db, "users", currentUser.uid, "seasons", id));
-    } catch (error: unknown) {
-      console.error("Failed to delete season from Firestore:", error);
-    }
-  }, []);
-
-  const addSeason: AppDataContextValue["addSeason"] = useCallback((input) => {
+  const addSeason = useCallback((input: any) => {
     const now = Date.now();
-    const season: FarmingSeason = {
-      ...input,
-      id: makeId(),
-      status: "active",
-      createdAt: now,
-      updatedAt: now,
-    };
+    const season: FarmingSeason = { ...input, id: makeId(), status: "active", createdAt: now, updatedAt: now };
     setSeasons((prev) => [season, ...prev]);
-    void saveSeasonToFirestore(season);
+    void saveToFirestore("seasons", season);
     return season;
-  }, [saveSeasonToFirestore]);
+  }, [saveToFirestore]);
 
-  const updateSeason = useCallback(
-    (id: string, patch: Partial<FarmingSeason>) => {
-      setSeasons((prev) =>
-        prev.map((s) => (s.id === id ? { ...s, ...patch, updatedAt: Date.now() } : s))
-      );
+  const updateSeason = useCallback((id: string, patch: Partial<FarmingSeason>) => {
+    setSeasons(prev => prev.map(s => s.id === id ? { ...s, ...patch, updatedAt: Date.now() } : s));
+    const updated = seasons.find(s => s.id === id);
+    if (updated) void saveToFirestore("seasons", { ...updated, ...patch, updatedAt: Date.now() }, true);
+  }, [saveToFirestore, seasons]);
 
-      const updatedSeason = seasons.find((s) => s.id === id);
-      if (updatedSeason) {
-        const seasonToSave = { ...updatedSeason, ...patch, updatedAt: Date.now() };
-        void saveSeasonToFirestore(seasonToSave, true);
-      }
-    },
-    [saveSeasonToFirestore, seasons]
-  );
+  const deleteSeason = useCallback((id: string) => {
+    setSeasons(prev => prev.filter(s => s.id !== id));
+    setExpenses(prev => prev.filter(e => e.seasonId !== id));
+    setWorkers(prev => prev.filter(w => w.seasonId !== id));
+    setBhaagidars(prev => prev.filter(b => b.seasonId !== id));
+    setAdvanceLedgers(prev => prev.filter(a => a.seasonId !== id));
+    if (settings.activeSeasonId === id) setActiveSeason(undefined);
+    void deleteFromFirestore("seasons", id);
+  }, [deleteFromFirestore, settings.activeSeasonId, setActiveSeason]);
 
-  const deleteSeason = useCallback(
-    (id: string) => {
-      setSeasons((prev) => prev.filter((s) => s.id !== id));
-      setExpenses((prev) => prev.filter((e) => e.seasonId !== id));
-      void deleteSeasonFromFirestore(id);
-    },
-    [deleteSeasonFromFirestore]
-  );
-
-  const getSeason = useCallback((id: string) => seasons.find((s) => s.id === id), [seasons]);
+  const getSeason = useCallback((id: string) => seasons.find(s => s.id === id), [seasons]);
 
   const setHarvest = useCallback((id: string, harvest: Harvest) => {
-    setSeasons((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, harvest, status: "harvested", updatedAt: Date.now() } : s))
-    );
-  }, []);
+    updateSeason(id, { harvest, status: "harvested" });
+  }, [updateSeason]);
 
-  const addExpense: AppDataContextValue["addExpense"] = useCallback((input) => {
-    const now = Date.now();
-    const expense: Expense = { ...input, id: makeId(), createdAt: now, updatedAt: now };
-    setExpenses((prev) => [expense, ...prev]);
-    void saveExpenseToFirestore(expense);
+  const addExpense = useCallback((input: any) => {
+    const expense: Expense = { ...input, id: makeId(), createdAt: Date.now(), updatedAt: Date.now() };
+    setExpenses(prev => [expense, ...prev]);
+    void saveToFirestore("expenses", expense);
     return expense;
-  }, [saveExpenseToFirestore]);
+  }, [saveToFirestore]);
 
-  const updateExpense = useCallback(
-    (id: string, patch: Partial<Expense>) => {
-      const existingExpense = expenses.find((e) => e.id === id);
-      if (!existingExpense) return;
+  const updateExpense = useCallback((id: string, patch: Partial<Expense>) => {
+    setExpenses(prev => prev.map(e => e.id === id ? { ...e, ...patch, updatedAt: Date.now() } : e));
+    const updated = expenses.find(e => e.id === id);
+    if (updated) void saveToFirestore("expenses", { ...updated, ...patch, updatedAt: Date.now() }, true);
+  }, [expenses, saveToFirestore]);
 
-      const updatedExpense: Expense = {
-        ...existingExpense,
-        ...patch,
-        updatedAt: Date.now(),
-      };
+  const deleteExpense = useCallback((id: string) => {
+    setExpenses(prev => prev.filter(e => e.id !== id));
+    void deleteFromFirestore("expenses", id);
+  }, [deleteFromFirestore]);
 
-      setExpenses((prev) => prev.map((e) => (e.id === id ? updatedExpense : e)));
-      void saveExpenseToFirestore(updatedExpense, true);
-    },
-    [expenses, saveExpenseToFirestore]
-  );
+  const expensesForSeason = useCallback((seasonId: string) => expenses.filter(e => e.seasonId === seasonId), [expenses]);
 
-  const deleteExpense = useCallback(
-    (id: string) => {
-      setExpenses((prev) => prev.filter((e) => e.id !== id));
-      void deleteExpenseFromFirestore(id);
-    },
-    [deleteExpenseFromFirestore]
-  );
+  const addWorker = useCallback((input: any) => {
+    const worker: WorkerRecord = { ...input, id: makeId(), createdAt: Date.now(), updatedAt: Date.now() };
+    setWorkers(prev => [worker, ...prev]);
+    void saveToFirestore("workers", worker);
+    return worker;
+  }, [saveToFirestore]);
 
-  const expensesForSeason = useCallback(
-    (seasonId: string) => expenses.filter((e) => e.seasonId === seasonId),
-    [expenses]
-  );
+  const updateWorker = useCallback((id: string, patch: Partial<WorkerRecord>) => {
+    setWorkers(prev => prev.map(w => w.id === id ? { ...w, ...patch, updatedAt: Date.now() } : w));
+    const updated = workers.find(w => w.id === id);
+    if (updated) void saveToFirestore("workers", { ...updated, ...patch, updatedAt: Date.now() }, true);
+  }, [workers, saveToFirestore]);
+
+  const deleteWorker = useCallback((id: string) => {
+    setWorkers(prev => prev.filter(w => w.id !== id));
+    void deleteFromFirestore("workers", id);
+  }, [deleteFromFirestore]);
+
+  const workersForSeason = useCallback((seasonId: string) => workers.filter(w => w.seasonId === seasonId), [workers]);
+
+  const addBhaagidar = useCallback((input: any) => {
+    const bhaagidar: BhaagidarProfile = { ...input, id: makeId(), createdAt: Date.now(), updatedAt: Date.now() };
+    setBhaagidars(prev => [bhaagidar, ...prev]);
+    void saveToFirestore("bhaagidars", bhaagidar);
+    return bhaagidar;
+  }, [saveToFirestore]);
+
+  const updateBhaagidar = useCallback((id: string, patch: Partial<BhaagidarProfile>) => {
+    setBhaagidars(prev => prev.map(b => b.id === id ? { ...b, ...patch, updatedAt: Date.now() } : b));
+    const updated = bhaagidars.find(b => b.id === id);
+    if (updated) void saveToFirestore("bhaagidars", { ...updated, ...patch, updatedAt: Date.now() }, true);
+  }, [bhaagidars, saveToFirestore]);
+
+  const deleteBhaagidar = useCallback((id: string) => {
+    setBhaagidars(prev => prev.filter(b => b.id !== id));
+    setAdvanceLedgers(prev => prev.filter(a => a.bhaagidarId !== id));
+    void deleteFromFirestore("bhaagidars", id);
+  }, [deleteFromFirestore]);
+
+  const bhaagidarsForSeason = useCallback((seasonId: string) => bhaagidars.filter(b => b.seasonId === seasonId), [bhaagidars]);
+
+  const addAdvanceLedger = useCallback((input: any) => {
+    const ledger: AdvanceLedger = { ...input, id: makeId(), createdAt: Date.now(), updatedAt: Date.now() };
+    setAdvanceLedgers(prev => [ledger, ...prev]);
+    void saveToFirestore("advanceLedgers", ledger);
+    return ledger;
+  }, [saveToFirestore]);
+
+  const deleteAdvanceLedger = useCallback((id: string) => {
+    setAdvanceLedgers(prev => prev.filter(a => a.id !== id));
+    void deleteFromFirestore("advanceLedgers", id);
+  }, [deleteFromFirestore]);
+
+  const ledgersForBhaagidar = useCallback((bhaagidarId: string) => advanceLedgers.filter(a => a.bhaagidarId === bhaagidarId), [advanceLedgers]);
 
   const updateSettings = useCallback((patch: Partial<AppSettings>) => {
-    setSettings((prev) => ({ ...prev, ...patch }));
+    setSettings(prev => ({ ...prev, ...patch }));
   }, []);
 
   const exportBackup = useCallback((): BackupPayload => {
@@ -389,9 +396,12 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
       exportedAt: new Date().toISOString(),
       seasons,
       expenses,
+      workers,
+      bhaagidars,
+      advanceLedgers,
       settings,
     };
-  }, [seasons, expenses, settings]);
+  }, [seasons, expenses, workers, bhaagidars, advanceLedgers, settings]);
 
   const importBackup = useCallback((payload: BackupPayload) => {
     try {
@@ -400,7 +410,10 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
       }
       setSeasons(payload.seasons);
       setExpenses(payload.expenses);
-      if (payload.settings) setSettings((prev) => ({ ...prev, ...payload.settings }));
+      if (payload.workers) setWorkers(payload.workers);
+      if (payload.bhaagidars) setBhaagidars(payload.bhaagidars);
+      if (payload.advanceLedgers) setAdvanceLedgers(payload.advanceLedgers);
+      if (payload.settings) setSettings(prev => ({ ...prev, ...payload.settings }));
       return { ok: true };
     } catch {
       return { ok: false, error: "parse" };
@@ -410,47 +423,30 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
   const clearAllData = useCallback(() => {
     setSeasons([]);
     setExpenses([]);
+    setWorkers([]);
+    setBhaagidars([]);
+    setAdvanceLedgers([]);
     storage.clearAll();
   }, []);
 
   const value = useMemo<AppDataContextValue>(
     () => ({
-      seasons,
-      expenses,
-      settings,
-      isLoaded,
-      addSeason,
-      updateSeason,
-      deleteSeason,
-      getSeason,
-      setHarvest,
-      addExpense,
-      updateExpense,
-      deleteExpense,
-      expensesForSeason,
-      updateSettings,
-      exportBackup,
-      importBackup,
-      clearAllData,
+      seasons, expenses, workers, bhaagidars, advanceLedgers, settings, isLoaded,
+      setActiveSeason, addSeason, updateSeason, deleteSeason, getSeason, setHarvest,
+      addExpense, updateExpense, deleteExpense, expensesForSeason,
+      addWorker, updateWorker, deleteWorker, workersForSeason,
+      addBhaagidar, updateBhaagidar, deleteBhaagidar, bhaagidarsForSeason,
+      addAdvanceLedger, deleteAdvanceLedger, ledgersForBhaagidar,
+      updateSettings, exportBackup, importBackup, clearAllData,
     }),
     [
-      seasons,
-      expenses,
-      settings,
-      isLoaded,
-      addSeason,
-      updateSeason,
-      deleteSeason,
-      getSeason,
-      setHarvest,
-      addExpense,
-      updateExpense,
-      deleteExpense,
-      expensesForSeason,
-      updateSettings,
-      exportBackup,
-      importBackup,
-      clearAllData,
+      seasons, expenses, workers, bhaagidars, advanceLedgers, settings, isLoaded,
+      setActiveSeason, addSeason, updateSeason, deleteSeason, getSeason, setHarvest,
+      addExpense, updateExpense, deleteExpense, expensesForSeason,
+      addWorker, updateWorker, deleteWorker, workersForSeason,
+      addBhaagidar, updateBhaagidar, deleteBhaagidar, bhaagidarsForSeason,
+      addAdvanceLedger, deleteAdvanceLedger, ledgersForBhaagidar,
+      updateSettings, exportBackup, importBackup, clearAllData,
     ]
   );
 

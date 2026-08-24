@@ -1,6 +1,9 @@
 const KEYS = {
   seasons: "kkn:seasons",
   expenses: "kkn:expenses",
+  workers: "kkn:workers",
+  bhaagidars: "kkn:bhaagidars",
+  advanceLedgers: "kkn:advanceLedgers",
   settings: "kkn:settings",
   draft: "kkn:draft:",
 } as const;
@@ -30,6 +33,12 @@ export const storage = {
   setSeasons: (v: unknown) => safeSet(KEYS.seasons, v),
   getExpenses: () => safeGet(KEYS.expenses, [] as unknown[]),
   setExpenses: (v: unknown) => safeSet(KEYS.expenses, v),
+  getWorkers: () => safeGet(KEYS.workers, [] as unknown[]),
+  setWorkers: (v: unknown) => safeSet(KEYS.workers, v),
+  getBhaagidars: () => safeGet(KEYS.bhaagidars, [] as unknown[]),
+  setBhaagidars: (v: unknown) => safeSet(KEYS.bhaagidars, v),
+  getAdvanceLedgers: () => safeGet(KEYS.advanceLedgers, [] as unknown[]),
+  setAdvanceLedgers: (v: unknown) => safeSet(KEYS.advanceLedgers, v),
   getSettings: (fallback: unknown) => safeGet(KEYS.settings, fallback),
   setSettings: (v: unknown) => safeSet(KEYS.settings, v),
   getDraft: <T,>(id: string, fallback: T) => safeGet(KEYS.draft + id, fallback),
@@ -58,6 +67,9 @@ export const storage = {
     try {
       localStorage.removeItem(KEYS.seasons);
       localStorage.removeItem(KEYS.expenses);
+      localStorage.removeItem(KEYS.workers);
+      localStorage.removeItem(KEYS.bhaagidars);
+      localStorage.removeItem(KEYS.advanceLedgers);
       // keep settings (theme) intentionally left to caller
     } catch {
       /* noop */
