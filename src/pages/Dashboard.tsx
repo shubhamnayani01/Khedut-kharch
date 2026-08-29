@@ -5,12 +5,13 @@ import { Screen, Fab, BottomNav } from "../components/ui/AppShell";
 import { SeasonCard } from "../components/SeasonCard";
 import { EmptyState } from "../components/ui/EmptyState";
 import { SearchIcon, NotebookIcon, CloseIcon } from "../components/icons/UIIcons";
-import { WalletIcon, FlaskIcon } from "../components/icons/ModuleIcons";
+import { WalletIcon } from "../components/icons/ModuleIcons";
+import { CategoryIcon } from "../components/icons/CategoryIcons";
 import { formatCurrency } from "../lib/format";
-import { totalExpenses, totalWorkerCost } from "../lib/calc";
+import { totalExpenses, totalWorkerCost, totalBhaagidaarAdvance } from "../lib/calc";
 
 export default function Dashboard() {
-  const { seasons, expenses, workers, isLoaded } = useAppData();
+  const { seasons, expenses, workers, advanceLedgers, isLoaded } = useAppData();
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<"all" | "active" | "harvested">("all");
@@ -33,7 +34,8 @@ export default function Dashboard() {
   
   const activeExpenses = expenses.filter(e => activeSeasonIds.has(e.seasonId));
   const activeWorkers = workers.filter(w => activeSeasonIds.has(w.seasonId));
-  const totalSpent = totalExpenses(activeExpenses) + totalWorkerCost(activeWorkers);
+  const activeLedgers = advanceLedgers.filter(a => activeSeasonIds.has(a.seasonId));
+  const totalSpent = totalExpenses(activeExpenses) + totalWorkerCost(activeWorkers) + totalBhaagidaarAdvance(activeLedgers);
 
   return (
     <>
@@ -72,14 +74,14 @@ export default function Dashboard() {
               </button>
               
               <button
-                onClick={() => navigate("/compatibility")}
+                onClick={() => navigate("/inventory")}
                 className="flex flex-col items-start p-4 rounded-[var(--radius-card)] bg-[var(--color-surface)] border border-[var(--color-border)] shadow-sm active:scale-95 transition-transform text-left"
               >
-                <div className="w-10 h-10 rounded-full bg-[var(--color-saffron-100)] flex items-center justify-center text-[var(--color-saffron-600)] mb-3">
-                  <FlaskIcon size={20} />
+                <div className="w-10 h-10 rounded-full bg-[var(--color-crop-50)] flex items-center justify-center text-[var(--color-crop-500)] mb-3">
+                  <CategoryIcon category="fertilizer" size={20} />
                 </div>
-                <h3 className="text-[14.5px] font-semibold text-[var(--color-ink)] mb-1">દવા મિશ્રણ ચેકર</h3>
-                <p className="text-[12px] text-[var(--color-ink-faint)] leading-tight">ખાતર અને દવા ચેક કરો</p>
+                <h3 className="text-[14.5px] font-semibold text-[var(--color-ink)] mb-1">સ્ટોક / ગોડાઉન</h3>
+                <p className="text-[12px] text-[var(--color-ink-faint)] leading-tight">ખાતર, દવાનો સ્ટોક મેનેજ કરો</p>
               </button>
             </div>
           </div>
@@ -157,6 +159,8 @@ export default function Dashboard() {
                 key={season.id}
                 season={season}
                 expenses={expenses.filter((e) => e.seasonId === season.id)}
+                workers={workers.filter((w) => w.seasonId === season.id)}
+                ledgers={advanceLedgers.filter((a) => a.seasonId === season.id)}
               />
             ))}
           </div>

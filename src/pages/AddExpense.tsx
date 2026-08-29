@@ -11,14 +11,14 @@ import { expenseSchema, type ExpenseFormInput, type ExpenseFormValues } from "..
 import { todayISO } from "../lib/format";
 import { EXPENSE_CATEGORIES } from "../types";
 import { CategoryIcon } from "../components/icons/CategoryIcons";
-import { CameraIcon, CloseIcon } from "../components/icons/UIIcons";
+import { CameraIcon, CloseIcon, NotebookIcon } from "../components/icons/UIIcons";
 import { storage } from "../lib/storage";
 import { compressImage } from "../lib/image";
 
 export default function AddExpense() {
   const navigate = useNavigate();
   const { id, expenseId } = useParams();
-  const { getSeason, addExpense, updateExpense, expenses } = useAppData();
+  const { getSeason, addExpense, updateExpense, expenses, inventoryItems } = useAppData();
   const { show } = useToast();
   const season = getSeason(id!);
   const isEdit = Boolean(expenseId);
@@ -27,6 +27,12 @@ export default function AddExpense() {
   const fileRef = useRef<HTMLInputElement>(null);
   const [photo, setPhoto] = useState<string | undefined>(existing?.billPhoto);
   const [photoBusy, setPhotoBusy] = useState(false);
+  
+  const [useStock, setUseStock] = useState(Boolean(existing?.inventoryItemId));
+  const [selectedStockId, setSelectedStockId] = useState<string | undefined>(existing?.inventoryItemId);
+  const [stockQuantityUsed, setStockQuantityUsed] = useState<number | undefined>(existing?.inventoryQuantityUsed);
+
+  const selectedStockItem = inventoryItems.find(i => i.id === selectedStockId);
 
   const {
     register,
@@ -94,11 +100,17 @@ export default function AddExpense() {
   };
 
   const onSubmit = (values: ExpenseFormValues) => {
+    const finalData = {
+      ...values,
+      inventoryItemId: useStock ? selectedStockId : undefined,
+      inventoryQuantityUsed: useStock ? stockQuantityUsed : undefined,
+    };
+
     if (isEdit && existing) {
-      updateExpense(existing.id, { ...values, billPhoto: photo });
+      updateExpense(existing.id, { ...finalData, billPhoto: photo });
       show("ખર્ચ અપડેટ થયો");
     } else {
-      addExpense({ ...values, seasonId: season.id, billPhoto: photo });
+      addExpense({ ...finalData, seasonId: season.id, billPhoto: photo });
       storage.clearDraft(draftKey);
       show("ખર્ચ ઉમેરાયો");
     }
@@ -119,7 +131,77 @@ export default function AddExpense() {
             {...register("date")}
           />
 
-          <div>
+          {!isEdit && inventoryItems.length > 0 && (
+            <div className="flex items-center gap-3 p-3 bg-[var(--color-crop-50)] rounded-[var(--radius-card)] border border-[var(--color-crop-100)]">
+              <NotebookIcon size={20} className="text-[var(--color-crop-500)]" />
+              <div className="flex-1">
+                <p className="text-[14px] font-semibold text-[var(--color-ink)]">સ્ટોક માંથી વાપરો?</p>
+                <p className="text-[12px] text-[var(--color-ink-soft)]">ગોડાઉન માંથી સામાન લો</p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  className="sr-only peer" 
+                  checked={useStock} 
+                  onChange={(e) => {
+                    setUseStock(e.target.checked);
+                    if (!e.target.checked) {
+                      setSelectedStockId(undefined);
+                      setStockQuantityUsed(undefined);
+                    }
+                  }} 
+                />
+                <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--color-crop-500)]"></div>
+              </label>
+            </div>
+          )}
+
+          {useStock && (
+            <div className="space-y-4 p-4 border-2 border-dashed border-[var(--color-crop-300)] bg-[var(--color-crop-50)] rounded-[var(--radius-card)]">
+              <div>
+                <span className="block text-[14px] font-medium text-[var(--color-ink)] mb-2">સ્ટોક પસંદ કરો</span>
+                <select 
+                  className="w-full h-[52px] px-3.5 bg-white border border-[var(--color-border)] rounded-[var(--radius-control)] text-[15px] font-medium outline-none focus:border-[var(--color-crop-500)]"
+                  value={selectedStockId || ""}
+                  onChange={(e) => {
+                    const id = e.target.value;
+                    setSelectedStockId(id);
+                    const item = inventoryItems.find(i => i.id === id);
+                    if (item) {
+                      setValue("category", item.category);
+                      if (stockQuantityUsed) {
+                        setValue("amount", Math.round((item.totalCost / item.totalQuantity) * stockQuantityUsed));
+                      }
+                    }
+                  }}
+                >
+                  <option value="" disabled>-- સ્ટોક આઇટમ પસંદ કરો --</option>
+                  {inventoryItems.map(item => (
+                    <option key={item.id} value={item.id}>{item.name} ({item.unit})</option>
+                  ))}
+                </select>
+              </div>
+              
+              {selectedStockItem && (
+                <NumberInput
+                  label={`વપરાયેલ જથ્થો (${selectedStockItem.unit})`}
+                  value={stockQuantityUsed || ""}
+                  onChange={(e) => {
+                    const qty = Number(e.target.value);
+                    setStockQuantityUsed(qty);
+                    if (qty > 0) {
+                      setValue("amount", Math.round((selectedStockItem.totalCost / selectedStockItem.totalQuantity) * qty));
+                    }
+                  }}
+                  placeholder="કેટલું વાપર્યું?"
+                  min="0.1"
+                  step="any"
+                />
+              )}
+            </div>
+          )}
+
+          <div className={useStock ? "opacity-50 pointer-events-none" : ""}>
             <span className="block text-[15px] font-medium text-[var(--color-ink)] mb-2">
               કેટેગરી <span className="text-[var(--color-loss-500)]">*</span>
             </span>
@@ -154,16 +236,18 @@ export default function AddExpense() {
             )}
           </div>
 
-          <NumberInput
-            label="રકમ (₹)"
-            required
-            placeholder="0"
-            step="1"
-            min="0"
-            autoFocus={!category}
-            error={errors.amount?.message}
-            {...register("amount")}
-          />
+          <div className={useStock ? "hidden" : ""}>
+            <NumberInput
+              label="રકમ (₹)"
+              required
+              placeholder="0"
+              step="1"
+              min="0"
+              autoFocus={!category && !useStock}
+              error={errors.amount?.message}
+              {...register("amount")}
+            />
+          </div>
 
           <TextArea label="વર્ણન (વૈકલ્પિક)" placeholder="દા.ત. યુરિયા 2 બોરી" {...register("description")} />
 

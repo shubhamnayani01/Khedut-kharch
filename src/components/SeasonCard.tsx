@@ -5,14 +5,14 @@ import { CROP_COLORS } from "../types";
 import { Card } from "./ui/Card";
 import { LeafIcon, HarvestIcon } from "./icons/UIIcons";
 import { formatCurrency, formatDateDMY, daysSince } from "../lib/format";
-import { seasonIncome, seasonProfit, totalExpenses } from "../lib/calc";
-import type { Expense } from "../types";
+import { seasonIncome, seasonProfit, totalExpenses, totalWorkerCost, totalBhaagidaarAdvance } from "../lib/calc";
+import type { Expense, WorkerRecord, AdvanceLedger } from "../types";
 
-export function SeasonCard({ season, expenses }: { season: FarmingSeason; expenses: Expense[] }) {
+export function SeasonCard({ season, expenses, workers = [], ledgers = [] }: { season: FarmingSeason; expenses: Expense[]; workers?: WorkerRecord[]; ledgers?: AdvanceLedger[] }) {
   const color = CROP_COLORS[season.colorTag] || CROP_COLORS.crop;
-  const spent = totalExpenses(expenses);
+  const spent = totalExpenses(expenses) + totalWorkerCost(workers) + totalBhaagidaarAdvance(ledgers);
   const isHarvested = season.status === "harvested";
-  const profit = isHarvested ? seasonProfit(season, expenses) : 0;
+  const profit = isHarvested ? seasonProfit(season, expenses, workers, ledgers) : 0;
   const income = isHarvested ? seasonIncome(season) : 0;
   const { setActiveSeason } = useAppData();
 

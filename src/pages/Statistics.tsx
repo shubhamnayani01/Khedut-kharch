@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, CartesianGrid } from "recharts";
 import { useAppData } from "../context/AppDataContext";
 import { TopBar, Screen, BottomNav } from "../components/ui/AppShell";
@@ -7,7 +7,7 @@ import { Card } from "../components/ui/Card";
 import { EmptyState } from "../components/ui/EmptyState";
 import { ChartIcon } from "../components/icons/UIIcons";
 import { formatCurrency } from "../lib/format";
-import { categoryTotals, monthlyExpenseSeries, seasonIncome, seasonProfit, totalExpenses, totalWorkerCost } from "../lib/calc";
+import { categoryTotals, monthlyExpenseSeries, seasonIncome, seasonProfit, totalExpenses, totalWorkerCost, totalBhaagidaarAdvance } from "../lib/calc";
 import WeatherCard from "../components/weather/WeatherCard";
 
 const PIE_COLORS = [
@@ -24,18 +24,32 @@ const PIE_COLORS = [
 ];
 
 export default function Statistics() {
-  const { seasons, settings, getSeason, expensesForSeason, workersForSeason, expenses: allExpenses, isLoaded } = useAppData();
+  const { seasons, settings, getSeason, expensesForSeason, workersForSeason, advanceLedgers, expenses: allExpenses, isLoaded } = useAppData();
 
   const seasonId = settings.activeSeasonId;
   const season = seasonId ? getSeason(seasonId) : undefined;
   const expenses = seasonId ? expensesForSeason(seasonId) : [];
   const workers = seasonId ? workersForSeason(seasonId) : [];
+  const ledgers = seasonId ? advanceLedgers.filter(a => a.seasonId === seasonId) : [];
 
   const totalIncome = season ? seasonIncome(season) : 0;
-  const netProfit = season ? seasonProfit(season, expenses, workers) : 0;
+  const netProfit = season ? seasonProfit(season, expenses, workers, ledgers) : 0;
+  
+  const bighas = season?.areaBigha || 0;
+  const canShowPerBigha = bighas > 0;
+  const [showPerBigha, setShowPerBigha] = useState(false);
+  
+  const v = (num: number) => (canShowPerBigha && showPerBigha ? num / bighas : num);
 
-  const cats = useMemo(() => categoryTotals(expenses), [expenses]);
-  const monthly = useMemo(() => monthlyExpenseSeries(expenses), [expenses]);
+  const cats = useMemo(() => {
+    const list = categoryTotals(expenses);
+    const wTotal = totalWorkerCost(workers);
+    if (wTotal > 0) list.push({ category: "labor" as any, label: "મજૂરી ખર્ચ", total: wTotal });
+    const bTotal = totalBhaagidaarAdvance(ledgers);
+    if (bTotal > 0) list.push({ category: "other" as any, label: "ભાગીદાર એડવાન્સ", total: bTotal });
+    return list.sort((a, b) => b.total - a.total).map(c => ({ ...c, total: v(c.total) }));
+  }, [expenses, workers, ledgers, showPerBigha, canShowPerBigha, bighas]);
+  const monthly = useMemo(() => monthlyExpenseSeries(expenses).map(m => ({ ...m, total: v(m.total) })), [expenses, showPerBigha, canShowPerBigha, bighas]);
   const profitSeries = useMemo(
     () =>
       seasons
@@ -69,13 +83,35 @@ export default function Statistics() {
       <TopBar titleContent={<SeasonSwitcher />} />
       <Screen>
         <WeatherCard />
+        
+        {canShowPerBigha && (
+          <div className="flex justify-center mb-4">
+            <div className="flex items-center bg-[var(--color-surface)] border border-[var(--color-border)] rounded-full p-1 shadow-sm">
+              <button
+                onClick={() => setShowPerBigha(false)}
+                className={`px-4 py-1.5 rounded-full text-[13px] font-semibold transition-colors ${!showPerBigha ? "bg-[var(--color-crop-500)] text-white shadow-sm" : "text-[var(--color-ink-soft)]"}`}
+              >
+                કુલ (Total)
+              </button>
+              <button
+                onClick={() => setShowPerBigha(true)}
+                className={`px-4 py-1.5 rounded-full text-[13px] font-semibold transition-colors ${showPerBigha ? "bg-[var(--color-crop-500)] text-white shadow-sm" : "text-[var(--color-ink-soft)]"}`}
+              >
+                વિઘા દીઠ (Per Bigha)
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="grid grid-cols-2 gap-3 mb-4">
-          <StatCard label="કુલ ખર્ચ (સામાન)" value={formatCurrency(totalExpenses(expenses))} />
-          <StatCard label="મજૂરી ખર્ચ" value={formatCurrency(totalWorkerCost(workers))} />
-          <StatCard label="કુલ આવક" value={formatCurrency(totalIncome)} />
+          <StatCard label="સામાન ખર્ચ" value={formatCurrency(v(totalExpenses(expenses)))} />
+          <StatCard label="મજૂરી ખર્ચ" value={formatCurrency(v(totalWorkerCost(workers)))} />
+          {ledgers.length > 0 && <StatCard label="ભાગીદાર એડવાન્સ" value={formatCurrency(v(totalBhaagidaarAdvance(ledgers)))} />}
+          <StatCard label="કુલ ખર્ચ" value={formatCurrency(v(totalExpenses(expenses) + totalWorkerCost(workers) + totalBhaagidaarAdvance(ledgers)))} />
+          <StatCard label="કુલ આવક" value={formatCurrency(v(totalIncome))} />
           <StatCard
             label={netProfit >= 0 ? "ચોખ્ખો નફો" : "ચોખ્ખી ખોટ"}
-            value={formatCurrency(netProfit)}
+            value={formatCurrency(v(netProfit))}
             color={netProfit >= 0 ? "var(--color-crop-500)" : "var(--color-loss-500)"}
           />
         </div>

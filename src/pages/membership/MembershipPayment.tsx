@@ -32,13 +32,12 @@ export default function MembershipPayment() {
 
   const isRejected = membership?.membershipStatus === "Rejected";
 
-  // If Active and not Skipped, go home; if Pending, go pending
+  // Redirect based on membership status
   useEffect(() => {
     if (loading || membershipLoading) return;
     if (!user) { navigate("/login", { replace: true }); return; }
-    
 
-    
+    if (membership?.membershipStatus === "Active") { navigate("/", { replace: true }); return; }
     if (membership?.membershipStatus === "Pending") { navigate("/membership/pending", { replace: true }); return; }
     if (membership?.membershipStatus === "Expired") { navigate("/membership/expired", { replace: true }); return; }
   }, [user, loading, membership, membershipLoading, navigate]);

@@ -9,15 +9,7 @@ export function WalletIcon(p: IconProps) {
   );
 }
 
-export function FlaskIcon(p: IconProps) {
-  return (
-    <svg {...svgProps(p.size, p.strokeWidth)} className={p.className}>
-      <path d="M10 2v6.6l-5 8.4A2 2 0 0 0 6.7 20h10.6a2 2 0 0 0 1.7-3l-5-8.4V2" />
-      <path d="M8.5 2h7" />
-      <path d="M14 11.5 10 15" />
-    </svg>
-  );
-}
+
 
 export function WarningIcon(p: IconProps) {
   return (

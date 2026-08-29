@@ -3,17 +3,17 @@ import { useAppData } from "../context/AppDataContext";
 import { TopBar, Screen } from "../components/ui/AppShell";
 import { Button } from "../components/ui/Button";
 import { formatCurrency, formatDateDMY, formatDateLong } from "../lib/format";
-import { categoryTotals, seasonIncome, seasonProfit, totalExpenses, profitPercentage } from "../lib/calc";
+import { categoryTotals, seasonIncome, seasonProfit, totalExpenses, profitPercentage, totalWorkerCost, totalBhaagidaarAdvance } from "../lib/calc";
 import { EXPENSE_CATEGORIES } from "../types";
 import { DownloadIcon } from "../components/icons/UIIcons";
 
 export default function Report() {
   const { id } = useParams();
-  const { getSeason, expensesForSeason } = useAppData();
+  const { getSeason, expensesForSeason, workersForSeason, bhaagidarsForSeason, advanceLedgers } = useAppData();
   const season = getSeason(id!);
-  const expenses = season
-    ? [...expensesForSeason(season.id)].sort((a, b) => a.date.localeCompare(b.date))
-    : [];
+  const expenses = season ? expensesForSeason(season.id) : [];
+  const workers = season ? workersForSeason(season.id) : [];
+  const ledgers = season ? advanceLedgers.filter(a => a.seasonId === season.id) : [];
 
   if (!season) {
     return (
@@ -26,12 +26,57 @@ export default function Report() {
     );
   }
 
-  const spent = totalExpenses(expenses);
-  const cats = categoryTotals(expenses);
+  const spent = totalExpenses(expenses) + totalWorkerCost(workers) + totalBhaagidaarAdvance(ledgers);
   const isHarvested = season.status === "harvested";
   const income = seasonIncome(season);
-  const profit = seasonProfit(season, expenses);
-  const pct = profitPercentage(season, expenses);
+  const profit = seasonProfit(season, expenses, workers, ledgers);
+  const pct = profitPercentage(season, expenses, workers, ledgers);
+
+  const bighas = season.areaBigha || 0;
+  const showPerBigha = bighas > 0;
+  const pb = (amount: number) => showPerBigha ? `(${formatCurrency(amount / bighas)} / વિઘા)` : '';
+
+  const cats = [...categoryTotals(expenses)];
+  const wTotal = totalWorkerCost(workers);
+  if (wTotal > 0) cats.push({ category: "labor" as any, label: "મજૂરી ખર્ચ", total: wTotal });
+  const bTotal = totalBhaagidaarAdvance(ledgers);
+  if (bTotal > 0) cats.push({ category: "other" as any, label: "ભાગીદાર એડવાન્સ", total: bTotal });
+  cats.sort((a, b) => b.total - a.total);
+
+  type ReportItem = { id: string; date: string; categoryLabel: string; description: string; amount: number };
+  const reportItems: ReportItem[] = [];
+  
+  expenses.forEach(e => reportItems.push({ 
+    id: e.id, 
+    date: e.date, 
+    categoryLabel: EXPENSE_CATEGORIES.find(c => c.id === e.category)?.label || "અન્ય", 
+    description: e.description || "—", 
+    amount: e.amount 
+  }));
+  
+  workers.forEach(w => reportItems.push({ 
+    id: w.id, 
+    date: w.date, 
+    categoryLabel: "મજૂરી", 
+    description: `${w.workersCount} મજૂર (${w.workType}) ${w.notes ? '- ' + w.notes : ''}`, 
+    amount: w.total 
+  }));
+  
+  const bhaagidars = bhaagidarsForSeason(season.id);
+  ledgers.forEach(l => {
+    const bhaagidar = bhaagidars.find(b => b.id === l.bhaagidarId);
+    const name = bhaagidar ? bhaagidar.name : 'ભાગીદાર';
+    const typeStr = l.type === 'debit' ? 'આપેલ' : 'પરત મળેલ';
+    reportItems.push({
+      id: l.id,
+      date: l.date,
+      categoryLabel: `ભાગીદાર (${name})`,
+      description: `એડવાન્સ ${typeStr} ${l.note ? '- ' + l.note : ''}`,
+      amount: l.type === 'debit' ? l.amount : -l.amount
+    });
+  });
+
+  reportItems.sort((a, b) => a.date.localeCompare(b.date));
 
   return (
     <>
@@ -85,15 +130,15 @@ export default function Report() {
               </tr>
             </thead>
             <tbody>
-              {expenses.map((e) => (
-                <tr key={e.id} className="border-b border-gray-300">
-                  <td className="py-1.5 tnum">{formatDateDMY(e.date)}</td>
-                  <td className="py-1.5">{EXPENSE_CATEGORIES.find((c) => c.id === e.category)?.label}</td>
-                  <td className="py-1.5">{e.description || "—"}</td>
-                  <td className="py-1.5 text-right tnum">{formatCurrency(e.amount)}</td>
+              {reportItems.map((item) => (
+                <tr key={item.id} className="border-b border-gray-300">
+                  <td className="py-1.5 tnum">{formatDateDMY(item.date)}</td>
+                  <td className="py-1.5">{item.categoryLabel}</td>
+                  <td className="py-1.5">{item.description}</td>
+                  <td className="py-1.5 text-right tnum">{formatCurrency(item.amount)}</td>
                 </tr>
               ))}
-              {expenses.length === 0 && (
+              {reportItems.length === 0 && (
                 <tr>
                   <td colSpan={4} className="py-4 text-center text-gray-500">
                     કોઈ ખર્ચ નોંધાયો નથી
@@ -116,13 +161,13 @@ export default function Report() {
           </table>
 
           <div className="mt-6 border-t-2 border-black pt-3">
-            <ReportTotal label="કુલ ખર્ચ" value={formatCurrency(spent)} />
+            <ReportTotal label="કુલ ખર્ચ" value={`${formatCurrency(spent)} ${pb(spent)}`} />
             {isHarvested && (
               <>
-                <ReportTotal label="કુલ આવક" value={formatCurrency(income)} />
+                <ReportTotal label="કુલ આવક" value={`${formatCurrency(income)} ${pb(income)}`} />
                 <ReportTotal
                   label={profit >= 0 ? "ચોખ્ખો નફો" : "ચોખ્ખી ખોટ"}
-                  value={`${formatCurrency(profit)} (${pct >= 0 ? "+" : ""}${pct.toFixed(1)}%)`}
+                  value={`${formatCurrency(profit)} ${pb(profit)} (${pct >= 0 ? "+" : ""}${pct.toFixed(1)}%)`}
                   strong
                 />
               </>

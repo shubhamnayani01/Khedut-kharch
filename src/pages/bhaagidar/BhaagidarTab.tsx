@@ -1,18 +1,50 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppData } from "../../context/AppDataContext";
 import { TopBar, Screen } from "../../components/ui/AppShell";
 import { SeasonSwitcher } from "../../components/ui/SeasonSwitcher";
 import { Button } from "../../components/ui/Button";
+import { Dialog } from "../../components/ui/Dialog";
+import { TextInput, NumberInput } from "../../components/ui/Field";
 import { EmptyState } from "../../components/ui/EmptyState";
-import { UsersIcon, PlusIcon, ChevronRightIcon } from "../../components/icons/UIIcons";
+import { UsersIcon, PlusIcon } from "../../components/icons/UIIcons";
+import { todayISO } from "../../lib/format";
+import { useToast } from "../../context/ToastContext";
 
 export default function BhaagidarTab() {
   const navigate = useNavigate();
-  const { settings, getSeason, bhaagidarsForSeason } = useAppData();
+  const { settings, getSeason, bhaagidarsForSeason, addAdvanceLedger } = useAppData();
+  const { show } = useToast();
   
   const seasonId = settings.activeSeasonId;
   const season = seasonId ? getSeason(seasonId) : undefined;
   const bhaagidars = seasonId ? bhaagidarsForSeason(seasonId) : [];
+
+  const [selectedBhaagidar, setSelectedBhaagidar] = useState<string | null>(null);
+  const [showAddTx, setShowAddTx] = useState(false);
+  const [txType, setTxType] = useState<"debit"|"credit">("debit");
+  const [amount, setAmount] = useState("");
+  const [note, setNote] = useState("");
+  const [date, setDate] = useState(todayISO());
+
+  const handleAddTx = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!amount || Number(amount) <= 0 || !selectedBhaagidar || !season) return;
+    addAdvanceLedger({
+      seasonId: season.id,
+      bhaagidarId: selectedBhaagidar,
+      date,
+      amount: Number(amount),
+      type: txType,
+      note
+    });
+    setShowAddTx(false);
+    setSelectedBhaagidar(null);
+    setAmount("");
+    setNote("");
+    setDate(todayISO());
+    show(txType === "debit" ? "એડવાન્સ નોંધાયું" : "પરત મળેલ રકમ નોંધાઈ");
+  };
 
   if (!season) {
     return (
@@ -45,29 +77,45 @@ export default function BhaagidarTab() {
         ) : (
           <div className="space-y-3">
             {bhaagidars.map((b) => (
-              <button
+              <div
                 key={b.id}
-                onClick={() => navigate(`/crop/${season.id}/bhaagidar/${b.id}`)}
-                className="w-full text-left bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[var(--radius-control)] p-3.5 flex items-center gap-3.5 active:scale-[0.98] transition-transform"
+                className="w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[var(--radius-control)] p-3.5 flex items-center justify-between"
               >
-                <div className="w-11 h-11 rounded-full bg-[var(--color-soil-50)] text-[var(--color-soil-600)] flex items-center justify-center shrink-0 font-bold text-[16px]">
-                  {b.name.charAt(0).toUpperCase()}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between mb-0.5">
-                    <span className="text-[15.5px] font-semibold text-[var(--color-ink)] truncate">
-                      {b.name}
-                    </span>
-                    <span className="tnum text-[14px] font-bold text-[var(--color-crop-500)] shrink-0">
-                      {b.sharePercentage}%
-                    </span>
+                <button
+                  onClick={() => navigate(`/crop/${season.id}/bhaagidar/${b.id}`)}
+                  className="flex-1 min-w-0 flex items-center gap-3.5 text-left active:opacity-70 transition-opacity"
+                >
+                  <div className="w-11 h-11 rounded-full bg-[var(--color-soil-50)] text-[var(--color-soil-600)] flex items-center justify-center shrink-0 font-bold text-[16px]">
+                    {b.name.charAt(0).toUpperCase()}
                   </div>
-                  <div className="flex items-center gap-2 text-[13px] text-[var(--color-ink-faint)]">
-                    {b.mobile ? <span className="truncate">{b.mobile}</span> : <span>નંબર નથી</span>}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between mb-0.5">
+                      <span className="text-[15.5px] font-semibold text-[var(--color-ink)] truncate">
+                        {b.name}
+                      </span>
+                      <span className="tnum text-[14px] font-bold text-[var(--color-crop-500)] shrink-0 pl-2">
+                        {b.sharePercentage}%
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 text-[13px] text-[var(--color-ink-faint)]">
+                      {b.mobile ? <span className="truncate">{b.mobile}</span> : <span>નંબર નથી</span>}
+                    </div>
                   </div>
+                </button>
+                
+                <div className="border-l border-[var(--color-border)] pl-3 ml-3 shrink-0">
+                  <button
+                    onClick={() => {
+                      setSelectedBhaagidar(b.id);
+                      setTxType('debit');
+                      setShowAddTx(true);
+                    }}
+                    className="flex items-center justify-center px-3 py-1.5 bg-[var(--color-surface-dim)] rounded-full text-[12px] font-semibold text-[var(--color-ink-soft)] active:scale-95 transition-transform"
+                  >
+                    + લેવડ-દેવડ
+                  </button>
                 </div>
-                <ChevronRightIcon size={18} className="text-[var(--color-ink-faint)]" />
-              </button>
+              </div>
             ))}
           </div>
         )}
@@ -82,6 +130,21 @@ export default function BhaagidarTab() {
            </button>
         </div>
       </Screen>
+
+      <Dialog open={showAddTx} onClose={() => setShowAddTx(false)} title="નવી લેવડ-દેવડ નોંધો">
+        <form onSubmit={handleAddTx} className="space-y-4 mt-2">
+           <div className="grid grid-cols-2 gap-2">
+             <button type="button" onClick={() => setTxType('debit')} className={`py-2 rounded-md font-semibold text-[14px] ${txType==='debit' ? 'bg-[var(--color-loss-100)] text-[var(--color-loss-600)] border border-[var(--color-loss-300)]' : 'bg-[var(--color-surface)] text-[var(--color-ink-soft)] border border-[var(--color-border)]'}`}>રૂપિયા આપ્યા</button>
+             <button type="button" onClick={() => setTxType('credit')} className={`py-2 rounded-md font-semibold text-[14px] ${txType==='credit' ? 'bg-[var(--color-crop-100)] text-[var(--color-crop-700)] border border-[var(--color-crop-300)]' : 'bg-[var(--color-surface)] text-[var(--color-ink-soft)] border border-[var(--color-border)]'}`}>પરત મળ્યા</button>
+           </div>
+           
+           <TextInput label="તારીખ" type="date" required value={date} onChange={(e) => setDate(e.target.value)} max={todayISO()} />
+           <NumberInput label="રકમ (₹)" required value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0" min="1" autoFocus />
+           <TextInput label="નોંધ (વૈકલ્પિક)" value={note} onChange={(e) => setNote(e.target.value)} placeholder="શાના માટે..." />
+           
+           <Button type="submit" fullWidth className="mt-2">નોંધ સાચવો</Button>
+        </form>
+      </Dialog>
     </>
   );
 }

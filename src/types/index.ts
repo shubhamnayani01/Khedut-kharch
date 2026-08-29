@@ -61,6 +61,19 @@ export interface AdvanceLedger {
   updatedAt: number;
 }
 
+export interface InventoryItem {
+  id: string;
+  name: string;
+  category: ExpenseCategory;
+  totalQuantity: number;
+  unit: string;
+  totalCost: number;
+  datePurchased: string; // ISO yyyy-mm-dd
+  notes?: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
 export interface Expense {
   id: string;
   seasonId: string;
@@ -69,6 +82,8 @@ export interface Expense {
   amount: number;
   description?: string;
   billPhoto?: string; // base64 data URL, compressed
+  inventoryItemId?: string;
+  inventoryQuantityUsed?: number;
   createdAt: number;
   updatedAt: number;
 }
@@ -112,6 +127,7 @@ export interface BackupPayload {
   workers: WorkerRecord[];
   bhaagidars: BhaagidarProfile[];
   advanceLedgers: AdvanceLedger[];
+  inventoryItems: InventoryItem[];
   settings: AppSettings;
 }
 

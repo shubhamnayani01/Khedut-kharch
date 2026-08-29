@@ -4,6 +4,7 @@ const KEYS = {
   workers: "kkn:workers",
   bhaagidars: "kkn:bhaagidars",
   advanceLedgers: "kkn:advanceLedgers",
+  inventoryItems: "kkn:inventoryItems",
   settings: "kkn:settings",
   draft: "kkn:draft:",
 } as const;
@@ -39,6 +40,8 @@ export const storage = {
   setBhaagidars: (v: unknown) => safeSet(KEYS.bhaagidars, v),
   getAdvanceLedgers: () => safeGet(KEYS.advanceLedgers, [] as unknown[]),
   setAdvanceLedgers: (v: unknown) => safeSet(KEYS.advanceLedgers, v),
+  getInventoryItems: () => safeGet(KEYS.inventoryItems, [] as unknown[]),
+  setInventoryItems: (v: unknown) => safeSet(KEYS.inventoryItems, v),
   getSettings: (fallback: unknown) => safeGet(KEYS.settings, fallback),
   setSettings: (v: unknown) => safeSet(KEYS.settings, v),
   getDraft: <T,>(id: string, fallback: T) => safeGet(KEYS.draft + id, fallback),
@@ -70,6 +73,7 @@ export const storage = {
       localStorage.removeItem(KEYS.workers);
       localStorage.removeItem(KEYS.bhaagidars);
       localStorage.removeItem(KEYS.advanceLedgers);
+      localStorage.removeItem(KEYS.inventoryItems);
       // keep settings (theme) intentionally left to caller
     } catch {
       /* noop */

@@ -40,3 +40,15 @@ export const harvestSchema = z.object({
 });
 export type HarvestFormInput = z.input<typeof harvestSchema>;
 export type HarvestFormValues = z.output<typeof harvestSchema>;
+
+export const inventorySchema = z.object({
+  name: z.string().trim().min(1, "નામ જરૂરી છે").max(60),
+  category: z.enum(EXPENSE_CATEGORY_VALUES, { message: "કેટેગરી પસંદ કરો" }),
+  totalQuantity: z.coerce.number({ message: "કુલ જથ્થો દાખલ કરો" }).positive(),
+  unit: z.string().min(1, "એકમ જરૂરી છે (દા.ત. થેલી, લિટર)"),
+  totalCost: z.coerce.number({ message: "કુલ કિંમત દાખલ કરો" }).positive(),
+  datePurchased: z.string().min(1, "તારીખ જરૂરી છે"),
+  notes: z.string().trim().max(200).optional(),
+});
+export type InventoryFormInput = z.input<typeof inventorySchema>;
+export type InventoryFormValues = z.output<typeof inventorySchema>;

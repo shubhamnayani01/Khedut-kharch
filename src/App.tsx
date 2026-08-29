@@ -19,7 +19,9 @@ import MembershipExpired from "./pages/membership/MembershipExpired";
 import AdminPanel from "./pages/admin/AdminPanel";
 import Wallet from "./pages/wallet/Wallet";
 import UploadDocument from "./pages/wallet/UploadDocument";
-import CompatibilityChecker from "./pages/compatibility/CompatibilityChecker";
+import InventoryTab from "./pages/inventory/InventoryTab";
+import InventoryForm from "./pages/inventory/InventoryForm";
+
 import ExpensesTab from "./pages/expenses/ExpensesTab";
 import WorkersTab from "./pages/workers/WorkersTab";
 import AddWorkerRecord from "./pages/workers/AddWorkerRecord";
@@ -253,13 +255,22 @@ export default function App() {
               }
             />
             <Route
-              path="/compatibility"
+              path="/inventory"
               element={
                 <AuthGuard>
-                  <CompatibilityChecker />
+                  <InventoryTab />
                 </AuthGuard>
               }
             />
+            <Route
+              path="/inventory/new"
+              element={
+                <AuthGuard>
+                  <InventoryForm />
+                </AuthGuard>
+              }
+            />
+
 
             {/* Catch-all → home (AuthGuard will redirect appropriately) */}
             <Route path="*" element={<Navigate to="/" replace />} />

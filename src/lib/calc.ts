@@ -1,8 +1,16 @@
-import type { Expense, ExpenseCategory, FarmingSeason, WorkerRecord } from "../types";
+import type { Expense, ExpenseCategory, FarmingSeason, WorkerRecord, AdvanceLedger } from "../types";
 import { EXPENSE_CATEGORIES } from "../types";
 
 export function totalExpenses(expenses: Expense[]): number {
   return expenses.reduce((sum, e) => sum + e.amount, 0);
+}
+
+export function totalBhaagidaarAdvance(ledgers: AdvanceLedger[]): number {
+  return ledgers.reduce((sum, t) => {
+    if (t.type === "debit") return sum + t.amount;
+    if (t.type === "credit") return sum - t.amount;
+    return sum;
+  }, 0);
 }
 
 export function categoryTotals(expenses: Expense[]): { category: ExpenseCategory; label: string; total: number }[] {
@@ -22,14 +30,14 @@ export function totalWorkerCost(workers: WorkerRecord[]): number {
   return workers.reduce((sum, w) => sum + w.total, 0);
 }
 
-export function seasonProfit(season: FarmingSeason, expenses: Expense[], workers: WorkerRecord[] = []): number {
-  return seasonIncome(season) - (totalExpenses(expenses) + totalWorkerCost(workers));
+export function seasonProfit(season: FarmingSeason, expenses: Expense[], workers: WorkerRecord[] = [], ledgers: AdvanceLedger[] = []): number {
+  return seasonIncome(season) - (totalExpenses(expenses) + totalWorkerCost(workers) + totalBhaagidaarAdvance(ledgers));
 }
 
-export function profitPercentage(season: FarmingSeason, expenses: Expense[], workers: WorkerRecord[] = []): number {
-  const exp = totalExpenses(expenses) + totalWorkerCost(workers);
+export function profitPercentage(season: FarmingSeason, expenses: Expense[], workers: WorkerRecord[] = [], ledgers: AdvanceLedger[] = []): number {
+  const exp = totalExpenses(expenses) + totalWorkerCost(workers) + totalBhaagidaarAdvance(ledgers);
   if (exp <= 0) return 0;
-  return (seasonProfit(season, expenses, workers) / exp) * 100;
+  return (seasonProfit(season, expenses, workers, ledgers) / exp) * 100;
 }
 
 export function monthlyExpenseSeries(expenses: Expense[]): { key: string; label: string; total: number }[] {

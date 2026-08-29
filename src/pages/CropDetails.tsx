@@ -18,19 +18,20 @@ import {
   LeafIcon,
 } from "../components/icons/UIIcons";
 import { formatCurrency, formatDateDMY, daysSince } from "../lib/format";
-import { categoryTotals, seasonIncome, seasonProfit, totalExpenses } from "../lib/calc";
+import { categoryTotals, seasonIncome, seasonProfit, totalExpenses, totalBhaagidaarAdvance } from "../lib/calc";
 import { CROP_COLORS, EXPENSE_CATEGORIES } from "../types";
 
 export default function CropDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { getSeason, expensesForSeason, workersForSeason, deleteSeason } = useAppData();
+  const { getSeason, expensesForSeason, workersForSeason, advanceLedgers, deleteSeason } = useAppData();
   const { show } = useToast();
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const season = getSeason(id!);
   const expenses = season ? expensesForSeason(season.id) : [];
   const workers = season ? workersForSeason(season.id) : [];
+  const ledgers = season ? advanceLedgers.filter(a => a.seasonId === season.id) : [];
 
   if (!season) {
     return (
@@ -44,11 +45,18 @@ export default function CropDetails() {
   }
 
   const color = CROP_COLORS[season.colorTag] || CROP_COLORS.crop;
-  const spent = totalExpenses(expenses) + workers.reduce((sum, w) => sum + w.total, 0);
-  const cats = categoryTotals(expenses);
+  const wTotal = workers.reduce((sum, w) => sum + w.total, 0);
+  const bTotal = totalBhaagidaarAdvance(ledgers);
+  const spent = totalExpenses(expenses) + wTotal + bTotal;
+  
+  const cats = [...categoryTotals(expenses)];
+  if (wTotal > 0) cats.push({ category: "labor" as any, label: "મજૂરી ખર્ચ", total: wTotal });
+  if (bTotal > 0) cats.push({ category: "other" as any, label: "ભાગીદાર એડવાન્સ", total: bTotal });
+  cats.sort((a, b) => b.total - a.total);
+
   const isHarvested = season.status === "harvested";
   const income = seasonIncome(season);
-  const profit = seasonProfit(season, expenses, workers);
+  const profit = seasonProfit(season, expenses, workers, ledgers);
   const recent = [...expenses].sort((a, b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt).slice(0, 5);
 
   return (
