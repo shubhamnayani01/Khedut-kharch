@@ -25,6 +25,7 @@ export default function MembershipPayment() {
 
   const [paymentMethod, setPaymentMethod] = useState("UPI");
   const [paymentReference, setPaymentReference] = useState("");
+  const [paymentAmount, setPaymentAmount] = useState("300");
   const [proofFile, setProofFile] = useState<File | null>(null);
   const [proofPreview, setProofPreview] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -37,7 +38,7 @@ export default function MembershipPayment() {
     if (loading || membershipLoading) return;
     if (!user) { navigate("/login", { replace: true }); return; }
 
-    if (membership?.membershipStatus === "Active") { navigate("/", { replace: true }); return; }
+    // Removed Active redirect so users can visit this page to donate after skipping
     if (membership?.membershipStatus === "Pending") { navigate("/membership/pending", { replace: true }); return; }
     if (membership?.membershipStatus === "Expired") { navigate("/membership/expired", { replace: true }); return; }
   }, [user, loading, membership, membershipLoading, navigate]);
@@ -53,6 +54,9 @@ export default function MembershipPayment() {
   const handleSubmit = async () => {
     if (!proofFile) { setError("પેમેન્ટ પ્રૂફ ફાઇલ પસંદ કરો."); return; }
     if (!paymentReference.trim()) { setError("ટ્રાન્ઝેક્શન ID / UTR ભરો."); return; }
+    const amt = parseInt(paymentAmount, 10);
+    if (isNaN(amt) || amt < 1) { setError("યોગ્ય રકમ ભરો."); return; }
+    
     setError("");
     setSubmitting(true);
     try {
@@ -60,6 +64,7 @@ export default function MembershipPayment() {
         paymentProofFile: proofFile,
         paymentMethod,
         paymentReference: paymentReference.trim(),
+        paymentAmount: amt,
       });
       navigate("/membership/pending", { replace: true });
     } catch (err: unknown) {
@@ -477,6 +482,41 @@ export default function MembershipPayment() {
             />
           </div>
 
+          {/* Payment Amount */}
+          <div style={{ marginBottom: "14px" }}>
+            <label
+              style={{
+                display: "block",
+                fontSize: "13px",
+                color: "var(--color-ink-soft)",
+                marginBottom: "6px",
+                fontWeight: 500,
+              }}
+            >
+              તમે કેટલું દાન કર્યું? (રૂપિયામાં)
+            </label>
+            <input
+              id="payment-amount"
+              type="number"
+              min="1"
+              value={paymentAmount}
+              onChange={(e) => setPaymentAmount(e.target.value)}
+              placeholder="300"
+              style={{
+                width: "100%",
+                boxSizing: "border-box",
+                height: "46px",
+                borderRadius: "12px",
+                border: "1.5px solid var(--color-border)",
+                background: "var(--color-paper)",
+                color: "var(--color-ink)",
+                fontSize: "15px",
+                padding: "0 14px",
+                outline: "none",
+              }}
+            />
+          </div>
+
           {/* File upload */}
           <div style={{ marginBottom: "16px" }}>
             <label
@@ -582,43 +622,45 @@ export default function MembershipPayment() {
         </div>
 
         {/* Skip donation - placed OUTSIDE the form card for clear separation */}
-        <button
-          id="skip-donation-btn"
-          onClick={async (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            try {
-              setSubmitting(true);
-              await skipDonation();
-              navigate("/", { replace: true });
-            } catch (err: unknown) {
-              console.error("Skip donation error:", err);
-              const msg = err instanceof Error ? err.message : String(err);
-              setError(`સ્કીપ કરવામાં ભૂલ: ${msg}`);
-              setSubmitting(false);
-            }
-          }}
-          disabled={submitting}
-          style={{
-            width: "100%",
-            height: "52px",
-            marginTop: "20px",
-            borderRadius: "14px",
-            background: "transparent",
-            color: submitting ? "var(--color-ink-faint)" : "var(--color-ink-soft)",
-            border: "1.5px solid var(--color-border)",
-            cursor: submitting ? "not-allowed" : "pointer",
-            fontSize: "15px",
-            fontWeight: 600,
-            transition: "all 0.2s",
-            touchAction: "manipulation",
-            WebkitTapHighlightColor: "transparent",
-            position: "relative",
-            zIndex: 5,
-          }}
-        >
-          હમણાં નહીં, આગળ વધો
-        </button>
+        {membership?.membershipStatus !== "Active" && (
+          <button
+            id="skip-donation-btn"
+            onClick={async (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              try {
+                setSubmitting(true);
+                await skipDonation();
+                navigate("/", { replace: true });
+              } catch (err: unknown) {
+                console.error("Skip donation error:", err);
+                const msg = err instanceof Error ? err.message : String(err);
+                setError(`સ્કીપ કરવામાં ભૂલ: ${msg}`);
+                setSubmitting(false);
+              }
+            }}
+            disabled={submitting}
+            style={{
+              width: "100%",
+              height: "52px",
+              marginTop: "20px",
+              borderRadius: "14px",
+              background: "transparent",
+              color: submitting ? "var(--color-ink-faint)" : "var(--color-ink-soft)",
+              border: "1.5px solid var(--color-border)",
+              cursor: submitting ? "not-allowed" : "pointer",
+              fontSize: "15px",
+              fontWeight: 600,
+              transition: "all 0.2s",
+              touchAction: "manipulation",
+              WebkitTapHighlightColor: "transparent",
+              position: "relative",
+              zIndex: 5,
+            }}
+          >
+            હમણાં નહીં, આગળ વધો
+          </button>
+        )}
       </div>
     </div>
   );

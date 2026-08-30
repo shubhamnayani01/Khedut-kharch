@@ -4,17 +4,39 @@ import { useAppData } from "../context/AppDataContext";
 import { Screen, Fab, BottomNav } from "../components/ui/AppShell";
 import { SeasonCard } from "../components/SeasonCard";
 import { EmptyState } from "../components/ui/EmptyState";
-import { SearchIcon, NotebookIcon, CloseIcon } from "../components/icons/UIIcons";
+import { Dialog } from "../components/ui/Dialog";
+import { SearchIcon, NotebookIcon, CloseIcon, CheckCircleIcon } from "../components/icons/UIIcons";
 import { WalletIcon } from "../components/icons/ModuleIcons";
 import { CategoryIcon } from "../components/icons/CategoryIcons";
 import { formatCurrency } from "../lib/format";
 import { totalExpenses, totalWorkerCost, totalBhaagidaarAdvance } from "../lib/calc";
+import { useAuth } from "../context/AuthContext";
+import { useEffect } from "react";
 
 export default function Dashboard() {
   const { seasons, expenses, workers, advanceLedgers, isLoaded } = useAppData();
+  const { user, membership } = useAuth();
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<"all" | "active" | "harvested">("all");
+  const [showThanks, setShowThanks] = useState(false);
+
+  useEffect(() => {
+    if (membership?.membershipStatus === "Active" && membership?.donationStatus !== "Skipped" && user?.uid) {
+      const key = `thanks_shown_${user.uid}_${membership.membershipApprovedAt || 'no_date'}`;
+      if (!localStorage.getItem(key)) {
+        setShowThanks(true);
+      }
+    }
+  }, [membership, user]);
+
+  const handleCloseThanks = () => {
+    if (user?.uid) {
+      const key = `thanks_shown_${user.uid}_${membership?.membershipApprovedAt || 'no_date'}`;
+      localStorage.setItem(key, "true");
+    }
+    setShowThanks(false);
+  };
 
   const filtered = useMemo(() => {
     let list = seasons;
@@ -168,6 +190,30 @@ export default function Dashboard() {
       </Screen>
       <Fab onClick={() => navigate("/new-season")} />
       <BottomNav />
+
+      <Dialog
+        open={showThanks}
+        onClose={handleCloseThanks}
+        title="ખૂબ ખૂબ આભાર! 💖"
+        footer={
+          <button
+            onClick={handleCloseThanks}
+            className="w-full h-12 rounded-xl bg-gradient-to-r from-[var(--color-crop-500)] to-[var(--color-crop-600)] text-white font-semibold text-[15px] shadow-sm active:scale-[0.98] transition-transform"
+          >
+            આગળ વધો
+          </button>
+        }
+      >
+        <div className="text-center py-2">
+          <div className="w-16 h-16 bg-[var(--color-crop-50)] text-[var(--color-crop-500)] rounded-full flex items-center justify-center mx-auto mb-4">
+            <CheckCircleIcon size={32} />
+          </div>
+          <p className="text-[14.5px] text-[var(--color-ink-soft)] leading-relaxed">
+            તમારું <strong>₹{membership?.membershipAmount || 300}</strong> નું દાન સફળતાપૂર્વક સ્વીકારવામાં આવ્યું છે.<br/><br/>
+            ખેડૂત ખર્ચ એપને સહયોગ કરવા બદલ તમારો ખૂબ ખૂબ આભાર! તમારું આ યોગદાન એપને વધુ સારી બનાવવામાં અને ચાલુ રાખવામાં મદદ કરશે.
+          </p>
+        </div>
+      </Dialog>
     </>
   );
 }

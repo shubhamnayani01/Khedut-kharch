@@ -15,7 +15,7 @@ import {
 } from "../components/icons/UIIcons";
 
 export default function Login() {
-  const { user, loading, membership, membershipLoading, signInWithGoogle } = useAuth();
+  const { user, loading, membership, membershipLoading, signInWithGoogle, signOutUser } = useAuth();
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -33,10 +33,13 @@ export default function Login() {
       navigate("/membership/pending", { replace: true });
     } else if (membership.membershipStatus === "Expired") {
       navigate("/membership/expired", { replace: true });
+    } else if (membership.membershipStatus === "Banned") {
+      setError("તમારું એકાઉન્ટ બ્લોક કરવામાં આવ્યું છે. (Your account has been banned.)");
+      void signOutUser();
     } else {
       navigate("/membership/payment", { replace: true });
     }
-  }, [user, loading, membership, membershipLoading, navigate]);
+  }, [user, loading, membership, membershipLoading, navigate, signOutUser]);
 
   const handleSignIn = async () => {
     setBusy(true);

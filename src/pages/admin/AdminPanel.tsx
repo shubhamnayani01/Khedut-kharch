@@ -5,11 +5,12 @@ import {
   updateDoc,
   doc,
   Timestamp,
+  deleteDoc,
 } from "firebase/firestore";
 import { db } from "../../firebase";
 import { useAuth } from "../../context/AuthContext";
 import type { MembershipStatus } from "../../types";
-import { ShieldIcon, RefreshIcon, CheckCircleIcon, XCircleIcon, MessageCircleIcon, CheckIcon } from "../../components/icons/UIIcons";
+import { ShieldIcon, RefreshIcon, CheckCircleIcon, XCircleIcon, MessageCircleIcon, CheckIcon, TrashIcon, LockIcon } from "../../components/icons/UIIcons";
 
 interface SupportTicket {
   id: string;
@@ -38,9 +39,10 @@ interface MemberUser {
   membershipApprovedAt?: number;
   approvedBy?: string;
   renewalCount: number;
+  donationStatus?: string;
 }
 
-type Tab = "Pending" | "Active" | "Expired" | "Rejected";
+type Tab = "Pending" | "Active" | "Expired" | "Rejected" | "Banned";
 
 function toMs(val: unknown): number | undefined {
   if (!val) return undefined;
@@ -97,6 +99,7 @@ export default function AdminPanel() {
           membershipApprovedAt: toMs(d.membershipApprovedAt),
           approvedBy: d.approvedBy ?? undefined,
           renewalCount: typeof d.renewalCount === "number" ? d.renewalCount : 0,
+          donationStatus: d.donationStatus ?? undefined,
         });
       });
       // Sort by most recently submitted
@@ -165,7 +168,6 @@ export default function AdminPanel() {
       await updateDoc(doc(db, "users", uid), {
         membershipStatus: "Active",
         membershipType: "Annual",
-        membershipAmount: 300,
         membershipStartedAt: Timestamp.fromMillis(now),
         membershipExpiresAt: Timestamp.fromMillis(expiresAt),
         membershipApprovedAt: Timestamp.fromMillis(now),
@@ -229,6 +231,34 @@ export default function AdminPanel() {
 
   const filtered = users.filter((u) => u.membershipStatus === tab);
 
+  const banUser = async (uid: string) => {
+    if (!window.confirm("શું તમે ખરેખર આ યુઝરને બેન કરવા માંગો છો?")) return;
+    setActionBusy(uid + "_ban");
+    try {
+      await updateDoc(doc(db, "users", uid), { membershipStatus: "Banned" });
+      setUsers((prev) => prev.map((u) => (u.uid === uid ? { ...u, membershipStatus: "Banned" } : u)));
+    } catch (err) {
+      console.error(err);
+      setError("બેન કરવામાં ભૂલ આવી.");
+    } finally {
+      setActionBusy(null);
+    }
+  };
+
+  const deleteUserProfile = async (uid: string) => {
+    if (!window.confirm("આ યુઝર પ્રોફાઈલ હંમેશા માટે ડીલીટ થઈ જશે. શું તમે ખરેખર ડીલીટ કરવા માંગો છો?")) return;
+    setActionBusy(uid + "_delete");
+    try {
+      await deleteDoc(doc(db, "users", uid));
+      setUsers((prev) => prev.filter((u) => u.uid !== uid));
+    } catch (err) {
+      console.error(err);
+      setError("ડીલીટ કરવામાં ભૂલ આવી.");
+    } finally {
+      setActionBusy(null);
+    }
+  };
+
   const tabCount = (t: Tab) => users.filter((u) => u.membershipStatus === t).length;
 
   const TABS: { key: Tab; label: string; color: string }[] = [
@@ -236,6 +266,7 @@ export default function AdminPanel() {
     { key: "Active", label: "Active", color: "var(--color-crop-500)" },
     { key: "Expired", label: "Expired", color: "var(--color-loss-500)" },
     { key: "Rejected", label: "Rejected", color: "var(--color-ink-faint)" },
+    { key: "Banned", label: "Banned", color: "var(--color-loss-600)" },
   ];
 
   return (
@@ -560,63 +591,70 @@ export default function AdminPanel() {
                 </div>
 
                 {/* Details grid */}
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr 1fr",
-                    gap: "6px 16px",
-                    marginBottom: "14px",
-                    fontSize: "13px",
-                  }}
-                >
-                  <div>
-                    <span style={{ color: "var(--color-ink-faint)" }}>Submitted: </span>
-                    <span style={{ color: "var(--color-ink)", fontWeight: 500 }}>
-                      {fmtDateTime(u.paymentSubmittedAt)}
-                    </span>
+                {u.donationStatus === "Skipped" ? (
+                  <div style={{ padding: "10px", background: "var(--color-paper-dim)", borderRadius: "8px", marginBottom: "14px", display: "flex", alignItems: "center", gap: "8px", color: "var(--color-ink-soft)", fontSize: "13.5px" }}>
+                    <CheckCircleIcon size={16} className="text-[var(--color-crop-500)]" />
+                    Free Access (Donation Skipped)
                   </div>
-                  <div>
-                    <span style={{ color: "var(--color-ink-faint)" }}>Method: </span>
-                    <span style={{ color: "var(--color-ink)", fontWeight: 500 }}>
-                      {u.paymentMethod ?? "—"}
-                    </span>
-                  </div>
-                  <div>
-                    <span style={{ color: "var(--color-ink-faint)" }}>Ref: </span>
-                    <span
-                      style={{
-                        color: "var(--color-ink)",
-                        fontWeight: 500,
-                        fontFamily: "monospace",
-                        fontSize: "12px",
-                      }}
-                    >
-                      {u.paymentReference ?? "—"}
-                    </span>
-                  </div>
-                  <div>
-                    <span style={{ color: "var(--color-ink-faint)" }}>Amount: </span>
-                    <span style={{ color: "var(--color-ink)", fontWeight: 500 }}>
-                      ₹{u.membershipAmount}
-                    </span>
-                  </div>
-                  {u.membershipExpiresAt && (
+                ) : (
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "1fr 1fr",
+                      gap: "6px 16px",
+                      marginBottom: "14px",
+                      fontSize: "13px",
+                    }}
+                  >
                     <div>
-                      <span style={{ color: "var(--color-ink-faint)" }}>Expires: </span>
+                      <span style={{ color: "var(--color-ink-faint)" }}>Submitted: </span>
                       <span style={{ color: "var(--color-ink)", fontWeight: 500 }}>
-                        {fmt(u.membershipExpiresAt)}
+                        {fmtDateTime(u.paymentSubmittedAt)}
                       </span>
                     </div>
-                  )}
-                  {u.renewalCount > 0 && (
                     <div>
-                      <span style={{ color: "var(--color-ink-faint)" }}>Renewals: </span>
+                      <span style={{ color: "var(--color-ink-faint)" }}>Method: </span>
                       <span style={{ color: "var(--color-ink)", fontWeight: 500 }}>
-                        {u.renewalCount}
+                        {u.paymentMethod ?? "—"}
                       </span>
                     </div>
-                  )}
-                </div>
+                    <div>
+                      <span style={{ color: "var(--color-ink-faint)" }}>Ref: </span>
+                      <span
+                        style={{
+                          color: "var(--color-ink)",
+                          fontWeight: 500,
+                          fontFamily: "monospace",
+                          fontSize: "12px",
+                        }}
+                      >
+                        {u.paymentReference ?? "—"}
+                      </span>
+                    </div>
+                    <div>
+                      <span style={{ color: "var(--color-ink-faint)" }}>Amount: </span>
+                      <span style={{ color: "var(--color-ink)", fontWeight: 500 }}>
+                        ₹{u.membershipAmount}
+                      </span>
+                    </div>
+                    {u.membershipExpiresAt && (
+                      <div>
+                        <span style={{ color: "var(--color-ink-faint)" }}>Expires: </span>
+                        <span style={{ color: "var(--color-ink)", fontWeight: 500 }}>
+                          {fmt(u.membershipExpiresAt)}
+                        </span>
+                      </div>
+                    )}
+                    {u.renewalCount > 0 && (
+                      <div>
+                        <span style={{ color: "var(--color-ink-faint)" }}>Renewals: </span>
+                        <span style={{ color: "var(--color-ink)", fontWeight: 500 }}>
+                          {u.renewalCount}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Payment proof thumbnail */}
                 {u.paymentProof && (
@@ -718,8 +756,8 @@ export default function AdminPanel() {
                   </div>
                 )}
 
-                {/* Approve action for Rejected/Expired too */}
-                {(u.membershipStatus === "Rejected" || u.membershipStatus === "Expired") && (
+                {/* Approve action for Rejected/Expired/Banned too */}
+                {(u.membershipStatus === "Rejected" || u.membershipStatus === "Expired" || u.membershipStatus === "Banned") && (
                   <button
                     id={`approve-${u.uid}`}
                     onClick={() => approveMembership(u.uid)}
@@ -742,6 +780,31 @@ export default function AdminPanel() {
                     {actionBusy === u.uid + "_approve" ? "..." : <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}><CheckCircleIcon size={16} /> Approve & Activate</div>}
                   </button>
                 )}
+
+                {/* Management Actions: Ban and Delete */}
+                <div style={{ display: "flex", gap: "10px", marginTop: "10px", borderTop: "1px solid var(--color-border)", paddingTop: "14px" }}>
+                  {(u.membershipStatus === "Active" || u.membershipStatus === "Pending") && (
+                     <button
+                       onClick={() => banUser(u.uid)}
+                       disabled={actionBusy === u.uid + "_ban"}
+                       style={{
+                         flex: 1, height: "38px", borderRadius: "8px", background: "var(--color-paper-dim)", color: "var(--color-loss-600)", border: "1px solid var(--color-loss-200)", cursor: "pointer", fontSize: "13px", fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: "6px"
+                       }}
+                     >
+                       {actionBusy === u.uid + "_ban" ? "..." : <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}><LockIcon size={14} /> Ban User</div>}
+                     </button>
+                  )}
+                  
+                  <button
+                    onClick={() => deleteUserProfile(u.uid)}
+                    disabled={actionBusy === u.uid + "_delete"}
+                    style={{
+                      flex: 1, height: "38px", borderRadius: "8px", background: "var(--color-loss-50)", color: "var(--color-loss-600)", border: "1px solid var(--color-loss-400)", cursor: "pointer", fontSize: "13px", fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: "6px"
+                    }}
+                  >
+                    {actionBusy === u.uid + "_delete" ? "..." : <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}><TrashIcon size={14} /> Delete Profile</div>}
+                  </button>
+                </div>
               </div>
             ))}
           </div>

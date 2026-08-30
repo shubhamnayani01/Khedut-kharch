@@ -42,6 +42,7 @@ interface AuthContextValue {
     paymentProofFile: File;
     paymentMethod: string;
     paymentReference: string;
+    paymentAmount: number;
   }) => Promise<void>;
   skipDonation: () => Promise<void>;
 }
@@ -194,10 +195,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       paymentProofFile,
       paymentMethod,
       paymentReference,
+      paymentAmount,
     }: {
       paymentProofFile: File;
       paymentMethod: string;
       paymentReference: string;
+      paymentAmount: number;
     }) => {
       if (!user) throw new Error("Not authenticated");
 
@@ -230,7 +233,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await updateDoc(doc(db, "users", user.uid), {
         membershipStatus: "Pending",
         membershipType: "Annual",
-        membershipAmount: 300,
+        membershipAmount: paymentAmount,
         paymentProof: proofURL,
         paymentMethod,
         paymentReference,

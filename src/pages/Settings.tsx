@@ -34,44 +34,13 @@ function formatBytes(n: number) {
 
 export default function Settings() {
   const { settings, updateSettings, exportBackup, importBackup, clearAllData, seasons, expenses } = useAppData();
-  const { user, signOutUser, isAdmin } = useAuth();
+  const { user, signOutUser, isAdmin, membership } = useAuth();
   const navigate = useNavigate();
   const { show } = useToast();
   const { canInstall, installed, promptInstall } = useInstallPrompt();
   const fileRef = useRef<HTMLInputElement>(null);
   const [confirmClear, setConfirmClear] = useState(false);
   const [authBusy, setAuthBusy] = useState(false);
-  const [donationRecord, setDonationRecord] = useState<any>(null);
-  const [checkingDonation, setCheckingDonation] = useState(true);
-
-  useEffect(() => {
-    if (!user?.uid) {
-      setCheckingDonation(false);
-      return;
-    }
-    const checkDonation = async () => {
-      try {
-        const q = query(
-          collection(db, "donations"),
-          where("uid", "==", user.uid),
-          where("status", "==", "Approved"),
-          orderBy("createdAt", "desc"),
-          limit(1)
-        );
-        const snap = await getDocs(q);
-        if (!snap.empty) {
-          setDonationRecord(snap.docs[0].data());
-        } else {
-          setDonationRecord(null);
-        }
-      } catch (err) {
-        console.error("Error fetching donation:", err);
-      } finally {
-        setCheckingDonation(false);
-      }
-    };
-    checkDonation();
-  }, [user]);
 
   const usage = storage.estimateUsageBytes();
 
@@ -173,15 +142,9 @@ export default function Settings() {
         <SectionLabel>સહયોગ</SectionLabel>
         <Card className="p-4 mb-5">
           {(() => {
-            if (checkingDonation) {
-              return (
-                <div className="flex items-center justify-center p-4">
-                  <span className="text-[13px] text-[var(--color-ink-faint)]">તપાસી રહ્યા છે...</span>
-                </div>
-              );
-            }
+            const hasDonated = membership?.membershipStatus === "Active" && membership?.donationStatus !== "Skipped";
 
-            if (donationRecord) {
+            if (hasDonated) {
               return (
                 <>
                   <div className="flex items-center justify-between mb-3">
@@ -190,18 +153,18 @@ export default function Settings() {
                       સહયોગી (Supporter)
                     </span>
                   </div>
-                  {donationRecord.createdAt && (
+                  {membership?.membershipApprovedAt && (
                     <div className="flex items-center justify-between mb-3">
                       <span className="text-[14px] text-[var(--color-ink-soft)]">દાનની તારીખ</span>
                       <span className="text-[14px] font-medium text-[var(--color-ink)] tnum">
-                        {new Date(donationRecord.createdAt).toLocaleDateString("gu-IN")}
+                        {new Date(membership.membershipApprovedAt).toLocaleDateString("gu-IN")}
                       </span>
                     </div>
                   )}
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-[14px] text-[var(--color-ink-soft)]">દાનની રકમ</span>
                     <span className="text-[14px] font-medium text-[var(--color-ink)]">
-                      ₹{donationRecord.amount ?? 300}
+                      ₹{membership?.membershipAmount ?? 300}
                     </span>
                   </div>
                   <div className="mt-2 pt-3 border-t border-[var(--color-border)]">

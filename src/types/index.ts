@@ -168,7 +168,7 @@ export interface UserDocument {
 
 export const ADMIN_EMAIL = "shubhamnayani01@gmail.com";
 
-export type MembershipStatus = "Pending" | "Active" | "Expired" | "Rejected";
+export type MembershipStatus = "Pending" | "Active" | "Expired" | "Rejected" | "Banned";
 
 // ─── Donation ─────────────────────────────────────────────────────────────────
 
