@@ -9,7 +9,18 @@ import {
 import { db } from "../../firebase";
 import { useAuth } from "../../context/AuthContext";
 import type { MembershipStatus } from "../../types";
-import { ShieldIcon, RefreshIcon, CheckCircleIcon, XCircleIcon } from "../../components/icons/UIIcons";
+import { ShieldIcon, RefreshIcon, CheckCircleIcon, XCircleIcon, MessageCircleIcon, CheckIcon } from "../../components/icons/UIIcons";
+
+interface SupportTicket {
+  id: string;
+  uid: string;
+  email: string | null;
+  displayName: string | null;
+  phoneNumber: string | null;
+  message: string;
+  status: "open" | "resolved";
+  createdAt: number;
+}
 
 interface MemberUser {
   uid: string;
@@ -53,7 +64,10 @@ function fmtDateTime(ms?: number): string {
 export default function AdminPanel() {
   const { user } = useAuth();
   const [users, setUsers] = useState<MemberUser[]>([]);
+  const [tickets, setTickets] = useState<SupportTicket[]>([]);
+  const [viewMode, setViewMode] = useState<"memberships" | "feedback">("memberships");
   const [loading, setLoading] = useState(true);
+  const [ticketsLoading, setTicketsLoading] = useState(false);
   const [tab, setTab] = useState<Tab>("Pending");
   const [actionBusy, setActionBusy] = useState<string | null>(null);
   const [selectedProof, setSelectedProof] = useState<string | null>(null);
@@ -96,9 +110,51 @@ export default function AdminPanel() {
     }
   }, []);
 
+  const fetchTickets = useCallback(async () => {
+    setTicketsLoading(true);
+    try {
+      const snap = await getDocs(collection(db, "feedback"));
+      const list: SupportTicket[] = [];
+      snap.forEach((docSnap) => {
+        const d = docSnap.data();
+        list.push({
+          id: docSnap.id,
+          uid: d.uid,
+          email: d.email ?? null,
+          displayName: d.displayName ?? null,
+          phoneNumber: d.phoneNumber ?? null,
+          message: d.message ?? "",
+          status: d.status ?? "open",
+          createdAt: toMs(d.createdAt) ?? 0,
+        });
+      });
+      list.sort((a, b) => b.createdAt - a.createdAt);
+      setTickets(list);
+    } catch (err) {
+      console.error(err);
+      setError("ટિકિટ લોડ કરવામાં ભૂલ આવી.");
+    } finally {
+      setTicketsLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
-    void fetchUsers();
-  }, [fetchUsers]);
+    if (viewMode === "memberships") void fetchUsers();
+    else void fetchTickets();
+  }, [viewMode, fetchUsers, fetchTickets]);
+
+  const resolveTicket = async (id: string) => {
+    setActionBusy(id + "_resolve");
+    try {
+      await updateDoc(doc(db, "feedback", id), { status: "resolved" });
+      setTickets(prev => prev.map(t => t.id === id ? { ...t, status: "resolved" } : t));
+    } catch (err) {
+      console.error(err);
+      setError("ટિકિટ અપડેટ કરવામાં ભૂલ આવી.");
+    } finally {
+      setActionBusy(null);
+    }
+  };
 
   const approveMembership = async (uid: string) => {
     setActionBusy(uid + "_approve");
@@ -230,7 +286,10 @@ export default function AdminPanel() {
             </p>
           </div>
           <button
-            onClick={fetchUsers}
+            onClick={() => {
+              if (viewMode === "memberships") fetchUsers();
+              else fetchTickets();
+            }}
             style={{
               marginLeft: "auto",
               height: "34px",
@@ -269,7 +328,54 @@ export default function AdminPanel() {
           </div>
         )}
 
-        {/* Tabs */}
+        {/* View Mode Toggle */}
+        <div style={{ display: "flex", gap: "10px", marginBottom: "20px" }}>
+          <button
+            onClick={() => setViewMode("memberships")}
+            style={{
+              flex: 1,
+              height: "40px",
+              borderRadius: "10px",
+              background: viewMode === "memberships" ? "var(--color-crop-500)" : "var(--color-surface)",
+              color: viewMode === "memberships" ? "white" : "var(--color-ink-soft)",
+              border: `1px solid ${viewMode === "memberships" ? "var(--color-crop-500)" : "var(--color-border)"}`,
+              fontSize: "14px",
+              fontWeight: 600,
+              cursor: "pointer",
+            }}
+          >
+            સભ્યપદ (Memberships)
+          </button>
+          <button
+            onClick={() => setViewMode("feedback")}
+            style={{
+              flex: 1,
+              height: "40px",
+              borderRadius: "10px",
+              background: viewMode === "feedback" ? "var(--color-crop-500)" : "var(--color-surface)",
+              color: viewMode === "feedback" ? "white" : "var(--color-ink-soft)",
+              border: `1px solid ${viewMode === "feedback" ? "var(--color-crop-500)" : "var(--color-border)"}`,
+              fontSize: "14px",
+              fontWeight: 600,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "6px"
+            }}
+          >
+            <MessageCircleIcon size={16} /> સપોર્ટ ટિકિટ્સ 
+            {tickets.filter(t => t.status === "open").length > 0 && (
+               <span style={{ background: viewMode === "feedback" ? "white" : "var(--color-loss-500)", color: viewMode === "feedback" ? "var(--color-crop-600)" : "white", padding: "2px 6px", borderRadius: "99px", fontSize: "11px" }}>
+                 {tickets.filter(t => t.status === "open").length}
+               </span>
+            )}
+          </button>
+        </div>
+
+        {viewMode === "memberships" ? (
+          <>
+            {/* Tabs */}
         <div
           style={{
             display: "flex",
@@ -638,6 +744,61 @@ export default function AdminPanel() {
                 )}
               </div>
             ))}
+          </div>
+        )}
+          </>
+        ) : (
+          /* Support Tickets UI */
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+            {ticketsLoading ? (
+               <p style={{ textAlign: "center", color: "var(--color-ink-faint)", padding: "20px" }}>ટિકિટ લોડ થઈ રહી છે...</p>
+            ) : tickets.length === 0 ? (
+               <div style={{ textAlign: "center", padding: "60px 0", color: "var(--color-ink-faint)" }}>
+                 <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '12px', color: 'var(--color-crop-500)' }}><CheckCircleIcon size={48} /></div>
+                 <p style={{ fontSize: "15px", margin: 0 }}>કોઈ સપોર્ટ ટિકિટ નથી.</p>
+               </div>
+            ) : (
+               tickets.map(t => (
+                 <div key={t.id} style={{ background: "var(--color-surface)", borderRadius: "16px", padding: "16px", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-card)" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "10px" }}>
+                      <div>
+                        <p style={{ fontSize: "15px", fontWeight: 600, color: "var(--color-ink)", margin: "0 0 2px" }}>{t.displayName || "Unknown User"}</p>
+                        <p style={{ fontSize: "12.5px", color: "var(--color-ink-faint)", margin: 0 }}>{t.email || t.phoneNumber || t.uid}</p>
+                      </div>
+                      <span style={{ fontSize: "12px", fontWeight: 600, padding: "3px 10px", borderRadius: "999px", background: t.status === "open" ? "var(--color-saffron-100)" : "var(--color-paper-dim)", color: t.status === "open" ? "var(--color-saffron-600)" : "var(--color-ink-faint)", height: "24px", display: "inline-flex", alignItems: "center" }}>
+                        {t.status === "open" ? "Open" : "Resolved"}
+                      </span>
+                    </div>
+                    <div style={{ background: "var(--color-paper-dim)", padding: "12px", borderRadius: "10px", fontSize: "14px", color: "var(--color-ink)", marginBottom: "14px", whiteSpace: "pre-wrap" }}>
+                      {t.message}
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <span style={{ fontSize: "12px", color: "var(--color-ink-faint)" }}>{fmtDateTime(t.createdAt)}</span>
+                      {t.status === "open" && (
+                        <button
+                          onClick={() => resolveTicket(t.id)}
+                          disabled={actionBusy === t.id + "_resolve"}
+                          style={{
+                            background: "var(--color-crop-50)",
+                            color: "var(--color-crop-600)",
+                            border: "1px solid var(--color-crop-400)",
+                            padding: "6px 14px",
+                            borderRadius: "8px",
+                            fontSize: "13px",
+                            fontWeight: 600,
+                            cursor: actionBusy === t.id + "_resolve" ? "not-allowed" : "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "6px"
+                          }}
+                        >
+                          {actionBusy === t.id + "_resolve" ? "..." : <><CheckIcon size={14} /> Mark Resolved</>}
+                        </button>
+                      )}
+                    </div>
+                 </div>
+               ))
+            )}
           </div>
         )}
       </div>

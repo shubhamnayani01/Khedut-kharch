@@ -64,6 +64,7 @@ interface AppDataContextValue {
   exportBackup: () => BackupPayload;
   importBackup: (payload: BackupPayload) => { ok: boolean; error?: string };
   clearAllData: () => void;
+  submitSupportTicket: (message: string) => Promise<void>;
 }
 
 const AppDataContext = createContext<AppDataContextValue | null>(null);
@@ -475,6 +476,26 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     storage.clearAll();
   }, []);
 
+  const submitSupportTicket = useCallback(async (message: string) => {
+    const currentUser = auth.currentUser;
+    if (!currentUser) throw new Error("Not logged in");
+    try {
+      const ticketId = makeId();
+      await setDoc(doc(db, "feedback", ticketId), {
+        uid: currentUser.uid,
+        email: currentUser.email,
+        displayName: currentUser.displayName,
+        phoneNumber: currentUser.phoneNumber,
+        message,
+        status: "open",
+        createdAt: serverTimestamp(),
+      });
+    } catch (error) {
+      console.error("Failed to submit support ticket:", error);
+      throw error;
+    }
+  }, []);
+
   const value = useMemo<AppDataContextValue>(
     () => ({
       seasons, expenses, workers, bhaagidars, advanceLedgers, inventoryItems, settings, isLoaded,
@@ -484,7 +505,7 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
       addBhaagidar, updateBhaagidar, deleteBhaagidar, bhaagidarsForSeason,
       addAdvanceLedger, deleteAdvanceLedger, ledgersForBhaagidar,
       addInventoryItem, updateInventoryItem, deleteInventoryItem,
-      updateSettings, exportBackup, importBackup, clearAllData,
+      updateSettings, exportBackup, importBackup, clearAllData, submitSupportTicket,
     }),
     [
       seasons, expenses, workers, bhaagidars, advanceLedgers, inventoryItems, settings, isLoaded,
@@ -494,7 +515,7 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
       addBhaagidar, updateBhaagidar, deleteBhaagidar, bhaagidarsForSeason,
       addAdvanceLedger, deleteAdvanceLedger, ledgersForBhaagidar,
       addInventoryItem, updateInventoryItem, deleteInventoryItem,
-      updateSettings, exportBackup, importBackup, clearAllData,
+      updateSettings, exportBackup, importBackup, clearAllData, submitSupportTicket,
     ]
   );
 
