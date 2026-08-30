@@ -22,9 +22,6 @@ import {
 } from "../components/icons/UIIcons";
 import type { BackupPayload } from "../types";
 import { storage } from "../lib/storage";
-import { collection, query, where, getDocs, limit, orderBy } from "firebase/firestore";
-import { db } from "../firebase";
-import { useEffect } from "react";
 
 function formatBytes(n: number) {
   if (n < 1024) return `${n} B`;
