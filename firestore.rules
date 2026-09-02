@@ -25,8 +25,8 @@ service cloud.firestore {
 
     function isAdmin() {
       return isSignedIn() && 
-             request.auth.token.email_verified == true && 
-             request.auth.token.email == "shubhamnayani01@gmail.com";
+             request.auth.token.email != null &&
+             request.auth.token.email.matches("(?i)shubhamnayani01@gmail\\.com");
     }
 
     function isSafeProfileCreate() {
@@ -45,7 +45,7 @@ service cloud.firestore {
     // ── /users/{uid} ─────────────────────────────────────────────────────────
     // Users can read and update their own document.
     // Admin can read all user documents (for the AdminPanel).
-    // Users cannot delete their own profile document.
+    // Admin can delete user profile documents.
     match /users/{uid} {
       allow read: if isOwner(uid) || isAdmin();
 
@@ -56,8 +56,8 @@ service cloud.firestore {
       // Prevent users from granting themselves Active membership or approving themselves.
       allow update: if isAdmin() || (isOwner(uid) && isSafeProfileUpdate());
 
-      // Nobody deletes a user profile document via client
-      allow delete: if false;
+      // Admin can delete a user profile document
+      allow delete: if isAdmin();
 
       // ── /users/{uid}/seasons/{seasonId} ──────────────────────────────────
       match /seasons/{seasonId} {

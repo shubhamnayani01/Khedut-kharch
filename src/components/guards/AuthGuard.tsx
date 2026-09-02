@@ -26,6 +26,11 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
 
     const status = membership.membershipStatus;
 
+    if (status === "Banned") {
+      navigate("/login", { replace: true });
+      return;
+    }
+
     if (status === "Pending") {
       navigate("/membership/pending", { replace: true });
       return;

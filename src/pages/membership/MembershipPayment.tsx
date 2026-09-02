@@ -38,7 +38,10 @@ export default function MembershipPayment() {
     if (loading || membershipLoading) return;
     if (!user) { navigate("/login", { replace: true }); return; }
 
-    // Removed Active redirect so users can visit this page to donate after skipping
+    // If user has already donated and is active, don't show donation page -> redirect to dashboard
+    const hasDonated = membership?.membershipStatus === "Active" && membership?.donationStatus !== "Skipped";
+    if (hasDonated) { navigate("/", { replace: true }); return; }
+
     if (membership?.membershipStatus === "Pending") { navigate("/membership/pending", { replace: true }); return; }
     if (membership?.membershipStatus === "Expired") { navigate("/membership/expired", { replace: true }); return; }
   }, [user, loading, membership, membershipLoading, navigate]);
@@ -621,46 +624,46 @@ export default function MembershipPayment() {
           </button>
         </div>
 
-        {/* Skip donation - placed OUTSIDE the form card for clear separation */}
-        {membership?.membershipStatus !== "Active" && (
-          <button
-            id="skip-donation-btn"
-            onClick={async (e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              try {
-                setSubmitting(true);
+        {/* Skip donation / Go to Dashboard button - ALWAYS visible */}
+        <button
+          id="skip-donation-btn"
+          onClick={async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            try {
+              setSubmitting(true);
+              if (membership?.membershipStatus !== "Active") {
                 await skipDonation();
-                navigate("/", { replace: true });
-              } catch (err: unknown) {
-                console.error("Skip donation error:", err);
-                const msg = err instanceof Error ? err.message : String(err);
-                setError(`સ્કીપ કરવામાં ભૂલ: ${msg}`);
-                setSubmitting(false);
               }
-            }}
-            disabled={submitting}
-            style={{
-              width: "100%",
-              height: "52px",
-              marginTop: "20px",
-              borderRadius: "14px",
-              background: "transparent",
-              color: submitting ? "var(--color-ink-faint)" : "var(--color-ink-soft)",
-              border: "1.5px solid var(--color-border)",
-              cursor: submitting ? "not-allowed" : "pointer",
-              fontSize: "15px",
-              fontWeight: 600,
-              transition: "all 0.2s",
-              touchAction: "manipulation",
-              WebkitTapHighlightColor: "transparent",
-              position: "relative",
-              zIndex: 5,
-            }}
-          >
-            હમણાં નહીં, આગળ વધો
-          </button>
-        )}
+              navigate("/", { replace: true });
+            } catch (err: unknown) {
+              console.error("Skip donation error:", err);
+              const msg = err instanceof Error ? err.message : String(err);
+              setError(`સ્કીપ કરવામાં ભૂલ: ${msg}`);
+              setSubmitting(false);
+            }
+          }}
+          disabled={submitting}
+          style={{
+            width: "100%",
+            height: "52px",
+            marginTop: "20px",
+            borderRadius: "14px",
+            background: "transparent",
+            color: submitting ? "var(--color-ink-faint)" : "var(--color-ink-soft)",
+            border: "1.5px solid var(--color-border)",
+            cursor: submitting ? "not-allowed" : "pointer",
+            fontSize: "15px",
+            fontWeight: 600,
+            transition: "all 0.2s",
+            touchAction: "manipulation",
+            WebkitTapHighlightColor: "transparent",
+            position: "relative",
+            zIndex: 5,
+          }}
+        >
+          {membership?.membershipStatus === "Active" ? "ડેશબોર્ડ પર પાછા જાઓ" : "હમણાં નહીં, આગળ વધો"}
+        </button>
       </div>
     </div>
   );

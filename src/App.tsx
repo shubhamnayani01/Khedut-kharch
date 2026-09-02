@@ -12,6 +12,7 @@ import ExpenseHistory from "./pages/ExpenseHistory";
 import Harvest from "./pages/Harvest";
 import Report from "./pages/Report";
 import Settings from "./pages/Settings";
+import Account from "./pages/Account";
 import Login from "./pages/Login";
 import MembershipPayment from "./pages/membership/MembershipPayment";
 import MembershipPending from "./pages/membership/MembershipPending";
@@ -235,6 +236,14 @@ export default function App() {
               element={
                 <AuthGuard>
                   <Settings />
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="/account"
+              element={
+                <AuthGuard>
+                  <Account />
                 </AuthGuard>
               }
             />

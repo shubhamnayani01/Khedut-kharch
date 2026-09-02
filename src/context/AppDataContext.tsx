@@ -16,7 +16,7 @@ import type {
   InventoryItem
 } from "../types";
 
-const DEFAULT_SETTINGS: AppSettings = { theme: "system", onboardingSeen: false };
+const DEFAULT_SETTINGS: AppSettings = { theme: "system", onboardingSeen: false, language: "gu" };
 
 interface AppDataContextValue {
   seasons: FarmingSeason[];

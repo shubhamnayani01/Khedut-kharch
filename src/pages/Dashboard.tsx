@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppData } from "../context/AppDataContext";
 import { Screen, Fab, BottomNav } from "../components/ui/AppShell";
@@ -11,19 +11,27 @@ import { CategoryIcon } from "../components/icons/CategoryIcons";
 import { formatCurrency } from "../lib/format";
 import { totalExpenses, totalWorkerCost, totalBhaagidaarAdvance } from "../lib/calc";
 import { useAuth } from "../context/AuthContext";
-import { useEffect } from "react";
+import { HeaderActions } from "../components/HeaderActions";
+import { useTranslation } from "../lib/i18n";
 
 export default function Dashboard() {
   const { seasons, expenses, workers, advanceLedgers, isLoaded } = useAppData();
   const { user, membership } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
+
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<"all" | "active" | "harvested">("all");
   const [showThanks, setShowThanks] = useState(false);
 
   useEffect(() => {
-    if (membership?.membershipStatus === "Active" && membership?.donationStatus !== "Skipped" && user?.uid) {
-      const key = `thanks_shown_${user.uid}_${membership.membershipApprovedAt || 'no_date'}`;
+    if (
+      membership?.membershipStatus === "Active" &&
+      membership?.donationStatus !== "Skipped" &&
+      membership?.membershipApprovedAt &&
+      user?.uid
+    ) {
+      const key = `thanks_shown_${user.uid}_${membership.membershipApprovedAt}`;
       if (!localStorage.getItem(key)) {
         setShowThanks(true);
       }
@@ -62,19 +70,24 @@ export default function Dashboard() {
   return (
     <>
       <Screen>
-        <div className="pt-2 pb-5">
-          <p className="text-[14px] text-[var(--color-ink-faint)]">નમસ્તે 🙏</p>
-          <h1 className="text-[24px] font-bold text-[var(--color-ink)] mt-0.5">ખેડૂત ખર્ચ નોંધ</h1>
+        <div className="pt-2 pb-5 flex items-center justify-between">
+          <div>
+            <p className="text-[14px] text-[var(--color-ink-faint)]">
+              {t("greeting")}{user?.displayName ? `, ${user.displayName.split(" ")[0]}` : ""} 🙏
+            </p>
+            <h1 className="text-[24px] font-bold text-[var(--color-ink)] mt-0.5">{t("appTitle")}</h1>
+          </div>
+          <HeaderActions />
         </div>
 
         {isLoaded && seasons.length > 0 && (
           <div className="grid grid-cols-2 gap-3 mb-5">
             <div className="rounded-[var(--radius-card)] bg-[var(--color-crop-500)] text-white p-4">
-              <p className="text-[13px] opacity-90">ચાલુ ખેતી</p>
+              <p className="text-[13px] opacity-90">{t("activeCrops")}</p>
               <p className="text-[22px] font-bold mt-1 tnum">{activeCount}</p>
             </div>
             <div className="rounded-[var(--radius-card)] bg-[var(--color-soil-500)] text-white p-4">
-              <p className="text-[13px] opacity-90">કુલ ખર્ચ</p>
+              <p className="text-[13px] opacity-90">{t("totalSpent")}</p>
               <p className="text-[20px] font-bold mt-1 tnum">{formatCurrency(totalSpent)}</p>
             </div>
           </div>
@@ -82,7 +95,7 @@ export default function Dashboard() {
 
         {isLoaded && (
           <div className="mb-6">
-            <h2 className="text-[15px] font-semibold text-[var(--color-ink)] mb-3 px-1">ખેડૂત સાધનો</h2>
+            <h2 className="text-[15px] font-semibold text-[var(--color-ink)] mb-3 px-1">{t("farmerTools")}</h2>
             <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={() => navigate("/wallet")}
@@ -91,8 +104,8 @@ export default function Dashboard() {
                 <div className="w-10 h-10 rounded-full bg-[var(--color-crop-50)] flex items-center justify-center text-[var(--color-crop-500)] mb-3">
                   <WalletIcon size={20} />
                 </div>
-                <h3 className="text-[14.5px] font-semibold text-[var(--color-ink)] mb-1">ખેડૂત વોલેટ</h3>
-                <p className="text-[12px] text-[var(--color-ink-faint)] leading-tight">તમારા જરૂરી દસ્તાવેજો સાચવો</p>
+                <h3 className="text-[14.5px] font-semibold text-[var(--color-ink)] mb-1">{t("farmerWallet")}</h3>
+                <p className="text-[12px] text-[var(--color-ink-faint)] leading-tight">{t("walletDesc")}</p>
               </button>
               
               <button
@@ -102,8 +115,8 @@ export default function Dashboard() {
                 <div className="w-10 h-10 rounded-full bg-[var(--color-crop-50)] flex items-center justify-center text-[var(--color-crop-500)] mb-3">
                   <CategoryIcon category="fertilizer" size={20} />
                 </div>
-                <h3 className="text-[14.5px] font-semibold text-[var(--color-ink)] mb-1">સ્ટોક / ગોડાઉન</h3>
-                <p className="text-[12px] text-[var(--color-ink-faint)] leading-tight">ખાતર, દવાનો સ્ટોક મેનેજ કરો</p>
+                <h3 className="text-[14.5px] font-semibold text-[var(--color-ink)] mb-1">{t("stockGodown")}</h3>
+                <p className="text-[12px] text-[var(--color-ink-faint)] leading-tight">{t("stockDesc")}</p>
               </button>
             </div>
           </div>
@@ -116,11 +129,11 @@ export default function Dashboard() {
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="પાક અથવા ખેતર શોધો..."
+                placeholder={t("searchPlaceholder")}
                 className="flex-1 bg-transparent outline-none text-[15px] placeholder:text-[var(--color-ink-faint)] min-w-0"
               />
               {query && (
-                <button onClick={() => setQuery("")} aria-label="સાફ કરો" className="shrink-0 text-[var(--color-ink-faint)]">
+                <button onClick={() => setQuery("")} aria-label="Clear" className="shrink-0 text-[var(--color-ink-faint)]">
                   <CloseIcon size={17} />
                 </button>
               )}
@@ -132,9 +145,9 @@ export default function Dashboard() {
           <div className="flex gap-2 mb-5 overflow-x-auto">
             {(
               [
-                ["all", "બધા"],
-                ["active", "ચાલુ"],
-                ["harvested", "કપાયેલ"],
+                ["all", t("all")],
+                ["active", t("active")],
+                ["harvested", t("harvested")],
               ] as const
             ).map(([key, label]) => (
               <button
@@ -161,19 +174,19 @@ export default function Dashboard() {
         ) : seasons.length === 0 ? (
           <EmptyState
             icon={<NotebookIcon size={30} />}
-            title="હજુ કોઈ ખેતી નોંધાઈ નથી"
-            description="નીચે '+ નવી ખેતી' બટન દબાવીને તમારી પહેલી ખેતી શરૂ કરો."
+            title={t("noSeasonsYet")}
+            description={t("noSeasonsDesc")}
             action={
               <button
                 onClick={() => navigate("/new-season")}
                 className="text-[14px] font-semibold text-[var(--color-crop-500)]"
               >
-                હમણાં શરૂ કરો →
+                {t("startNow")}
               </button>
             }
           />
         ) : filtered.length === 0 ? (
-          <EmptyState icon={<SearchIcon size={26} />} title="કંઈ મળ્યું નહીં" description="બીજું નામ શોધીને જુઓ." />
+          <EmptyState icon={<SearchIcon size={26} />} title={t("nothingFound")} description={t("tryAnotherSearch")} />
         ) : (
           <div className="space-y-3">
             {filtered.map((season) => (
@@ -194,13 +207,13 @@ export default function Dashboard() {
       <Dialog
         open={showThanks}
         onClose={handleCloseThanks}
-        title="ખૂબ ખૂબ આભાર! 💖"
+        title="Thank you! 💖"
         footer={
           <button
             onClick={handleCloseThanks}
             className="w-full h-12 rounded-xl bg-gradient-to-r from-[var(--color-crop-500)] to-[var(--color-crop-600)] text-white font-semibold text-[15px] shadow-sm active:scale-[0.98] transition-transform"
           >
-            આગળ વધો
+            Continue
           </button>
         }
       >
@@ -209,8 +222,8 @@ export default function Dashboard() {
             <CheckCircleIcon size={32} />
           </div>
           <p className="text-[14.5px] text-[var(--color-ink-soft)] leading-relaxed">
-            તમારું <strong>₹{membership?.membershipAmount || 300}</strong> નું દાન સફળતાપૂર્વક સ્વીકારવામાં આવ્યું છે.<br/><br/>
-            ખેડૂત ખર્ચ એપને સહયોગ કરવા બદલ તમારો ખૂબ ખૂબ આભાર! તમારું આ યોગદાન એપને વધુ સારી બનાવવામાં અને ચાલુ રાખવામાં મદદ કરશે.
+            Your donation of <strong>₹{membership?.membershipAmount || 300}</strong> has been received.<br/><br/>
+            Thank you for supporting Khedut Kharch!
           </p>
         </div>
       </Dialog>

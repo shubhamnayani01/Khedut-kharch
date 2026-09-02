@@ -1,6 +1,8 @@
 import React from "react";
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { BackIcon, HomeIcon, RupeeIcon, UserIcon, UsersIcon, MenuIcon, PlusIcon } from "../icons/UIIcons";
+import { HeaderActions } from "../HeaderActions";
+import { useTranslation } from "../../lib/i18n";
 
 export function TopBar({
   title,
@@ -17,6 +19,7 @@ export function TopBar({
 }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation();
 
   const isRootRoute = location.pathname === "/";
   const shouldShowBack = onBack !== undefined || (!isRootRoute && hideBack !== true);
@@ -27,7 +30,7 @@ export function TopBar({
         {shouldShowBack ? (
           <button
             onClick={onBack ?? (() => navigate("/"))}
-            aria-label="પાછળ જાઓ"
+            aria-label={t("back")}
             className="w-11 h-11 flex items-center justify-center rounded-full active:bg-[var(--color-paper-dim)] text-[var(--color-ink)] shrink-0"
           >
             <BackIcon size={22} />
@@ -38,21 +41,23 @@ export function TopBar({
         <div className="flex-1 min-w-0">
           {titleContent ? titleContent : <h1 className="text-[19px] font-semibold text-[var(--color-ink)] truncate">{title}</h1>}
         </div>
-        {right}
+        {right !== undefined ? right : <HeaderActions />}
       </div>
     </header>
   );
 }
 
-const navItems = [
-  { to: "/", label: "ડેશબોર્ડ", icon: HomeIcon, end: true },
-  { to: "/expenses", label: "ખર્ચ", icon: RupeeIcon, end: false },
-  { to: "/workers", label: "મજૂર", icon: UserIcon, end: false },
-  { to: "/bhaagidar", label: "ભાગીદાર", icon: UsersIcon, end: false },
-  { to: "/more", label: "વધુ", icon: MenuIcon, end: false },
-];
-
 export function BottomNav() {
+  const { t } = useTranslation();
+
+  const navItems = [
+    { to: "/", label: t("dashboard"), icon: HomeIcon, end: true },
+    { to: "/expenses", label: t("expenses"), icon: RupeeIcon, end: false },
+    { to: "/workers", label: t("workers"), icon: UserIcon, end: false },
+    { to: "/bhaagidar", label: t("bhaagidar"), icon: UsersIcon, end: false },
+    { to: "/more", label: t("more"), icon: MenuIcon, end: false },
+  ];
+
   return (
     <nav
       id="app-shell-nav"
@@ -83,7 +88,10 @@ export function BottomNav() {
   );
 }
 
-export function Fab({ onClick, label = "નવી ખેતી" }: { onClick: () => void; label?: string }) {
+export function Fab({ onClick, label }: { onClick: () => void; label?: string }) {
+  const { t } = useTranslation();
+  const displayLabel = label ?? t("newCrop");
+
   return (
     <button
       id="app-shell-fab"
@@ -91,7 +99,7 @@ export function Fab({ onClick, label = "નવી ખેતી" }: { onClick: ()
       className="fixed z-40 right-4 bottom-[calc(72px+env(safe-area-inset-bottom))] flex items-center gap-2 h-14 pl-4 pr-5 rounded-full bg-[var(--color-crop-500)] text-white shadow-[var(--shadow-float)] active:bg-[var(--color-crop-600)] transition-transform duration-150 active:scale-95"
     >
       <PlusIcon size={22} />
-      <span className="text-[15px] font-semibold">{label}</span>
+      <span className="text-[15px] font-semibold">{displayLabel}</span>
     </button>
   );
 }

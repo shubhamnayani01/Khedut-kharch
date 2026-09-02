@@ -232,28 +232,53 @@ export default function AdminPanel() {
   const filtered = users.filter((u) => u.membershipStatus === tab);
 
   const banUser = async (uid: string) => {
+    if (uid === user?.uid) {
+      alert("તમે તમારા પોતાના એકાઉન્ટને બેન કરી શકતા નથી.");
+      return;
+    }
     if (!window.confirm("શું તમે ખરેખર આ યુઝરને બેન કરવા માંગો છો?")) return;
     setActionBusy(uid + "_ban");
+    setError("");
     try {
       await updateDoc(doc(db, "users", uid), { membershipStatus: "Banned" });
       setUsers((prev) => prev.map((u) => (u.uid === uid ? { ...u, membershipStatus: "Banned" } : u)));
     } catch (err) {
       console.error(err);
-      setError("બેન કરવામાં ભૂલ આવી.");
+      setError("બેન કરવામાં ભૂલ આવી. (" + (err instanceof Error ? err.message : String(err)) + ")");
+    } finally {
+      setActionBusy(null);
+    }
+  };
+
+  const unbanUser = async (uid: string) => {
+    if (!window.confirm("શું તમે આ યુઝરનો બેન હટાવવા માંગો છો?")) return;
+    setActionBusy(uid + "_unban");
+    setError("");
+    try {
+      await updateDoc(doc(db, "users", uid), { membershipStatus: "Pending" });
+      setUsers((prev) => prev.map((u) => (u.uid === uid ? { ...u, membershipStatus: "Pending" } : u)));
+    } catch (err) {
+      console.error(err);
+      setError("Unban કરવામાં ભૂલ આવી. (" + (err instanceof Error ? err.message : String(err)) + ")");
     } finally {
       setActionBusy(null);
     }
   };
 
   const deleteUserProfile = async (uid: string) => {
+    if (uid === user?.uid) {
+      alert("તમે તમારા પોતાના એકાઉન્ટને ડીલીટ કરી શકતા નથી.");
+      return;
+    }
     if (!window.confirm("આ યુઝર પ્રોફાઈલ હંમેશા માટે ડીલીટ થઈ જશે. શું તમે ખરેખર ડીલીટ કરવા માંગો છો?")) return;
     setActionBusy(uid + "_delete");
+    setError("");
     try {
       await deleteDoc(doc(db, "users", uid));
       setUsers((prev) => prev.filter((u) => u.uid !== uid));
     } catch (err) {
       console.error(err);
-      setError("ડીલીટ કરવામાં ભૂલ આવી.");
+      setError("ડીલીટ કરવામાં ભૂલ આવી. (" + (err instanceof Error ? err.message : String(err)) + ")");
     } finally {
       setActionBusy(null);
     }
@@ -783,24 +808,74 @@ export default function AdminPanel() {
 
                 {/* Management Actions: Ban and Delete */}
                 <div style={{ display: "flex", gap: "10px", marginTop: "10px", borderTop: "1px solid var(--color-border)", paddingTop: "14px" }}>
-                  {(u.membershipStatus === "Active" || u.membershipStatus === "Pending") && (
+                  {u.membershipStatus !== "Banned" ? (
                      <button
                        onClick={() => banUser(u.uid)}
-                       disabled={actionBusy === u.uid + "_ban"}
+                       disabled={actionBusy === u.uid + "_ban" || u.uid === user?.uid}
                        style={{
-                         flex: 1, height: "38px", borderRadius: "8px", background: "var(--color-paper-dim)", color: "var(--color-loss-600)", border: "1px solid var(--color-loss-200)", cursor: "pointer", fontSize: "13px", fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: "6px"
+                         flex: 1,
+                         height: "38px",
+                         borderRadius: "8px",
+                         background: "var(--color-paper-dim)",
+                         color: u.uid === user?.uid ? "var(--color-ink-faint)" : "var(--color-loss-600)",
+                         border: "1px solid var(--color-loss-200)",
+                         cursor: u.uid === user?.uid ? "not-allowed" : "pointer",
+                         fontSize: "13px",
+                         fontWeight: 600,
+                         display: "flex",
+                         alignItems: "center",
+                         justifyContent: "center",
+                         gap: "6px",
+                         opacity: u.uid === user?.uid ? 0.6 : 1
                        }}
+                       title={u.uid === user?.uid ? "તમે તમારા પોતાના એકાઉન્ટને બેન કરી શકતા નથી" : ""}
                      >
                        {actionBusy === u.uid + "_ban" ? "..." : <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}><LockIcon size={14} /> Ban User</div>}
+                     </button>
+                  ) : (
+                     <button
+                       onClick={() => unbanUser(u.uid)}
+                       disabled={actionBusy === u.uid + "_unban"}
+                       style={{
+                         flex: 1,
+                         height: "38px",
+                         borderRadius: "8px",
+                         background: "var(--color-crop-50)",
+                         color: "var(--color-crop-600)",
+                         border: "1px solid var(--color-crop-400)",
+                         cursor: "pointer",
+                         fontSize: "13px",
+                         fontWeight: 600,
+                         display: "flex",
+                         alignItems: "center",
+                         justifyContent: "center",
+                         gap: "6px"
+                       }}
+                     >
+                       {actionBusy === u.uid + "_unban" ? "..." : <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}><CheckCircleIcon size={14} /> Unban User</div>}
                      </button>
                   )}
                   
                   <button
                     onClick={() => deleteUserProfile(u.uid)}
-                    disabled={actionBusy === u.uid + "_delete"}
+                    disabled={actionBusy === u.uid + "_delete" || u.uid === user?.uid}
                     style={{
-                      flex: 1, height: "38px", borderRadius: "8px", background: "var(--color-loss-50)", color: "var(--color-loss-600)", border: "1px solid var(--color-loss-400)", cursor: "pointer", fontSize: "13px", fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: "6px"
+                      flex: 1,
+                      height: "38px",
+                      borderRadius: "8px",
+                      background: "var(--color-loss-50)",
+                      color: u.uid === user?.uid ? "var(--color-ink-faint)" : "var(--color-loss-600)",
+                      border: "1px solid var(--color-loss-400)",
+                      cursor: u.uid === user?.uid ? "not-allowed" : "pointer",
+                      fontSize: "13px",
+                      fontWeight: 600,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "6px",
+                      opacity: u.uid === user?.uid ? 0.6 : 1
                     }}
+                    title={u.uid === user?.uid ? "તમે તમારા પોતાના એકાઉન્ટને ડીલીટ કરી શકતા નથી" : ""}
                   >
                     {actionBusy === u.uid + "_delete" ? "..." : <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}><TrashIcon size={14} /> Delete Profile</div>}
                   </button>

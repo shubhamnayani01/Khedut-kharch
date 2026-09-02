@@ -8,7 +8,7 @@ import { TextInput, NumberInput, TextArea } from "../../components/ui/Field";
 import { Button } from "../../components/ui/Button";
 import { inventorySchema, type InventoryFormInput, type InventoryFormValues } from "../../lib/validation";
 import { todayISO } from "../../lib/format";
-import { EXPENSE_CATEGORIES } from "../../types";
+import { INVENTORY_CATEGORIES } from "../../types";
 import { CategoryIcon } from "../../components/icons/CategoryIcons";
 
 export default function InventoryForm() {
@@ -60,7 +60,7 @@ export default function InventoryForm() {
               control={control}
               render={({ field }) => (
                 <div className="grid grid-cols-4 gap-2.5">
-                  {EXPENSE_CATEGORIES.map((c) => {
+                  {INVENTORY_CATEGORIES.map((c) => {
                     const active = field.value === c.id;
                     return (
                       <button

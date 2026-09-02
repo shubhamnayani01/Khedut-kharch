@@ -47,3 +47,11 @@ export function daysSince(iso: string): number {
   const diff = Math.floor((today - start) / (1000 * 60 * 60 * 24));
   return diff < 0 ? 0 : diff;
 }
+
+export function formatBytes(bytes: number): string {
+  if (bytes <= 0) return "0 KB";
+  const kb = bytes / 1024;
+  if (kb < 1024) return `${kb.toFixed(1)} KB`;
+  const mb = kb / 1024;
+  return `${mb.toFixed(1)} MB`;
+}

@@ -3,14 +3,16 @@ import { useNavigate } from "react-router-dom";
 import { TopBar, Screen } from "../components/ui/AppShell";
 import { Button } from "../components/ui/Button";
 import { Dialog } from "../components/ui/Dialog";
-import { ChartIcon, SettingsIcon, NotebookIcon, UploadIcon, MessageCircleIcon } from "../components/icons/UIIcons";
+import { ChartIcon, SettingsIcon, NotebookIcon, UploadIcon, MessageCircleIcon, UserIcon } from "../components/icons/UIIcons";
 import { useAppData } from "../context/AppDataContext";
 import { useToast } from "../context/ToastContext";
+import { useTranslation } from "../lib/i18n";
 
 export default function MoreMenu() {
   const navigate = useNavigate();
   const { settings, submitSupportTicket } = useAppData();
   const { show } = useToast();
+  const { t } = useTranslation();
   
   const [supportOpen, setSupportOpen] = useState(false);
   const [supportText, setSupportText] = useState("");
@@ -20,17 +22,18 @@ export default function MoreMenu() {
     if (settings.activeSeasonId) {
       navigate(`/crop/${settings.activeSeasonId}/report`);
     } else {
-      show("કૃપા કરીને પહેલા ડેશબોર્ડમાંથી ખેતી પસંદ કરો");
+      show("Please select a crop from dashboard first");
     }
   };
 
   const menu = [
-    { label: "રિપોર્ટ અને PDF", icon: NotebookIcon, onClick: handleReportClick },
-    { label: "આંકડા (Statistics)", icon: ChartIcon, onClick: () => navigate("/statistics") },
-    { label: "વૉલેટ અને દસ્તાવેજો", icon: UploadIcon, onClick: () => navigate("/wallet") },
-    { label: "સેટિંગ્સ", icon: SettingsIcon, onClick: () => navigate("/settings") },
+    { label: t("accountManagement"), icon: UserIcon, onClick: () => navigate("/account") },
+    { label: t("reportsPdf"), icon: NotebookIcon, onClick: handleReportClick },
+    { label: t("statistics"), icon: ChartIcon, onClick: () => navigate("/statistics") },
+    { label: t("walletDocs"), icon: UploadIcon, onClick: () => navigate("/wallet") },
+    { label: t("settings"), icon: SettingsIcon, onClick: () => navigate("/settings") },
     { 
-      label: "સપોર્ટ (Support)", 
+      label: t("support"), 
       icon: MessageCircleIcon, 
       onClick: () => setSupportOpen(true)
     }
@@ -41,11 +44,11 @@ export default function MoreMenu() {
     setIsSubmitting(true);
     try {
       await submitSupportTicket(supportText);
-      show("તમારો મેસેજ મોકલાઈ ગયો છે. અમે જલ્દી સંપર્ક કરીશું.");
+      show("Your message has been sent. We will get back to you soon.");
       setSupportOpen(false);
       setSupportText("");
-    } catch (err) {
-      show("મેસેજ મોકલવામાં ભૂલ આવી, ફરી પ્રયાસ કરો.");
+    } catch {
+      show("Failed to send message, please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -53,7 +56,7 @@ export default function MoreMenu() {
 
   return (
     <>
-      <TopBar title="વધુ (More)" />
+      <TopBar title={t("more")} />
       <Screen>
         <div className="space-y-2">
           {menu.map((m, i) => (
@@ -74,25 +77,25 @@ export default function MoreMenu() {
       <Dialog
         open={supportOpen}
         onClose={() => !isSubmitting && setSupportOpen(false)}
-        title="મદદ અને સપોર્ટ"
+        title={t("helpSupport")}
         footer={
           <>
             <Button variant="outline" fullWidth onClick={() => setSupportOpen(false)} disabled={isSubmitting}>
-              રદ કરો
+              {t("cancel")}
             </Button>
             <Button fullWidth onClick={handleSupportSubmit} disabled={!supportText.trim() || isSubmitting}>
-              {isSubmitting ? "મોકલાઈ રહ્યું છે..." : "મોકલો"}
+              {isSubmitting ? "..." : "Send"}
             </Button>
           </>
         }
       >
         <p className="text-[13.5px] text-[var(--color-ink-faint)] mb-4 leading-relaxed">
-          જો તમને એપ વાપરવામાં કોઈ તકલીફ પડતી હોય અથવા કોઈ પ્રશ્ન હોય, તો નીચે લખીને મોકલો.
+          Describe your issue or question below.
         </p>
         <textarea
           value={supportText}
           onChange={(e) => setSupportText(e.target.value)}
-          placeholder="તમારી સમસ્યા અહી લખો..."
+          placeholder="Write your issue here..."
           disabled={isSubmitting}
           className="w-full h-32 rounded-[var(--radius-control)] border border-[var(--color-border)] p-4 text-[15px] bg-[var(--color-surface)] text-[var(--color-ink)] focus:outline-none focus:border-[var(--color-crop-500)] resize-none"
         />

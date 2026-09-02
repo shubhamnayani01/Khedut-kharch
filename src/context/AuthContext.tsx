@@ -131,6 +131,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           membershipApprovedAt: data.membershipApprovedAt?.toMillis?.() ?? data.membershipApprovedAt ?? undefined,
           approvedBy: data.approvedBy ?? undefined,
           renewalCount: typeof data.renewalCount === "number" ? data.renewalCount : 0,
+          donationStatus: data.donationStatus ?? undefined,
         };
 
         // Auto-expire: if Active but expiry has passed, update Firestore and local state
@@ -270,6 +271,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       ...prev,
       membershipStatus: "Active",
       membershipExpiresAt: undefined,
+      donationStatus: "Skipped",
     } as UserMembership));
   }, [user]);
 

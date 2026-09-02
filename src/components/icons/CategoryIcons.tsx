@@ -16,10 +16,12 @@ export function SeedIcon({ size, className, strokeWidth }: IconProps) {
 export function FertilizerIcon({ size, className, strokeWidth }: IconProps) {
   return (
     <svg {...svgProps(size, strokeWidth)} className={className}>
-      <path d="M8 21V11a4 4 0 0 1 8 0v10" />
-      <path d="M5 21h14" />
-      <path d="M9 21v-6h6v6" />
-      <circle cx="12" cy="6" r="2.4" />
+      {/* Fertilizer Bag / Sack with Stitching & Sprout */}
+      <path d="M6 3h12l1.5 4.5v12.5a2 2 0 0 1-2 2H6.5a2 2 0 0 1-2-2V7.5L6 3z" />
+      <line x1="4.5" y1="7" x2="19.5" y2="7" />
+      <circle cx="12" cy="14" r="3" />
+      <path d="M12 12.5v3" />
+      <path d="M10.5 14h3" />
     </svg>
   );
 }
@@ -27,11 +29,15 @@ export function FertilizerIcon({ size, className, strokeWidth }: IconProps) {
 export function PesticideIcon({ size, className, strokeWidth }: IconProps) {
   return (
     <svg {...svgProps(size, strokeWidth)} className={className}>
-      <path d="M6 10V6a2 2 0 0 1 2-2h2v3" />
-      <rect x="4" y="10" width="9" height="9" rx="1.5" />
-      <path d="M13 13.5h6.2c1 0 1.8-.9 1.6-1.9l-.5-2.6" />
-      <path d="M17.5 13.5V17" />
-      <path d="M8 14.5v3" />
+      {/* Spray Bottle with Mist */}
+      <path d="M10 2h4" />
+      <path d="M12 2v3" />
+      <path d="M9 5h6v3H9z" />
+      <path d="M7 10a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2v-9z" />
+      <path d="M15 6h4" />
+      <path d="M18 4l2-1" />
+      <path d="M18 8l2 1" />
+      <line x1="10" y1="14" x2="14" y2="14" />
     </svg>
   );
 }
@@ -39,11 +45,11 @@ export function PesticideIcon({ size, className, strokeWidth }: IconProps) {
 export function DieselIcon({ size, className, strokeWidth }: IconProps) {
   return (
     <svg {...svgProps(size, strokeWidth)} className={className}>
-      <path d="M6 21V9.5L11 4h1l2 2.5" />
-      <rect x="6" y="9.5" width="8" height="11.5" rx="1" />
-      <path d="M14 12h2.5L19 14.5V19a1.5 1.5 0 0 1-1.5 1.5H16" />
-      <circle cx="17.25" cy="19" r="1.2" />
-      <path d="M9 14h2" />
+      {/* Fuel Pump / Gas Station Nozzle */}
+      <path d="M3 22V5a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v17" />
+      <line x1="2" y1="22" x2="15" y2="22" />
+      <rect x="5" y="6" width="6" height="5" rx="1" />
+      <path d="M14 9h2a2 2 0 0 1 2 2v5a1.5 1.5 0 0 0 3 0V9l-3-3" />
     </svg>
   );
 }
@@ -51,10 +57,11 @@ export function DieselIcon({ size, className, strokeWidth }: IconProps) {
 export function LaborIcon({ size, className, strokeWidth }: IconProps) {
   return (
     <svg {...svgProps(size, strokeWidth)} className={className}>
-      <circle cx="12" cy="6" r="2.6" />
-      <path d="M5 21v-3.5C5 14.5 8 13 12 13s7 1.5 7 4.5V21" />
-      <path d="M8.5 13.2 6 9" />
-      <path d="M15.5 13.2 18 9" />
+      {/* Worker Team / Farmers */}
+      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
     </svg>
   );
 }
@@ -62,8 +69,9 @@ export function LaborIcon({ size, className, strokeWidth }: IconProps) {
 export function IrrigationIcon({ size, className, strokeWidth }: IconProps) {
   return (
     <svg {...svgProps(size, strokeWidth)} className={className}>
-      <path d="M12 3s5 5.6 5 9.4a5 5 0 0 1-10 0C7 8.6 12 3 12 3Z" />
-      <path d="M4 20c1-1 2-1 3 0s2 1 3 0 2-1 3 0 2 1 3 0 2-1 3 0" />
+      {/* Water Drop with Waves */}
+      <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
+      <path d="M4 21c1.5-1.5 3.5-1.5 5 0s3.5 1.5 5 0 3.5-1.5 5 0" />
     </svg>
   );
 }
@@ -71,11 +79,11 @@ export function IrrigationIcon({ size, className, strokeWidth }: IconProps) {
 export function TransportIcon({ size, className, strokeWidth }: IconProps) {
   return (
     <svg {...svgProps(size, strokeWidth)} className={className}>
-      <path d="M3 16V9a1 1 0 0 1 1-1h9l4 4h2a1 1 0 0 1 1 1v3" />
-      <path d="M3 16h17" />
-      <circle cx="7" cy="17.5" r="1.6" />
-      <circle cx="17" cy="17.5" r="1.6" />
-      <path d="M13 8v4" />
+      {/* Delivery / Farm Transport Truck */}
+      <path d="M1 3h14v13H1z" />
+      <path d="M15 8h4.5l3.5 4v4h-8V8z" />
+      <circle cx="5.5" cy="18.5" r="2.5" />
+      <circle cx="18.5" cy="18.5" r="2.5" />
     </svg>
   );
 }
@@ -83,9 +91,8 @@ export function TransportIcon({ size, className, strokeWidth }: IconProps) {
 export function RentIcon({ size, className, strokeWidth }: IconProps) {
   return (
     <svg {...svgProps(size, strokeWidth)} className={className}>
-      <path d="M4 11 12 4l8 7" />
-      <path d="M6 10v10h12V10" />
-      <path d="M10 20v-5h4v5" />
+      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+      <polyline points="9 22 9 12 15 12 15 22" />
     </svg>
   );
 }
@@ -93,7 +100,7 @@ export function RentIcon({ size, className, strokeWidth }: IconProps) {
 export function ElectricityIcon({ size, className, strokeWidth }: IconProps) {
   return (
     <svg {...svgProps(size, strokeWidth)} className={className}>
-      <path d="M13 3 5 14h5l-1 7 8-11h-5l1-7Z" />
+      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
     </svg>
   );
 }
@@ -101,9 +108,9 @@ export function ElectricityIcon({ size, className, strokeWidth }: IconProps) {
 export function OtherIcon({ size, className, strokeWidth }: IconProps) {
   return (
     <svg {...svgProps(size, strokeWidth)} className={className}>
-      <circle cx="5.5" cy="12" r="1.4" />
-      <circle cx="12" cy="12" r="1.4" />
-      <circle cx="18.5" cy="12" r="1.4" />
+      <circle cx="12" cy="12" r="2" />
+      <circle cx="19" cy="12" r="2" />
+      <circle cx="5" cy="12" r="2" />
     </svg>
   );
 }

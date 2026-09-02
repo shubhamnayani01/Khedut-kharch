@@ -23,6 +23,10 @@ export const EXPENSE_CATEGORIES: { id: ExpenseCategory; label: string }[] = [
   { id: "other", label: "અન્ય" },
 ];
 
+export const INVENTORY_CATEGORIES = EXPENSE_CATEGORIES.filter(
+  (c) => !["labor", "irrigation", "transport", "rent", "electricity"].includes(c.id)
+);
+
 export type WorkType = "નિંદામણ" | "કાપણી" | "વાવેતર" | "દવા છંટકાવ" | "ખાતર આપવું" | "સિંચાઈ" | "અન્ય";
 
 export interface WorkerRecord {

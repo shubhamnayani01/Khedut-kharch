@@ -33,6 +33,18 @@ export default function AddExpense() {
   const [stockQuantityUsed, setStockQuantityUsed] = useState<number | undefined>(existing?.inventoryQuantityUsed);
 
   const selectedStockItem = inventoryItems.find(i => i.id === selectedStockId);
+  const usedOtherForSelected = selectedStockItem
+    ? expenses
+        .filter(e => e.inventoryItemId === selectedStockItem.id && e.id !== existing?.id)
+        .reduce((sum, e) => sum + (e.inventoryQuantityUsed || 0), 0)
+    : 0;
+  const availableStock = selectedStockItem ? selectedStockItem.totalQuantity - usedOtherForSelected : 0;
+  const isStockExceeded = Boolean(
+    useStock &&
+    selectedStockItem &&
+    stockQuantityUsed !== undefined &&
+    stockQuantityUsed > availableStock
+  );
 
   const {
     register,
@@ -100,6 +112,21 @@ export default function AddExpense() {
   };
 
   const onSubmit = (values: ExpenseFormValues) => {
+    if (useStock) {
+      if (!selectedStockId || !selectedStockItem) {
+        show("કૃપા કરીને ગોડાઉનમાંથી સ્ટોક આઇટમ પસંદ કરો", "error");
+        return;
+      }
+      if (!stockQuantityUsed || stockQuantityUsed <= 0) {
+        show("કૃપા કરીને વપરાયેલ જથ્થો ઉમેરો", "error");
+        return;
+      }
+      if (stockQuantityUsed > availableStock) {
+        show(`ગોડાઉનમાં ફક્ત ${availableStock} ${selectedStockItem.unit} સ્ટોક બાકી છે. તમે ${stockQuantityUsed} ${selectedStockItem.unit} વાપરી શકતા નથી.`, "error");
+        return;
+      }
+    }
+
     const finalData = {
       ...values,
       inventoryItemId: useStock ? selectedStockId : undefined,
@@ -159,7 +186,18 @@ export default function AddExpense() {
           {useStock && (
             <div className="space-y-4 p-4 border-2 border-dashed border-[var(--color-crop-300)] bg-[var(--color-crop-50)] rounded-[var(--radius-card)]">
               <div>
-                <span className="block text-[14px] font-medium text-[var(--color-ink)] mb-2">સ્ટોક પસંદ કરો</span>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[14px] font-medium text-[var(--color-ink)]">સ્ટોક પસંદ કરો</span>
+                  {selectedStockItem && (
+                    <span className={`text-[12px] font-semibold px-2.5 py-1 rounded-full ${
+                      availableStock > 0 
+                        ? 'bg-[var(--color-crop-100)] text-[var(--color-crop-700)] border border-[var(--color-crop-300)]' 
+                        : 'bg-[var(--color-loss-100)] text-[var(--color-loss-700)] border border-[var(--color-loss-300)]'
+                    }`}>
+                      ગોડાઉનમાં ઉપલબ્ધ: {availableStock} {selectedStockItem.unit}
+                    </span>
+                  )}
+                </div>
                 <select 
                   className="w-full h-[52px] px-3.5 bg-white border border-[var(--color-border)] rounded-[var(--radius-control)] text-[15px] font-medium outline-none focus:border-[var(--color-crop-500)]"
                   value={selectedStockId || ""}
@@ -176,27 +214,47 @@ export default function AddExpense() {
                   }}
                 >
                   <option value="" disabled>-- સ્ટોક આઇટમ પસંદ કરો --</option>
-                  {inventoryItems.map(item => (
-                    <option key={item.id} value={item.id}>{item.name} ({item.unit})</option>
-                  ))}
+                  {inventoryItems.map(item => {
+                    const usedOther = expenses
+                      .filter(e => e.inventoryItemId === item.id && e.id !== existing?.id)
+                      .reduce((sum, e) => sum + (e.inventoryQuantityUsed || 0), 0);
+                    const avail = item.totalQuantity - usedOther;
+                    return (
+                      <option key={item.id} value={item.id}>
+                        {item.name} ({item.unit}) — બાકી સ્ટોક: {avail} {item.unit}
+                      </option>
+                    );
+                  })}
                 </select>
               </div>
               
               {selectedStockItem && (
-                <NumberInput
-                  label={`વપરાયેલ જથ્થો (${selectedStockItem.unit})`}
-                  value={stockQuantityUsed || ""}
-                  onChange={(e) => {
-                    const qty = Number(e.target.value);
-                    setStockQuantityUsed(qty);
-                    if (qty > 0) {
-                      setValue("amount", Math.round((selectedStockItem.totalCost / selectedStockItem.totalQuantity) * qty));
-                    }
-                  }}
-                  placeholder="કેટલું વાપર્યું?"
-                  min="0.1"
-                  step="any"
-                />
+                <div>
+                  <NumberInput
+                    label={`વપરાયેલ જથ્થો (${selectedStockItem.unit})`}
+                    value={stockQuantityUsed || ""}
+                    onChange={(e) => {
+                      const qty = Number(e.target.value);
+                      setStockQuantityUsed(qty);
+                      if (qty > 0) {
+                        setValue("amount", Math.round((selectedStockItem.totalCost / selectedStockItem.totalQuantity) * qty));
+                      }
+                    }}
+                    placeholder="કેટલું વાપર્યું?"
+                    min="0.1"
+                    step="any"
+                    error={isStockExceeded ? `⚠️ ગોડાઉનમાં ફક્ત ${availableStock} ${selectedStockItem.unit} બાકી છે. તમે ${stockQuantityUsed} ${selectedStockItem.unit} વાપરી શકતા નથી.` : undefined}
+                  />
+                  {availableStock <= 0 ? (
+                    <p className="mt-1.5 text-[12.5px] font-medium text-[var(--color-loss-600)]">
+                      ⚠️ આ આઇટમનો સ્ટોક પૂરો થઈ ગયો છે! (0 {selectedStockItem.unit} બાકી)
+                    </p>
+                  ) : (
+                    <p className="mt-1 text-[12px] text-[var(--color-ink-faint)]">
+                      ગોડાઉનમાં બાકી સ્ટોક: <strong className="text-[var(--color-crop-600)]">{availableStock} {selectedStockItem.unit}</strong>
+                    </p>
+                  )}
+                </div>
               )}
             </div>
           )}
@@ -293,7 +351,7 @@ export default function AddExpense() {
           </div>
 
           <div className="pt-2">
-            <Button type="submit" fullWidth size="lg" disabled={isSubmitting}>
+            <Button type="submit" fullWidth size="lg" disabled={isSubmitting || isStockExceeded}>
               ખર્ચ સાચવો
             </Button>
           </div>
