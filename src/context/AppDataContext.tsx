@@ -466,7 +466,19 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const clearAllData = useCallback(() => {
+  const clearAllData = useCallback(async () => {
+    const currentUser = auth.currentUser;
+    if (currentUser) {
+      const colNames = ["seasons", "expenses", "workers", "bhaagidars", "advanceLedgers", "inventoryItems"];
+      for (const colName of colNames) {
+        try {
+          const snapshot = await getDocs(collection(db, "users", currentUser.uid, colName));
+          await Promise.all(snapshot.docs.map((d) => deleteDoc(doc(db, "users", currentUser.uid, colName, d.id))));
+        } catch (error) {
+          console.error(`Failed to clear ${colName} from Firestore:`, error);
+        }
+      }
+    }
     setSeasons([]);
     setExpenses([]);
     setWorkers([]);

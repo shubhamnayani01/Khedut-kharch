@@ -161,9 +161,25 @@ export default function Account() {
               <p className="text-[13px] text-[var(--color-ink-soft)] leading-relaxed mb-3">
                 You are using the free tier of Khedut Kharch. Support our project with a voluntary donation.
               </p>
-              <Button variant="primary" fullWidth onClick={() => navigate("/membership/payment")}>
-                {t("supportAppBtn")}
-              </Button>
+              <div className="space-y-2">
+                <Button variant="primary" fullWidth onClick={() => navigate("/membership/payment")}>
+                  {t("supportAppBtn")}
+                </Button>
+                <div className="pt-2 border-t border-[var(--color-border)]/60 text-center">
+                  <p className="text-[12px] text-[var(--color-ink-faint)] mb-1.5">
+                    બીજા એકાઉન્ટમાંથી દાન કરેલું છે? (Already donated from another account?)
+                  </p>
+                  <button
+                    onClick={() => {
+                      setSupportText(`હું બીજા Google એકાઉન્ટમાંથી દાન આપી ચૂક્યો છું. (Donated from another account: ${user?.email})`);
+                      setSupportOpen(true);
+                    }}
+                    className="text-[12.5px] font-semibold text-[var(--color-crop-600)] hover:underline active:opacity-70"
+                  >
+                    દાન સ્ટેટસ સિંક / લિંક કરવા અહીં ક્લિક કરો →
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </Card>

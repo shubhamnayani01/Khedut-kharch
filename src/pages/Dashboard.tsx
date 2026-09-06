@@ -207,13 +207,13 @@ export default function Dashboard() {
       <Dialog
         open={showThanks}
         onClose={handleCloseThanks}
-        title="Thank you! 💖"
+        title={t("thankYouTitle")}
         footer={
           <button
             onClick={handleCloseThanks}
             className="w-full h-12 rounded-xl bg-gradient-to-r from-[var(--color-crop-500)] to-[var(--color-crop-600)] text-white font-semibold text-[15px] shadow-sm active:scale-[0.98] transition-transform"
           >
-            Continue
+            {t("continueBtn")}
           </button>
         }
       >
@@ -222,8 +222,8 @@ export default function Dashboard() {
             <CheckCircleIcon size={32} />
           </div>
           <p className="text-[14.5px] text-[var(--color-ink-soft)] leading-relaxed">
-            Your donation of <strong>₹{membership?.membershipAmount || 300}</strong> has been received.<br/><br/>
-            Thank you for supporting Khedut Kharch!
+            <strong>₹{membership?.membershipAmount || 300}</strong><br/><br/>
+            {t("donationReceivedDesc")}
           </p>
         </div>
       </Dialog>

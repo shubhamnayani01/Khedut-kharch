@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useAppData } from "../../context/AppDataContext";
-import { TopBar, Screen } from "../../components/ui/AppShell";
+import { TopBar, Screen, BottomNav } from "../../components/ui/AppShell";
 import { SeasonSwitcher } from "../../components/ui/SeasonSwitcher";
 import { Button } from "../../components/ui/Button";
 import { EmptyState } from "../../components/ui/EmptyState";
@@ -30,6 +30,7 @@ export default function WorkersTab() {
             <Button onClick={() => navigate("/new-season")}>નવી ખેતી ઉમેરો</Button>
           </div>
         </Screen>
+        <BottomNav />
       </>
     );
   }
@@ -92,6 +93,7 @@ export default function WorkersTab() {
            </button>
         </div>
       </Screen>
+      <BottomNav />
     </>
   );
 }

@@ -5,7 +5,7 @@ import { Button } from "../components/ui/Button";
 import { formatCurrency, formatDateDMY, formatDateLong } from "../lib/format";
 import { categoryTotals, seasonIncome, seasonProfit, totalExpenses, profitPercentage, totalWorkerCost, totalBhaagidaarAdvance } from "../lib/calc";
 import { EXPENSE_CATEGORIES } from "../types";
-import { DownloadIcon } from "../components/icons/UIIcons";
+import { DownloadIcon, MessageCircleIcon } from "../components/icons/UIIcons";
 
 export default function Report() {
   const { id } = useParams();
@@ -78,26 +78,58 @@ export default function Report() {
 
   reportItems.sort((a, b) => a.date.localeCompare(b.date));
 
+  const handleWhatsAppShare = () => {
+    const summaryText =
+      `🌾 *ખેડૂત ખર્ચ નોંધ — પાક રિપોર્ટ* 🌾\n\n` +
+      `🌱 *પાક:* ${season.cropName}\n` +
+      `🏞️ *ખેતર:* ${season.fieldName}${season.areaLabel ? ` (${season.areaLabel})` : ""}\n` +
+      `📅 *વાવણી તારીખ:* ${formatDateDMY(season.sowingDate)}\n` +
+      `💰 *કુલ ખર્ચ:* ${formatCurrency(spent)}\n` +
+      (isHarvested
+        ? `💵 *કુલ આવક:* ${formatCurrency(income)}\n` +
+          `📈 *${profit >= 0 ? "ચોખ્ખો નફો" : "ચોખ્ખી ખોટ"}:* ${formatCurrency(profit)} (${pct >= 0 ? "+" : ""}${pct.toFixed(1)}%)\n`
+        : "") +
+      `\nખેડૂત ખર્ચ એપ દ્વારા બનાવેલ 🚜`;
+
+    const url = `https://wa.me/?text=${encodeURIComponent(summaryText)}`;
+    window.open(url, "_blank");
+  };
+
   return (
     <>
       <TopBar
         title="રિપોર્ટ"
         right={
-          <button
-            onClick={() => window.print()}
-            className="w-11 h-11 flex items-center justify-center rounded-full text-[var(--color-crop-500)]"
-            aria-label="PDF ડાઉનલોડ કરો"
-          >
-            <DownloadIcon size={20} />
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={handleWhatsAppShare}
+              className="w-10 h-10 flex items-center justify-center rounded-full text-emerald-600 bg-emerald-50 active:bg-emerald-100"
+              title="WhatsApp પર શેર કરો"
+            >
+              <MessageCircleIcon size={20} />
+            </button>
+            <button
+              onClick={() => window.print()}
+              className="w-10 h-10 flex items-center justify-center rounded-full text-[var(--color-crop-500)]"
+              title="PDF ડાઉનલોડ કરો"
+            >
+              <DownloadIcon size={20} />
+            </button>
+          </div>
         }
       />
       <Screen withNav={false}>
-        <div className="mb-4 print:hidden">
+        <div className="mb-4 space-y-2 print:hidden">
           <Button fullWidth size="lg" onClick={() => window.print()}>
             <DownloadIcon size={18} /> PDF તરીકે સાચવો / છાપો
           </Button>
-          <p className="text-center text-[12.5px] text-[var(--color-ink-faint)] mt-2">
+          <button
+            onClick={handleWhatsAppShare}
+            className="w-full h-12 flex items-center justify-center gap-2 rounded-[var(--radius-control)] bg-emerald-600 text-white font-semibold text-[15px] shadow-sm active:bg-emerald-700 transition-colors"
+          >
+            <MessageCircleIcon size={20} /> WhatsApp પર સાચાં આંકડા શેર કરો
+          </button>
+          <p className="text-center text-[12.5px] text-[var(--color-ink-faint)] mt-1">
             પ્રિન્ટ સ્ક્રીનમાં "Save as PDF" પસંદ કરો.
           </p>
         </div>

@@ -78,7 +78,7 @@ export default function AddWorkerRecord() {
 
   return (
     <>
-      <TopBar title={isEdit ? "મજૂર સંપાદિત કરો" : "મજૂર ઉમેરો"} />
+      <TopBar title={isEdit ? "મજૂર એડિટ કરો" : "મજૂર ઉમેરો"} />
       <Screen withNav={false}>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 pb-8">
           <TextInput

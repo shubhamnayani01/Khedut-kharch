@@ -146,7 +146,7 @@ export default function AddExpense() {
 
   return (
     <>
-      <TopBar title={isEdit ? "ખર્ચ સંપાદિત કરો" : "ખર્ચ ઉમેરો"} />
+      <TopBar title={isEdit ? "ખર્ચ એડિટ કરો" : "ખર્ચ ઉમેરો"} />
       <Screen withNav={false}>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 pb-8">
           <TextInput

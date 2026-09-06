@@ -3,7 +3,6 @@ import type { ExpenseCategory } from "../types";
 
 export const translations = {
   gu: {
-    // Nav & Shell
     dashboard: "ડેશબોર્ડ",
     expenses: "ખર્ચ",
     workers: "મજૂર",
@@ -14,7 +13,7 @@ export const translations = {
     settings: "સેટિંગ્સ",
     account: "એકાઉન્ટ",
 
-    // Dashboard
+    
     greeting: "નમસ્તે",
     appTitle: "ખેડૂત ખર્ચ નોંધ",
     activeCrops: "ચાલુ ખેતી",
@@ -35,13 +34,13 @@ export const translations = {
     tryAnotherSearch: "બીજું નામ શોધીને જુઓ.",
 
     // Account Page
-    accountManagement: "એકાઉન્ટ સંચાલન",
+    accountManagement: "એકાઉન્ટ સેટિંગ્સ",
     googleVerified: "Google દ્વારા સુરક્ષિત સાઇન-ઇન",
     membershipStatus: "સદસ્યતા અને સ્ટેટસ",
     supporter: "સહયોગી (Supporter)",
-    freeUser: "મફત ઉપયોગ (Free User)",
-    donationDate: "દાનની તારીખ",
-    donationAmount: "દાનની રકમ",
+    freeUser: "ફ્રી યુઝર (Free User)",
+    donationDate: "તારીખ",
+    donationAmount: "રકમ",
     supportProjectMsg: "ખેડૂત ખર્ચને સહયોગ કરવા બદલ આભાર. તમારું એકાઉન્ટ સંપૂર્ણપણે સક્રિય છે.",
     supportAppBtn: "ખેડૂત ખર્ચને સહયોગ કરો",
     appSettingsDesc: "એપ સેટિંગ્સ (Theme, Backup, Storage)",
@@ -52,28 +51,28 @@ export const translations = {
     signOutDesc: "તમારા Google એકાઉન્ટમાંથી સાઇન આઉટ કરો",
     signOutConfirmTitle: "સાઇન આઉટ કરવું છે?",
     signOutConfirmDesc: "શું તમે આ એકાઉન્ટમાંથી સાઇન આઉટ કરવા માંગો છો?",
-    cancel: "રદ કરો",
+    cancel: "કેન્સલ કરો",
 
     // Settings Page
     language: "ભાષા / Language",
     gujarati: "ગુજરાતી (Gujarati)",
     english: "English (અંગ્રેજી)",
-    appearance: "દેખાવ",
+    appearance: "થીમ / દેખાવ",
     lightMode: "લાઇટ મોડ",
     darkMode: "ડાર્ક મોડ",
     systemDefault: "સિસ્ટમ પ્રમાણે",
     backup: "બેકઅપ",
     exportBackup: "બેકઅપ એક્સપોર્ટ કરો",
-    restoreBackup: "બેકઅપ પુનઃસ્થાપિત કરો",
-    installApp: "એપ્લિકેશન ઇન્સ્ટોલ કરો",
+    restoreBackup: "બેકઅપ રિસ્ટોર કરો",
+    installApp: "એપ ઇન્સ્ટોલ કરો",
     addToHomeScreen: "હોમ સ્ક્રીન પર ઉમેરો",
-    storage: "સંગ્રહ",
+    storage: "સ્ટોરેજ",
     totalCropsCount: "કુલ ખેતી",
     totalExpensesCount: "કુલ ખર્ચ નોંધ",
-    usedStorage: "વપરાયેલ સંગ્રહ",
-    about: "વિશે",
-    clearAllData: "બધો ડેટા સાફ કરો",
-    clearAllConfirmTitle: "બધો ડેટા સાફ કરવો છે?",
+    usedStorage: "વપરાયેલ સ્ટોરેજ",
+    about: "વિશે (About)",
+    clearAllData: "બધો ડેટા ક્લિયર કરો",
+    clearAllConfirmTitle: "બધો ડેટા ક્લિયર કરવો છે?",
     clearAllConfirmDesc: "તમામ ખેતી અને ખર્ચની નોંધ કાયમ માટે ડિલીટ થશે. બેકઅપ લીધા વગર આગળ ન વધો.",
 
     // Expenses Tab
@@ -102,6 +101,11 @@ export const translations = {
     statistics: "આંકડા (Statistics)",
     walletDocs: "વૉલેટ અને દસ્તાવેજો",
     support: "સપોર્ટ (Support)",
+
+    // Dialogs & Notifications
+    thankYouTitle: "આભાર! 💖",
+    continueBtn: "આગળ વધો",
+    donationReceivedDesc: "તમારું દાન પ્રાપ્ત થયું છે. ખેડૂત ખર્ચને સહયોગ આપવા બદલ તમારો ખૂબ ખૂબ આભાર!",
   },
   en: {
     // Nav & Shell
@@ -203,6 +207,11 @@ export const translations = {
     statistics: "Statistics",
     walletDocs: "Wallet & Documents",
     support: "Support",
+
+    // Dialogs & Notifications
+    thankYouTitle: "Thank you! 💖",
+    continueBtn: "Continue",
+    donationReceivedDesc: "Your donation has been received. Thank you for supporting Khedut Kharch!",
   },
 } as const;
 

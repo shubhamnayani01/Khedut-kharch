@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { TopBar, Screen } from "../components/ui/AppShell";
+import { TopBar, Screen, BottomNav } from "../components/ui/AppShell";
 import { Button } from "../components/ui/Button";
 import { Dialog } from "../components/ui/Dialog";
 import { ChartIcon, SettingsIcon, NotebookIcon, UploadIcon, MessageCircleIcon, UserIcon } from "../components/icons/UIIcons";
@@ -100,6 +100,7 @@ export default function MoreMenu() {
           className="w-full h-32 rounded-[var(--radius-control)] border border-[var(--color-border)] p-4 text-[15px] bg-[var(--color-surface)] text-[var(--color-ink)] focus:outline-none focus:border-[var(--color-crop-500)] resize-none"
         />
       </Dialog>
+      <BottomNav />
     </>
   );
 }

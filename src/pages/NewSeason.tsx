@@ -86,7 +86,7 @@ export default function NewSeason() {
 
   return (
     <>
-      <TopBar title={isEdit ? "ખેતી સંપાદિત કરો" : "નવી ખેતી"} onBack={undefined} />
+      <TopBar title={isEdit ? "ખેતી એડિટ કરો" : "નવી ખેતી"} onBack={undefined} />
       <Screen withNav={false}>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 pb-8">
           <TextInput

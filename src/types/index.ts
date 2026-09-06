@@ -119,7 +119,7 @@ export interface FarmingSeason {
 export interface AppSettings {
   theme: "light" | "dark" | "system";
   onboardingSeen: boolean;
-  language?: "gu" | "en" | "hi";
+  language?: "gu" | "en";
   activeSeasonId?: string;
 }
 
@@ -170,6 +170,10 @@ export interface UserDocument {
 
 // ─── Membership ───────────────────────────────────────────────────────────────
 
+export const ADMIN_EMAILS = [
+  "shubhamnayani01@gmail.com",
+  "shubhamnayani0110@gmail.com",
+];
 export const ADMIN_EMAIL = "shubhamnayani01@gmail.com";
 
 export type MembershipStatus = "Pending" | "Active" | "Expired" | "Rejected" | "Banned";

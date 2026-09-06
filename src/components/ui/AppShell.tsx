@@ -3,6 +3,7 @@ import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { BackIcon, HomeIcon, RupeeIcon, UserIcon, UsersIcon, MenuIcon, PlusIcon } from "../icons/UIIcons";
 import { HeaderActions } from "../HeaderActions";
 import { useTranslation } from "../../lib/i18n";
+import { PWAInstallBanner } from "../PWAInstallBanner";
 
 export function TopBar({
   title,
@@ -59,9 +60,11 @@ export function BottomNav() {
   ];
 
   return (
-    <nav
+    <>
+      <PWAInstallBanner />
+      <nav
       id="app-shell-nav"
-      className="sticky bottom-0 z-30 bg-[var(--color-surface)]/95 backdrop-blur border-t border-[var(--color-border)] pb-[env(safe-area-inset-bottom)]"
+      className="fixed bottom-0 left-0 right-0 z-30 bg-[var(--color-surface)]/95 backdrop-blur border-t border-[var(--color-border)] pb-[env(safe-area-inset-bottom)] shadow-lg"
     >
       <div className="max-w-2xl mx-auto grid grid-cols-5">
         {navItems.map((item) => (
@@ -85,6 +88,7 @@ export function BottomNav() {
         ))}
       </div>
     </nav>
+    </>
   );
 }
 

@@ -6,7 +6,7 @@ import { Card } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
 import { Dialog } from "../../components/ui/Dialog";
 import { EmptyState } from "../../components/ui/EmptyState";
-import { PlusIcon, TrashIcon } from "../../components/icons/UIIcons";
+import { PlusIcon, TrashIcon, EditIcon } from "../../components/icons/UIIcons";
 import { CategoryIcon } from "../../components/icons/CategoryIcons";
 import { formatCurrency, formatDateDMY } from "../../lib/format";
 import { EXPENSE_CATEGORIES, type InventoryItem } from "../../types";
@@ -72,12 +72,22 @@ export default function InventoryTab() {
                         {catLabel} · {formatDateDMY(item.datePurchased)}
                       </p>
                     </div>
-                    <button 
-                      onClick={() => setDeleteConfirm(item)}
-                      className="w-8 h-8 flex items-center justify-center text-[var(--color-loss-500)] bg-[var(--color-loss-50)] rounded-full active:bg-[var(--color-loss-100)]"
-                    >
-                      <TrashIcon size={16} />
-                    </button>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <button 
+                        onClick={() => navigate(`/inventory/${item.id}/edit`)}
+                        className="w-8 h-8 flex items-center justify-center text-[var(--color-crop-600)] bg-[var(--color-crop-50)] rounded-full active:bg-[var(--color-crop-100)]"
+                        title="એડિટ કરો"
+                      >
+                        <EditIcon size={16} />
+                      </button>
+                      <button 
+                        onClick={() => setDeleteConfirm(item)}
+                        className="w-8 h-8 flex items-center justify-center text-[var(--color-loss-500)] bg-[var(--color-loss-50)] rounded-full active:bg-[var(--color-loss-100)]"
+                        title="ડિલીટ કરો"
+                      >
+                        <TrashIcon size={16} />
+                      </button>
+                    </div>
                   </div>
                   
                   <div className="mt-4 grid grid-cols-2 gap-3 p-3 bg-[var(--color-paper-dim)] rounded-lg">

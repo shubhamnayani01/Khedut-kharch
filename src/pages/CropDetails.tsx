@@ -67,7 +67,7 @@ export default function CropDetails() {
           <button
             onClick={() => navigate(`/crop/${season.id}/edit`)}
             className="w-11 h-11 flex items-center justify-center rounded-full text-[var(--color-ink-soft)] active:bg-[var(--color-paper-dim)]"
-            aria-label="સંપાદિત કરો"
+            aria-label="એડિટ કરો"
           >
             <EditIcon size={19} />
           </button>
@@ -149,7 +149,7 @@ export default function CropDetails() {
             <NotebookIcon size={18} /> PDF બનાવો
           </Button>
           <Button variant="outline" onClick={() => navigate(`/crop/${season.id}/edit`)} className="!h-14">
-            <EditIcon size={18} /> સંપાદિત કરો
+            <EditIcon size={18} /> એડિટ કરો
           </Button>
         </div>
 

@@ -279,6 +279,14 @@ export default function App() {
                 </AuthGuard>
               }
             />
+            <Route
+              path="/inventory/:id/edit"
+              element={
+                <AuthGuard>
+                  <InventoryForm />
+                </AuthGuard>
+              }
+            />
 
 
             {/* Catch-all → home (AuthGuard will redirect appropriately) */}

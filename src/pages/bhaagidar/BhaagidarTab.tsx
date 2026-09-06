@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppData } from "../../context/AppDataContext";
-import { TopBar, Screen } from "../../components/ui/AppShell";
+import { TopBar, Screen, BottomNav } from "../../components/ui/AppShell";
 import { SeasonSwitcher } from "../../components/ui/SeasonSwitcher";
 import { Button } from "../../components/ui/Button";
 import { Dialog } from "../../components/ui/Dialog";
@@ -60,6 +60,7 @@ export default function BhaagidarTab() {
             <Button onClick={() => navigate("/new-season")}>નવી ખેતી ઉમેરો</Button>
           </div>
         </Screen>
+        <BottomNav />
       </>
     );
   }
@@ -145,6 +146,7 @@ export default function BhaagidarTab() {
            <Button type="submit" fullWidth className="mt-2">નોંધ સાચવો</Button>
         </form>
       </Dialog>
+      <BottomNav />
     </>
   );
 }

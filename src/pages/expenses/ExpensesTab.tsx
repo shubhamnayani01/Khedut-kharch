@@ -1,21 +1,40 @@
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppData } from "../../context/AppDataContext";
-import { TopBar, Screen } from "../../components/ui/AppShell";
+import { TopBar, Screen, BottomNav } from "../../components/ui/AppShell";
 import { SeasonSwitcher } from "../../components/ui/SeasonSwitcher";
 import { Button } from "../../components/ui/Button";
 import { EmptyState } from "../../components/ui/EmptyState";
-import { NotebookIcon, PlusIcon } from "../../components/icons/UIIcons";
+import { NotebookIcon, PlusIcon, SearchIcon, CloseIcon } from "../../components/icons/UIIcons";
 import { CategoryIcon } from "../../components/icons/CategoryIcons";
 import { formatCurrency, formatDateDMY } from "../../lib/format";
-import { EXPENSE_CATEGORIES } from "../../types";
+import { EXPENSE_CATEGORIES, type ExpenseCategory } from "../../types";
 
 export default function ExpensesTab() {
   const navigate = useNavigate();
   const { settings, getSeason, expensesForSeason } = useAppData();
   
+  const [query, setQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<ExpenseCategory | "all">("all");
+
   const seasonId = settings.activeSeasonId;
   const season = seasonId ? getSeason(seasonId) : undefined;
-  const expenses = seasonId ? expensesForSeason(seasonId).sort((a, b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt) : [];
+  const allExpenses = seasonId ? expensesForSeason(seasonId).sort((a, b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt) : [];
+
+  const filteredExpenses = useMemo(() => {
+    return allExpenses.filter((e) => {
+      if (selectedCategory !== "all" && e.category !== selectedCategory) return false;
+      if (query.trim()) {
+        const q = query.trim().toLowerCase();
+        const catLabel = (EXPENSE_CATEGORIES.find((c) => c.id === e.category)?.label || e.category).toLowerCase();
+        const desc = (e.description || "").toLowerCase();
+        const amt = String(e.amount);
+        const dateStr = formatDateDMY(e.date);
+        return catLabel.includes(q) || desc.includes(q) || amt.includes(q) || dateStr.includes(q);
+      }
+      return true;
+    });
+  }, [allExpenses, selectedCategory, query]);
 
   if (!season) {
     return (
@@ -39,15 +58,64 @@ export default function ExpensesTab() {
     <>
       <TopBar titleContent={<SeasonSwitcher />} />
       <Screen>
-        {expenses.length === 0 ? (
+        {allExpenses.length > 0 && (
+          <div className="space-y-3 mb-4">
+            {/* Search Bar */}
+            <div className="flex items-center gap-2 h-12 px-4 rounded-[var(--radius-control)] bg-[var(--color-surface)] border border-[var(--color-border)]">
+              <SearchIcon size={19} className="text-[var(--color-ink-faint)] shrink-0" />
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="ખર્ચ અથવા વિગત શોધો..."
+                className="flex-1 bg-transparent outline-none text-[15px] placeholder:text-[var(--color-ink-faint)] min-w-0"
+              />
+              {query && (
+                <button onClick={() => setQuery("")} aria-label="Clear" className="shrink-0 text-[var(--color-ink-faint)]">
+                  <CloseIcon size={17} />
+                </button>
+              )}
+            </div>
+
+            {/* Category Filter Chips */}
+            <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+              <button
+                onClick={() => setSelectedCategory("all")}
+                className={`shrink-0 h-8 px-3 rounded-full text-[13px] font-medium border transition-colors ${
+                  selectedCategory === "all"
+                    ? "bg-[var(--color-crop-500)] text-white border-[var(--color-crop-500)]"
+                    : "bg-[var(--color-surface)] text-[var(--color-ink-soft)] border-[var(--color-border)]"
+                }`}
+              >
+                બધા
+              </button>
+              {EXPENSE_CATEGORIES.map((c) => (
+                <button
+                  key={c.id}
+                  onClick={() => setSelectedCategory(c.id)}
+                  className={`shrink-0 h-8 px-3 rounded-full text-[13px] font-medium border transition-colors ${
+                    selectedCategory === c.id
+                      ? "bg-[var(--color-crop-500)] text-white border-[var(--color-crop-500)]"
+                      : "bg-[var(--color-surface)] text-[var(--color-ink-soft)] border-[var(--color-border)]"
+                  }`}
+                >
+                  {c.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {allExpenses.length === 0 ? (
           <EmptyState
             icon={<NotebookIcon size={24} />}
             title="કોઈ ખર્ચ નથી"
             description="આ ખેતી માટે હજુ સુધી કોઈ ખર્ચ ઉમેર્યો નથી."
           />
+        ) : filteredExpenses.length === 0 ? (
+          <EmptyState icon={<SearchIcon size={26} />} title="કંઈ મળ્યું નહીં" description="બીજી વિગત શોધીને જુઓ." />
         ) : (
           <div className="space-y-3">
-            {expenses.map((e) => (
+            {filteredExpenses.map((e) => (
               <button
                 key={e.id}
                 onClick={() => navigate(`/crop/${season.id}/expense/${e.id}/edit`)}
@@ -90,6 +158,7 @@ export default function ExpensesTab() {
            </button>
         </div>
       </Screen>
+      <BottomNav />
     </>
   );
 }

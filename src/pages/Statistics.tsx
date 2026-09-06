@@ -24,7 +24,7 @@ const PIE_COLORS = [
 ];
 
 export default function Statistics() {
-  const { seasons, settings, getSeason, expensesForSeason, workersForSeason, advanceLedgers, expenses: allExpenses, isLoaded } = useAppData();
+  const { seasons, settings, getSeason, expensesForSeason, workersForSeason, advanceLedgers, expenses: allExpenses, workers: allWorkers, isLoaded } = useAppData();
 
   const seasonId = settings.activeSeasonId;
   const season = seasonId ? getSeason(seasonId) : undefined;
@@ -56,13 +56,14 @@ export default function Statistics() {
         .filter((s) => s.status === "harvested")
         .map((s) => {
           const sExp = allExpenses.filter((e) => e.seasonId === s.id);
-          // workers cost not in allWorkers easily without another appData helper, but let's approximate or just use expenses for the line chart
+          const sWrk = allWorkers.filter((w) => w.seasonId === s.id);
+          const sLed = advanceLedgers.filter((a) => a.seasonId === s.id);
           return {
             name: s.cropName.length > 6 ? s.cropName.slice(0, 6) + "…" : s.cropName,
-            profit: seasonProfit(s, sExp),
+            profit: seasonProfit(s, sExp, sWrk, sLed),
           };
         }),
-    [seasons, allExpenses]
+    [seasons, allExpenses, allWorkers, advanceLedgers]
   );
 
   if (isLoaded && !season) {

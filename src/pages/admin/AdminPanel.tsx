@@ -73,7 +73,48 @@ export default function AdminPanel() {
   const [tab, setTab] = useState<Tab>("Pending");
   const [actionBusy, setActionBusy] = useState<string | null>(null);
   const [selectedProof, setSelectedProof] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const [error, setError] = useState("");
+
+  const grantSupporterStatus = async (uid: string, amount = 300) => {
+    setActionBusy(uid + "_supporter");
+    setError("");
+    try {
+      const now = Date.now();
+      const expiresAt = now + 365 * 24 * 60 * 60 * 1000;
+      await updateDoc(doc(db, "users", uid), {
+        membershipStatus: "Active",
+        membershipType: "Annual",
+        membershipAmount: amount,
+        membershipStartedAt: Timestamp.fromMillis(now),
+        membershipExpiresAt: Timestamp.fromMillis(expiresAt),
+        membershipApprovedAt: Timestamp.fromMillis(now),
+        approvedBy: user?.uid ?? "admin",
+        donationStatus: "Donated",
+      });
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.uid === uid
+            ? {
+              ...u,
+              membershipStatus: "Active",
+              membershipAmount: amount,
+              membershipStartedAt: now,
+              membershipExpiresAt: expiresAt,
+              membershipApprovedAt: now,
+              approvedBy: user?.uid ?? "admin",
+              donationStatus: "Donated",
+            }
+            : u
+        )
+      );
+    } catch (err) {
+      console.error(err);
+      setError("Supporter સ્ટેટસ અપડેટ કરવામાં ભૂલ આવી.");
+    } finally {
+      setActionBusy(null);
+    }
+  };
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
@@ -82,7 +123,7 @@ export default function AdminPanel() {
       const list: MemberUser[] = [];
       snap.forEach((docSnap) => {
         const d = docSnap.data();
-        if (!d.membershipStatus) return; // skip users with no membership record
+        if (!d.membershipStatus) return;
         list.push({
           uid: docSnap.id,
           name: d.name ?? null,
@@ -178,13 +219,13 @@ export default function AdminPanel() {
         prev.map((u) =>
           u.uid === uid
             ? {
-                ...u,
-                membershipStatus: "Active",
-                membershipStartedAt: now,
-                membershipExpiresAt: expiresAt,
-                membershipApprovedAt: now,
-                approvedBy: user?.uid ?? "admin",
-              }
+              ...u,
+              membershipStatus: "Active",
+              membershipStartedAt: now,
+              membershipExpiresAt: expiresAt,
+              membershipApprovedAt: now,
+              approvedBy: user?.uid ?? "admin",
+            }
             : u
         )
       );
@@ -211,13 +252,13 @@ export default function AdminPanel() {
         prev.map((u) =>
           u.uid === uid
             ? {
-                ...u,
-                membershipStatus: "Rejected",
-                membershipStartedAt: undefined,
-                membershipExpiresAt: undefined,
-                membershipApprovedAt: undefined,
-                approvedBy: undefined,
-              }
+              ...u,
+              membershipStatus: "Rejected",
+              membershipStartedAt: undefined,
+              membershipExpiresAt: undefined,
+              membershipApprovedAt: undefined,
+              approvedBy: undefined,
+            }
             : u
         )
       );
@@ -229,7 +270,17 @@ export default function AdminPanel() {
     }
   };
 
-  const filtered = users.filter((u) => u.membershipStatus === tab);
+  const filtered = users.filter((u) => {
+    const matchesTab = u.membershipStatus === tab;
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return matchesTab;
+    return matchesTab && (
+      (u.name && u.name.toLowerCase().includes(q)) ||
+      (u.email && u.email.toLowerCase().includes(q)) ||
+      (u.paymentReference && u.paymentReference.toLowerCase().includes(q)) ||
+      u.uid.toLowerCase().includes(q)
+    );
+  });
 
   const banUser = async (uid: string) => {
     if (uid === user?.uid) {
@@ -420,522 +471,568 @@ export default function AdminPanel() {
               gap: "6px"
             }}
           >
-            <MessageCircleIcon size={16} /> સપોર્ટ ટિકિટ્સ 
+            <MessageCircleIcon size={16} /> સપોર્ટ ટિકિટ્સ
             {tickets.filter(t => t.status === "open").length > 0 && (
-               <span style={{ background: viewMode === "feedback" ? "white" : "var(--color-loss-500)", color: viewMode === "feedback" ? "var(--color-crop-600)" : "white", padding: "2px 6px", borderRadius: "99px", fontSize: "11px" }}>
-                 {tickets.filter(t => t.status === "open").length}
-               </span>
+              <span style={{ background: viewMode === "feedback" ? "white" : "var(--color-loss-500)", color: viewMode === "feedback" ? "var(--color-crop-600)" : "white", padding: "2px 6px", borderRadius: "99px", fontSize: "11px" }}>
+                {tickets.filter(t => t.status === "open").length}
+              </span>
             )}
           </button>
         </div>
 
         {viewMode === "memberships" ? (
           <>
-            {/* Tabs */}
-        <div
-          style={{
-            display: "flex",
-            gap: "8px",
-            marginBottom: "20px",
-            overflowX: "auto",
-            paddingBottom: "4px",
-          }}
-        >
-          {TABS.map((t) => (
-            <button
-              key={t.key}
-              onClick={() => setTab(t.key)}
-              style={{
-                flexShrink: 0,
-                height: "36px",
-                padding: "0 16px",
-                borderRadius: "999px",
-                border: `1.5px solid ${tab === t.key ? t.color : "var(--color-border)"}`,
-                background: tab === t.key ? t.color : "var(--color-surface)",
-                color: tab === t.key ? "white" : "var(--color-ink-soft)",
-                fontSize: "13.5px",
-                fontWeight: 600,
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-                transition: "all 0.2s",
-              }}
-            >
-              {t.label}
-              <span
+            {/* Search filter */}
+            <div style={{ marginBottom: "14px" }}>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="યુઝર શોધો (નામ, ઈમેઈલ, Ref, UID...)..."
                 style={{
-                  background: tab === t.key ? "rgba(255,255,255,0.3)" : "var(--color-paper-dim)",
-                  borderRadius: "999px",
-                  padding: "1px 7px",
-                  fontSize: "12px",
-                }}
-              >
-                {tabCount(t.key)}
-              </span>
-            </button>
-          ))}
-        </div>
-
-        {/* User list */}
-        {loading ? (
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: "12px",
-            }}
-          >
-            {[1, 2, 3].map((i) => (
-              <div
-                key={i}
-                style={{
-                  height: "120px",
-                  borderRadius: "16px",
-                  background: "var(--color-paper-dim)",
-                  animation: "pulse 1.5s ease-in-out infinite",
+                  width: "100%",
+                  height: "42px",
+                  borderRadius: "10px",
+                  border: "1px solid var(--color-border)",
+                  background: "var(--color-surface)",
+                  padding: "0 14px",
+                  fontSize: "14px",
+                  color: "var(--color-ink)",
+                  outline: "none",
                 }}
               />
-            ))}
-          </div>
-        ) : filtered.length === 0 ? (
-          <div
-            style={{
-              textAlign: "center",
-              padding: "60px 0",
-              color: "var(--color-ink-faint)",
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '12px', color: 'var(--color-crop-500)' }}><CheckCircleIcon size={48} /></div>
-            <p style={{ fontSize: "15px", margin: 0 }}>
-              {tab === "Pending" ? "કોઈ Pending વિનંતી નથી" : `કોઈ ${tab} સભ્ય નથી`}
-            </p>
-          </div>
-        ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-            {filtered.map((u) => (
-              <div
-                key={u.uid}
-                style={{
-                  background: "var(--color-surface)",
-                  borderRadius: "16px",
-                  padding: "16px",
-                  border: "1px solid var(--color-border)",
-                  boxShadow: "var(--shadow-card)",
-                }}
-              >
-                {/* User header */}
-                <div
+            </div>
+
+            {/* Tabs */}
+            <div
+              style={{
+                display: "flex",
+                gap: "8px",
+                marginBottom: "20px",
+                overflowX: "auto",
+                paddingBottom: "4px",
+              }}
+            >
+              {TABS.map((t) => (
+                <button
+                  key={t.key}
+                  onClick={() => setTab(t.key)}
                   style={{
+                    flexShrink: 0,
+                    height: "36px",
+                    padding: "0 16px",
+                    borderRadius: "999px",
+                    border: `1.5px solid ${tab === t.key ? t.color : "var(--color-border)"}`,
+                    background: tab === t.key ? t.color : "var(--color-surface)",
+                    color: tab === t.key ? "white" : "var(--color-ink-soft)",
+                    fontSize: "13.5px",
+                    fontWeight: 600,
+                    cursor: "pointer",
                     display: "flex",
                     alignItems: "center",
-                    gap: "12px",
-                    marginBottom: "14px",
+                    gap: "6px",
+                    transition: "all 0.2s",
                   }}
                 >
-                  <div
-                    style={{
-                      width: "44px",
-                      height: "44px",
-                      borderRadius: "50%",
-                      overflow: "hidden",
-                      background: "var(--color-crop-100)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      flexShrink: 0,
-                    }}
-                  >
-                    {u.photoURL ? (
-                      <img
-                        src={u.photoURL}
-                        alt={u.name ?? "User"}
-                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                      />
-                    ) : (
-                      <span style={{ fontSize: "18px", color: "var(--color-crop-600)" }}>
-                        {u.name?.charAt(0) ?? "U"}
-                      </span>
-                    )}
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p
-                      style={{
-                        fontSize: "15px",
-                        fontWeight: 600,
-                        color: "var(--color-ink)",
-                        margin: "0 0 2px",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      {u.name ?? "Unknown User"}
-                    </p>
-                    <p
-                      style={{
-                        fontSize: "12.5px",
-                        color: "var(--color-ink-faint)",
-                        margin: 0,
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      {u.email ?? u.uid}
-                    </p>
-                  </div>
-                  {/* Status badge */}
+                  {t.label}
                   <span
                     style={{
-                      flexShrink: 0,
-                      fontSize: "12px",
-                      fontWeight: 600,
-                      padding: "3px 10px",
+                      background: tab === t.key ? "rgba(255,255,255,0.3)" : "var(--color-paper-dim)",
                       borderRadius: "999px",
-                      background:
-                        u.membershipStatus === "Active"
-                          ? "var(--color-crop-100)"
-                          : u.membershipStatus === "Pending"
-                          ? "var(--color-saffron-100)"
-                          : u.membershipStatus === "Expired"
-                          ? "var(--color-loss-100)"
-                          : "var(--color-paper-dim)",
-                      color:
-                        u.membershipStatus === "Active"
-                          ? "var(--color-crop-600)"
-                          : u.membershipStatus === "Pending"
-                          ? "var(--color-saffron-600)"
-                          : u.membershipStatus === "Expired"
-                          ? "var(--color-loss-600)"
-                          : "var(--color-ink-faint)",
+                      padding: "1px 7px",
+                      fontSize: "12px",
                     }}
                   >
-                    {u.membershipStatus}
+                    {tabCount(t.key)}
                   </span>
-                </div>
+                </button>
+              ))}
+            </div>
 
-                {/* Details grid */}
-                {u.donationStatus === "Skipped" ? (
-                  <div style={{ padding: "10px", background: "var(--color-paper-dim)", borderRadius: "8px", marginBottom: "14px", display: "flex", alignItems: "center", gap: "8px", color: "var(--color-ink-soft)", fontSize: "13.5px" }}>
-                    <CheckCircleIcon size={16} className="text-[var(--color-crop-500)]" />
-                    Free Access (Donation Skipped)
-                  </div>
-                ) : (
+            {/* User list */}
+            {loading ? (
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "12px",
+                }}
+              >
+                {[1, 2, 3].map((i) => (
                   <div
+                    key={i}
                     style={{
-                      display: "grid",
-                      gridTemplateColumns: "1fr 1fr",
-                      gap: "6px 16px",
-                      marginBottom: "14px",
-                      fontSize: "13px",
+                      height: "120px",
+                      borderRadius: "16px",
+                      background: "var(--color-paper-dim)",
+                      animation: "pulse 1.5s ease-in-out infinite",
+                    }}
+                  />
+                ))}
+              </div>
+            ) : filtered.length === 0 ? (
+              <div
+                style={{
+                  textAlign: "center",
+                  padding: "60px 0",
+                  color: "var(--color-ink-faint)",
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '12px', color: 'var(--color-crop-500)' }}><CheckCircleIcon size={48} /></div>
+                <p style={{ fontSize: "15px", margin: 0 }}>
+                  {tab === "Pending" ? "કોઈ Pending વિનંતી નથી" : `કોઈ ${tab} સભ્ય નથી`}
+                </p>
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                {filtered.map((u) => (
+                  <div
+                    key={u.uid}
+                    style={{
+                      background: "var(--color-surface)",
+                      borderRadius: "16px",
+                      padding: "16px",
+                      border: "1px solid var(--color-border)",
+                      boxShadow: "var(--shadow-card)",
                     }}
                   >
-                    <div>
-                      <span style={{ color: "var(--color-ink-faint)" }}>Submitted: </span>
-                      <span style={{ color: "var(--color-ink)", fontWeight: 500 }}>
-                        {fmtDateTime(u.paymentSubmittedAt)}
-                      </span>
-                    </div>
-                    <div>
-                      <span style={{ color: "var(--color-ink-faint)" }}>Method: </span>
-                      <span style={{ color: "var(--color-ink)", fontWeight: 500 }}>
-                        {u.paymentMethod ?? "—"}
-                      </span>
-                    </div>
-                    <div>
-                      <span style={{ color: "var(--color-ink-faint)" }}>Ref: </span>
+                    {/* User header */}
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "12px",
+                        marginBottom: "14px",
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: "44px",
+                          height: "44px",
+                          borderRadius: "50%",
+                          overflow: "hidden",
+                          background: "var(--color-crop-100)",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flexShrink: 0,
+                        }}
+                      >
+                        {u.photoURL ? (
+                          <img
+                            src={u.photoURL}
+                            alt={u.name ?? "User"}
+                            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                          />
+                        ) : (
+                          <span style={{ fontSize: "18px", color: "var(--color-crop-600)" }}>
+                            {u.name?.charAt(0) ?? "U"}
+                          </span>
+                        )}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p
+                          style={{
+                            fontSize: "15px",
+                            fontWeight: 600,
+                            color: "var(--color-ink)",
+                            margin: "0 0 2px",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {u.name ?? "Unknown User"}
+                        </p>
+                        <p
+                          style={{
+                            fontSize: "12.5px",
+                            color: "var(--color-ink-faint)",
+                            margin: 0,
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {u.email ?? u.uid}
+                        </p>
+                      </div>
+                      {/* Status badge */}
                       <span
                         style={{
-                          color: "var(--color-ink)",
-                          fontWeight: 500,
-                          fontFamily: "monospace",
+                          flexShrink: 0,
                           fontSize: "12px",
+                          fontWeight: 600,
+                          padding: "3px 10px",
+                          borderRadius: "999px",
+                          background:
+                            u.membershipStatus === "Active"
+                              ? "var(--color-crop-100)"
+                              : u.membershipStatus === "Pending"
+                                ? "var(--color-saffron-100)"
+                                : u.membershipStatus === "Expired"
+                                  ? "var(--color-loss-100)"
+                                  : "var(--color-paper-dim)",
+                          color:
+                            u.membershipStatus === "Active"
+                              ? "var(--color-crop-600)"
+                              : u.membershipStatus === "Pending"
+                                ? "var(--color-saffron-600)"
+                                : u.membershipStatus === "Expired"
+                                  ? "var(--color-loss-600)"
+                                  : "var(--color-ink-faint)",
                         }}
                       >
-                        {u.paymentReference ?? "—"}
+                        {u.membershipStatus}
                       </span>
                     </div>
-                    <div>
-                      <span style={{ color: "var(--color-ink-faint)" }}>Amount: </span>
-                      <span style={{ color: "var(--color-ink)", fontWeight: 500 }}>
-                        ₹{u.membershipAmount}
-                      </span>
-                    </div>
-                    {u.membershipExpiresAt && (
-                      <div>
-                        <span style={{ color: "var(--color-ink-faint)" }}>Expires: </span>
-                        <span style={{ color: "var(--color-ink)", fontWeight: 500 }}>
-                          {fmt(u.membershipExpiresAt)}
-                        </span>
-                      </div>
-                    )}
-                    {u.renewalCount > 0 && (
-                      <div>
-                        <span style={{ color: "var(--color-ink-faint)" }}>Renewals: </span>
-                        <span style={{ color: "var(--color-ink)", fontWeight: 500 }}>
-                          {u.renewalCount}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                )}
 
-                {/* Payment proof thumbnail */}
-                {u.paymentProof && (
-                  <div style={{ marginBottom: "14px" }}>
-                    <button
-                      onClick={() => setSelectedProof(u.paymentProof!)}
-                      style={{
-                        display: "block",
-                        width: "100%",
-                        cursor: "pointer",
-                        border: "none",
-                        background: "none",
-                        padding: 0,
-                        textAlign: "left",
-                      }}
-                    >
-                      <img
-                        src={u.paymentProof}
-                        alt="Payment proof"
+                    {/* Details grid */}
+                    {u.donationStatus === "Skipped" ? (
+                      <div style={{ padding: "12px", background: "var(--color-paper-dim)", borderRadius: "10px", marginBottom: "14px" }}>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px", color: "var(--color-ink-soft)", fontSize: "13.5px", marginBottom: "10px" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                            <CheckCircleIcon size={16} className="text-[var(--color-crop-500)]" />
+                            Free Access (Donation Skipped)
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => grantSupporterStatus(u.uid)}
+                          disabled={actionBusy === u.uid + "_supporter"}
+                          style={{
+                            width: "100%",
+                            height: "38px",
+                            borderRadius: "8px",
+                            background: "linear-gradient(135deg, var(--color-crop-500), var(--color-crop-600))",
+                            color: "white",
+                            border: "none",
+                            fontSize: "13px",
+                            fontWeight: 600,
+                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: "6px",
+                          }}
+                        >
+                          {actionBusy === u.uid + "_supporter" ? "..." : "💚 Mark as Supporter / Donor (સહયોગી બનાવો)"}
+                        </button>
+                      </div>
+                    ) : (
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "1fr 1fr",
+                          gap: "6px 16px",
+                          marginBottom: "14px",
+                          fontSize: "13px",
+                        }}
+                      >
+                        <div>
+                          <span style={{ color: "var(--color-ink-faint)" }}>Submitted: </span>
+                          <span style={{ color: "var(--color-ink)", fontWeight: 500 }}>
+                            {fmtDateTime(u.paymentSubmittedAt)}
+                          </span>
+                        </div>
+                        <div>
+                          <span style={{ color: "var(--color-ink-faint)" }}>Method: </span>
+                          <span style={{ color: "var(--color-ink)", fontWeight: 500 }}>
+                            {u.paymentMethod ?? "—"}
+                          </span>
+                        </div>
+                        <div>
+                          <span style={{ color: "var(--color-ink-faint)" }}>Ref: </span>
+                          <span
+                            style={{
+                              color: "var(--color-ink)",
+                              fontWeight: 500,
+                              fontFamily: "monospace",
+                              fontSize: "12px",
+                            }}
+                          >
+                            {u.paymentReference ?? "—"}
+                          </span>
+                        </div>
+                        <div>
+                          <span style={{ color: "var(--color-ink-faint)" }}>Amount: </span>
+                          <span style={{ color: "var(--color-ink)", fontWeight: 500 }}>
+                            ₹{u.membershipAmount}
+                          </span>
+                        </div>
+                        {u.membershipExpiresAt && (
+                          <div>
+                            <span style={{ color: "var(--color-ink-faint)" }}>Expires: </span>
+                            <span style={{ color: "var(--color-ink)", fontWeight: 500 }}>
+                              {fmt(u.membershipExpiresAt)}
+                            </span>
+                          </div>
+                        )}
+                        {u.renewalCount > 0 && (
+                          <div>
+                            <span style={{ color: "var(--color-ink-faint)" }}>Renewals: </span>
+                            <span style={{ color: "var(--color-ink)", fontWeight: 500 }}>
+                              {u.renewalCount}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Payment proof thumbnail */}
+                    {u.paymentProof && (
+                      <div style={{ marginBottom: "14px" }}>
+                        <button
+                          onClick={() => setSelectedProof(u.paymentProof!)}
+                          style={{
+                            display: "block",
+                            width: "100%",
+                            cursor: "pointer",
+                            border: "none",
+                            background: "none",
+                            padding: 0,
+                            textAlign: "left",
+                          }}
+                        >
+                          <img
+                            src={u.paymentProof}
+                            alt="Payment proof"
+                            style={{
+                              width: "100%",
+                              maxHeight: "140px",
+                              objectFit: "contain",
+                              borderRadius: "10px",
+                              border: "1px solid var(--color-border)",
+                              background: "var(--color-paper)",
+                            }}
+                          />
+                          <p
+                            style={{
+                              fontSize: "12px",
+                              color: "var(--color-ink-faint)",
+                              marginTop: "4px",
+                              textAlign: "center",
+                            }}
+                          >
+                            ટૅપ કરીને મોટો જુઓ
+                          </p>
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Actions — only for Pending */}
+                    {u.membershipStatus === "Pending" && (
+                      <div style={{ display: "flex", gap: "10px" }}>
+                        <button
+                          id={`approve-${u.uid}`}
+                          onClick={() => approveMembership(u.uid)}
+                          disabled={actionBusy === u.uid + "_approve" || actionBusy === u.uid + "_reject"}
+                          style={{
+                            flex: 1,
+                            height: "44px",
+                            borderRadius: "12px",
+                            background:
+                              actionBusy === u.uid + "_approve"
+                                ? "var(--color-paper-dim)"
+                                : "linear-gradient(135deg, var(--color-crop-500), var(--color-crop-600))",
+                            color: actionBusy === u.uid + "_approve" ? "var(--color-ink-faint)" : "white",
+                            border: "none",
+                            cursor:
+                              actionBusy === u.uid + "_approve" || actionBusy === u.uid + "_reject"
+                                ? "not-allowed"
+                                : "pointer",
+                            fontSize: "14px",
+                            fontWeight: 600,
+                            transition: "all 0.2s",
+                          }}
+                        >
+                          {actionBusy === u.uid + "_approve" ? "..." : <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}><CheckCircleIcon size={16} /> Approve</div>}
+                        </button>
+                        <button
+                          id={`reject-${u.uid}`}
+                          onClick={() => rejectMembership(u.uid)}
+                          disabled={actionBusy === u.uid + "_approve" || actionBusy === u.uid + "_reject"}
+                          style={{
+                            flex: 1,
+                            height: "44px",
+                            borderRadius: "12px",
+                            background:
+                              actionBusy === u.uid + "_reject"
+                                ? "var(--color-paper-dim)"
+                                : "var(--color-loss-100)",
+                            color:
+                              actionBusy === u.uid + "_reject"
+                                ? "var(--color-ink-faint)"
+                                : "var(--color-loss-600)",
+                            border: `1px solid ${actionBusy === u.uid + "_reject" ? "var(--color-border)" : "var(--color-loss-400)"}`,
+                            cursor:
+                              actionBusy === u.uid + "_approve" || actionBusy === u.uid + "_reject"
+                                ? "not-allowed"
+                                : "pointer",
+                            fontSize: "14px",
+                            fontWeight: 600,
+                            transition: "all 0.2s",
+                          }}
+                        >
+                          {actionBusy === u.uid + "_reject" ? "..." : <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}><XCircleIcon size={16} /> Reject</div>}
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Approve action for Rejected/Expired/Banned too */}
+                    {(u.membershipStatus === "Rejected" || u.membershipStatus === "Expired" || u.membershipStatus === "Banned") && (
+                      <button
+                        id={`approve-${u.uid}`}
+                        onClick={() => approveMembership(u.uid)}
+                        disabled={actionBusy === u.uid + "_approve"}
                         style={{
                           width: "100%",
-                          maxHeight: "140px",
-                          objectFit: "contain",
-                          borderRadius: "10px",
-                          border: "1px solid var(--color-border)",
-                          background: "var(--color-paper)",
-                        }}
-                      />
-                      <p
-                        style={{
-                          fontSize: "12px",
-                          color: "var(--color-ink-faint)",
-                          marginTop: "4px",
-                          textAlign: "center",
+                          height: "44px",
+                          borderRadius: "12px",
+                          background:
+                            actionBusy === u.uid + "_approve"
+                              ? "var(--color-paper-dim)"
+                              : "linear-gradient(135deg, var(--color-crop-500), var(--color-crop-600))",
+                          color: actionBusy === u.uid + "_approve" ? "var(--color-ink-faint)" : "white",
+                          border: "none",
+                          cursor: actionBusy === u.uid + "_approve" ? "not-allowed" : "pointer",
+                          fontSize: "14px",
+                          fontWeight: 600,
                         }}
                       >
-                        ટૅપ કરીને મોટો જુઓ
-                      </p>
-                    </button>
+                        {actionBusy === u.uid + "_approve" ? "..." : <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}><CheckCircleIcon size={16} /> Approve & Activate</div>}
+                      </button>
+                    )}
+
+                    {/* Management Actions: Ban and Delete */}
+                    <div style={{ display: "flex", gap: "10px", marginTop: "10px", borderTop: "1px solid var(--color-border)", paddingTop: "14px" }}>
+                      {u.membershipStatus !== "Banned" ? (
+                        <button
+                          onClick={() => banUser(u.uid)}
+                          disabled={actionBusy === u.uid + "_ban" || u.uid === user?.uid}
+                          style={{
+                            flex: 1,
+                            height: "38px",
+                            borderRadius: "8px",
+                            background: "var(--color-paper-dim)",
+                            color: u.uid === user?.uid ? "var(--color-ink-faint)" : "var(--color-loss-600)",
+                            border: "1px solid var(--color-loss-200)",
+                            cursor: u.uid === user?.uid ? "not-allowed" : "pointer",
+                            fontSize: "13px",
+                            fontWeight: 600,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: "6px",
+                            opacity: u.uid === user?.uid ? 0.6 : 1
+                          }}
+                          title={u.uid === user?.uid ? "તમે તમારા પોતાના એકાઉન્ટને બેન કરી શકતા નથી" : ""}
+                        >
+                          {actionBusy === u.uid + "_ban" ? "..." : <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}><LockIcon size={14} /> Ban User</div>}
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => unbanUser(u.uid)}
+                          disabled={actionBusy === u.uid + "_unban"}
+                          style={{
+                            flex: 1,
+                            height: "38px",
+                            borderRadius: "8px",
+                            background: "var(--color-crop-50)",
+                            color: "var(--color-crop-600)",
+                            border: "1px solid var(--color-crop-400)",
+                            cursor: "pointer",
+                            fontSize: "13px",
+                            fontWeight: 600,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: "6px"
+                          }}
+                        >
+                          {actionBusy === u.uid + "_unban" ? "..." : <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}><CheckCircleIcon size={14} /> Unban User</div>}
+                        </button>
+                      )}
+
+                      <button
+                        onClick={() => deleteUserProfile(u.uid)}
+                        disabled={actionBusy === u.uid + "_delete" || u.uid === user?.uid}
+                        style={{
+                          flex: 1,
+                          height: "38px",
+                          borderRadius: "8px",
+                          background: "var(--color-loss-50)",
+                          color: u.uid === user?.uid ? "var(--color-ink-faint)" : "var(--color-loss-600)",
+                          border: "1px solid var(--color-loss-400)",
+                          cursor: u.uid === user?.uid ? "not-allowed" : "pointer",
+                          fontSize: "13px",
+                          fontWeight: 600,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: "6px",
+                          opacity: u.uid === user?.uid ? 0.6 : 1
+                        }}
+                        title={u.uid === user?.uid ? "તમે તમારા પોતાના એકાઉન્ટને ડીલીટ કરી શકતા નથી" : ""}
+                      >
+                        {actionBusy === u.uid + "_delete" ? "..." : <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}><TrashIcon size={14} /> Delete Profile</div>}
+                      </button>
+                    </div>
                   </div>
-                )}
-
-                {/* Actions — only for Pending */}
-                {u.membershipStatus === "Pending" && (
-                  <div style={{ display: "flex", gap: "10px" }}>
-                    <button
-                      id={`approve-${u.uid}`}
-                      onClick={() => approveMembership(u.uid)}
-                      disabled={actionBusy === u.uid + "_approve" || actionBusy === u.uid + "_reject"}
-                      style={{
-                        flex: 1,
-                        height: "44px",
-                        borderRadius: "12px",
-                        background:
-                          actionBusy === u.uid + "_approve"
-                            ? "var(--color-paper-dim)"
-                            : "linear-gradient(135deg, var(--color-crop-500), var(--color-crop-600))",
-                        color: actionBusy === u.uid + "_approve" ? "var(--color-ink-faint)" : "white",
-                        border: "none",
-                        cursor:
-                          actionBusy === u.uid + "_approve" || actionBusy === u.uid + "_reject"
-                            ? "not-allowed"
-                            : "pointer",
-                        fontSize: "14px",
-                        fontWeight: 600,
-                        transition: "all 0.2s",
-                      }}
-                    >
-                      {actionBusy === u.uid + "_approve" ? "..." : <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}><CheckCircleIcon size={16} /> Approve</div>}
-                    </button>
-                    <button
-                      id={`reject-${u.uid}`}
-                      onClick={() => rejectMembership(u.uid)}
-                      disabled={actionBusy === u.uid + "_approve" || actionBusy === u.uid + "_reject"}
-                      style={{
-                        flex: 1,
-                        height: "44px",
-                        borderRadius: "12px",
-                        background:
-                          actionBusy === u.uid + "_reject"
-                            ? "var(--color-paper-dim)"
-                            : "var(--color-loss-100)",
-                        color:
-                          actionBusy === u.uid + "_reject"
-                            ? "var(--color-ink-faint)"
-                            : "var(--color-loss-600)",
-                        border: `1px solid ${actionBusy === u.uid + "_reject" ? "var(--color-border)" : "var(--color-loss-400)"}`,
-                        cursor:
-                          actionBusy === u.uid + "_approve" || actionBusy === u.uid + "_reject"
-                            ? "not-allowed"
-                            : "pointer",
-                        fontSize: "14px",
-                        fontWeight: 600,
-                        transition: "all 0.2s",
-                      }}
-                    >
-                      {actionBusy === u.uid + "_reject" ? "..." : <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}><XCircleIcon size={16} /> Reject</div>}
-                    </button>
-                  </div>
-                )}
-
-                {/* Approve action for Rejected/Expired/Banned too */}
-                {(u.membershipStatus === "Rejected" || u.membershipStatus === "Expired" || u.membershipStatus === "Banned") && (
-                  <button
-                    id={`approve-${u.uid}`}
-                    onClick={() => approveMembership(u.uid)}
-                    disabled={actionBusy === u.uid + "_approve"}
-                    style={{
-                      width: "100%",
-                      height: "44px",
-                      borderRadius: "12px",
-                      background:
-                        actionBusy === u.uid + "_approve"
-                          ? "var(--color-paper-dim)"
-                          : "linear-gradient(135deg, var(--color-crop-500), var(--color-crop-600))",
-                      color: actionBusy === u.uid + "_approve" ? "var(--color-ink-faint)" : "white",
-                      border: "none",
-                      cursor: actionBusy === u.uid + "_approve" ? "not-allowed" : "pointer",
-                      fontSize: "14px",
-                      fontWeight: 600,
-                    }}
-                  >
-                    {actionBusy === u.uid + "_approve" ? "..." : <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}><CheckCircleIcon size={16} /> Approve & Activate</div>}
-                  </button>
-                )}
-
-                {/* Management Actions: Ban and Delete */}
-                <div style={{ display: "flex", gap: "10px", marginTop: "10px", borderTop: "1px solid var(--color-border)", paddingTop: "14px" }}>
-                  {u.membershipStatus !== "Banned" ? (
-                     <button
-                       onClick={() => banUser(u.uid)}
-                       disabled={actionBusy === u.uid + "_ban" || u.uid === user?.uid}
-                       style={{
-                         flex: 1,
-                         height: "38px",
-                         borderRadius: "8px",
-                         background: "var(--color-paper-dim)",
-                         color: u.uid === user?.uid ? "var(--color-ink-faint)" : "var(--color-loss-600)",
-                         border: "1px solid var(--color-loss-200)",
-                         cursor: u.uid === user?.uid ? "not-allowed" : "pointer",
-                         fontSize: "13px",
-                         fontWeight: 600,
-                         display: "flex",
-                         alignItems: "center",
-                         justifyContent: "center",
-                         gap: "6px",
-                         opacity: u.uid === user?.uid ? 0.6 : 1
-                       }}
-                       title={u.uid === user?.uid ? "તમે તમારા પોતાના એકાઉન્ટને બેન કરી શકતા નથી" : ""}
-                     >
-                       {actionBusy === u.uid + "_ban" ? "..." : <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}><LockIcon size={14} /> Ban User</div>}
-                     </button>
-                  ) : (
-                     <button
-                       onClick={() => unbanUser(u.uid)}
-                       disabled={actionBusy === u.uid + "_unban"}
-                       style={{
-                         flex: 1,
-                         height: "38px",
-                         borderRadius: "8px",
-                         background: "var(--color-crop-50)",
-                         color: "var(--color-crop-600)",
-                         border: "1px solid var(--color-crop-400)",
-                         cursor: "pointer",
-                         fontSize: "13px",
-                         fontWeight: 600,
-                         display: "flex",
-                         alignItems: "center",
-                         justifyContent: "center",
-                         gap: "6px"
-                       }}
-                     >
-                       {actionBusy === u.uid + "_unban" ? "..." : <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}><CheckCircleIcon size={14} /> Unban User</div>}
-                     </button>
-                  )}
-                  
-                  <button
-                    onClick={() => deleteUserProfile(u.uid)}
-                    disabled={actionBusy === u.uid + "_delete" || u.uid === user?.uid}
-                    style={{
-                      flex: 1,
-                      height: "38px",
-                      borderRadius: "8px",
-                      background: "var(--color-loss-50)",
-                      color: u.uid === user?.uid ? "var(--color-ink-faint)" : "var(--color-loss-600)",
-                      border: "1px solid var(--color-loss-400)",
-                      cursor: u.uid === user?.uid ? "not-allowed" : "pointer",
-                      fontSize: "13px",
-                      fontWeight: 600,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: "6px",
-                      opacity: u.uid === user?.uid ? 0.6 : 1
-                    }}
-                    title={u.uid === user?.uid ? "તમે તમારા પોતાના એકાઉન્ટને ડીલીટ કરી શકતા નથી" : ""}
-                  >
-                    {actionBusy === u.uid + "_delete" ? "..." : <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}><TrashIcon size={14} /> Delete Profile</div>}
-                  </button>
-                </div>
+                ))}
               </div>
-            ))}
-          </div>
-        )}
+            )}
           </>
         ) : (
           /* Support Tickets UI */
           <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
             {ticketsLoading ? (
-               <p style={{ textAlign: "center", color: "var(--color-ink-faint)", padding: "20px" }}>ટિકિટ લોડ થઈ રહી છે...</p>
+              <p style={{ textAlign: "center", color: "var(--color-ink-faint)", padding: "20px" }}>ટિકિટ લોડ થઈ રહી છે...</p>
             ) : tickets.length === 0 ? (
-               <div style={{ textAlign: "center", padding: "60px 0", color: "var(--color-ink-faint)" }}>
-                 <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '12px', color: 'var(--color-crop-500)' }}><CheckCircleIcon size={48} /></div>
-                 <p style={{ fontSize: "15px", margin: 0 }}>કોઈ સપોર્ટ ટિકિટ નથી.</p>
-               </div>
+              <div style={{ textAlign: "center", padding: "60px 0", color: "var(--color-ink-faint)" }}>
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '12px', color: 'var(--color-crop-500)' }}><CheckCircleIcon size={48} /></div>
+                <p style={{ fontSize: "15px", margin: 0 }}>કોઈ સપોર્ટ ટિકિટ નથી.</p>
+              </div>
             ) : (
-               tickets.map(t => (
-                 <div key={t.id} style={{ background: "var(--color-surface)", borderRadius: "16px", padding: "16px", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-card)" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "10px" }}>
-                      <div>
-                        <p style={{ fontSize: "15px", fontWeight: 600, color: "var(--color-ink)", margin: "0 0 2px" }}>{t.displayName || "Unknown User"}</p>
-                        <p style={{ fontSize: "12.5px", color: "var(--color-ink-faint)", margin: 0 }}>{t.email || t.phoneNumber || t.uid}</p>
-                      </div>
-                      <span style={{ fontSize: "12px", fontWeight: 600, padding: "3px 10px", borderRadius: "999px", background: t.status === "open" ? "var(--color-saffron-100)" : "var(--color-paper-dim)", color: t.status === "open" ? "var(--color-saffron-600)" : "var(--color-ink-faint)", height: "24px", display: "inline-flex", alignItems: "center" }}>
-                        {t.status === "open" ? "Open" : "Resolved"}
-                      </span>
+              tickets.map(t => (
+                <div key={t.id} style={{ background: "var(--color-surface)", borderRadius: "16px", padding: "16px", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-card)" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "10px" }}>
+                    <div>
+                      <p style={{ fontSize: "15px", fontWeight: 600, color: "var(--color-ink)", margin: "0 0 2px" }}>{t.displayName || "Unknown User"}</p>
+                      <p style={{ fontSize: "12.5px", color: "var(--color-ink-faint)", margin: 0 }}>{t.email || t.phoneNumber || t.uid}</p>
                     </div>
-                    <div style={{ background: "var(--color-paper-dim)", padding: "12px", borderRadius: "10px", fontSize: "14px", color: "var(--color-ink)", marginBottom: "14px", whiteSpace: "pre-wrap" }}>
-                      {t.message}
-                    </div>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <span style={{ fontSize: "12px", color: "var(--color-ink-faint)" }}>{fmtDateTime(t.createdAt)}</span>
-                      {t.status === "open" && (
-                        <button
-                          onClick={() => resolveTicket(t.id)}
-                          disabled={actionBusy === t.id + "_resolve"}
-                          style={{
-                            background: "var(--color-crop-50)",
-                            color: "var(--color-crop-600)",
-                            border: "1px solid var(--color-crop-400)",
-                            padding: "6px 14px",
-                            borderRadius: "8px",
-                            fontSize: "13px",
-                            fontWeight: 600,
-                            cursor: actionBusy === t.id + "_resolve" ? "not-allowed" : "pointer",
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "6px"
-                          }}
-                        >
-                          {actionBusy === t.id + "_resolve" ? "..." : <><CheckIcon size={14} /> Mark Resolved</>}
-                        </button>
-                      )}
-                    </div>
-                 </div>
-               ))
+                    <span style={{ fontSize: "12px", fontWeight: 600, padding: "3px 10px", borderRadius: "999px", background: t.status === "open" ? "var(--color-saffron-100)" : "var(--color-paper-dim)", color: t.status === "open" ? "var(--color-saffron-600)" : "var(--color-ink-faint)", height: "24px", display: "inline-flex", alignItems: "center" }}>
+                      {t.status === "open" ? "Open" : "Resolved"}
+                    </span>
+                  </div>
+                  <div style={{ background: "var(--color-paper-dim)", padding: "12px", borderRadius: "10px", fontSize: "14px", color: "var(--color-ink)", marginBottom: "14px", whiteSpace: "pre-wrap" }}>
+                    {t.message}
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <span style={{ fontSize: "12px", color: "var(--color-ink-faint)" }}>{fmtDateTime(t.createdAt)}</span>
+                    {t.status === "open" && (
+                      <button
+                        onClick={() => resolveTicket(t.id)}
+                        disabled={actionBusy === t.id + "_resolve"}
+                        style={{
+                          background: "var(--color-crop-50)",
+                          color: "var(--color-crop-600)",
+                          border: "1px solid var(--color-crop-400)",
+                          padding: "6px 14px",
+                          borderRadius: "8px",
+                          fontSize: "13px",
+                          fontWeight: 600,
+                          cursor: actionBusy === t.id + "_resolve" ? "not-allowed" : "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "6px"
+                        }}
+                      >
+                        {actionBusy === t.id + "_resolve" ? "..." : <><CheckIcon size={14} /> Mark Resolved</>}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))
             )}
           </div>
         )}

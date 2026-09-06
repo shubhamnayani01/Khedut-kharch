@@ -28,7 +28,7 @@ import {
 } from "firebase/firestore";
 import { auth, db } from "../firebase";
 import type { UserMembership, MembershipStatus } from "../types";
-import { ADMIN_EMAIL } from "../types";
+import { ADMIN_EMAILS } from "../types";
 
 interface AuthContextValue {
   user: User | null;
@@ -72,7 +72,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [membershipLoading, setMembershipLoading] = useState(true);
 
   const isAdmin = useMemo(
-    () => !!(user?.email && user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()),
+    () => !!(user?.email && ADMIN_EMAILS.some(e => e.toLowerCase() === user.email!.toLowerCase())),
     [user]
   );
 

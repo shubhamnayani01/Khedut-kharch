@@ -186,7 +186,7 @@ export default function ExpenseHistory() {
                   <button
                     onClick={() => navigate(`/crop/${season.id}/expense/${e.id}/edit`)}
                     className="w-9 h-9 flex items-center justify-center rounded-full text-[var(--color-ink-faint)] active:bg-[var(--color-paper-dim)]"
-                    aria-label="સંપાદિત કરો"
+                    aria-label="એડિટ કરો"
                   >
                     <EditIcon size={17} />
                   </button>

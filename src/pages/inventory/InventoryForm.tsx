@@ -1,6 +1,6 @@
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useAppData } from "../../context/AppDataContext";
 import { useToast } from "../../context/ToastContext";
 import { TopBar, Screen } from "../../components/ui/AppShell";
@@ -13,8 +13,12 @@ import { CategoryIcon } from "../../components/icons/CategoryIcons";
 
 export default function InventoryForm() {
   const navigate = useNavigate();
-  const { addInventoryItem } = useAppData();
+  const { id } = useParams();
+  const { inventoryItems, addInventoryItem, updateInventoryItem } = useAppData();
   const { show } = useToast();
+
+  const isEdit = Boolean(id);
+  const existing = isEdit ? inventoryItems.find((i) => i.id === id) : undefined;
 
   const {
     register,
@@ -23,23 +27,38 @@ export default function InventoryForm() {
     formState: { errors, isSubmitting },
   } = useForm<InventoryFormInput, unknown, InventoryFormValues>({
     resolver: zodResolver(inventorySchema),
-    defaultValues: {
-      datePurchased: todayISO(),
-      name: "",
-      unit: "થેલી",
-      notes: "",
-    },
+    defaultValues: existing
+      ? {
+          name: existing.name,
+          category: existing.category,
+          totalQuantity: existing.totalQuantity,
+          unit: existing.unit,
+          totalCost: existing.totalCost,
+          datePurchased: existing.datePurchased,
+          notes: existing.notes || "",
+        }
+      : {
+          datePurchased: todayISO(),
+          name: "",
+          unit: "થેલી",
+          notes: "",
+        },
   });
 
   const onSubmit = (values: InventoryFormValues) => {
-    addInventoryItem(values);
-    show("સ્ટોક ઉમેરાયો");
+    if (isEdit && existing) {
+      updateInventoryItem(existing.id, values);
+      show("સ્ટોક અપડેટ થયો");
+    } else {
+      addInventoryItem(values);
+      show("સ્ટોક ઉમેરાયો");
+    }
     navigate("/inventory", { replace: true });
   };
 
   return (
     <>
-      <TopBar title="નવો સ્ટોક ઉમેરો" />
+      <TopBar title={isEdit ? "સ્ટોક એડિટ કરો" : "નવો સ્ટોક ઉમેરો"} />
       <Screen withNav={false}>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 pb-8">
           
