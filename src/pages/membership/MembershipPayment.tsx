@@ -3,8 +3,6 @@ import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { XCircleIcon, CheckIcon, PinIcon, PaperclipIcon, CloseIcon, HourglassIcon, CoffeeIcon } from "../../components/icons/UIIcons";
 
-// ─── Free vs Paid feature comparison 
-
 type FeatureRow = { label: string; free: boolean | string; paid: boolean | string };
 
 const FEATURES: FeatureRow[] = [
@@ -48,8 +46,6 @@ export default function MembershipPayment() {
       navigate("/", { replace: true });
       return;
     }
-    // Still in trial → dashboard
-    if (status === "Trial") { navigate("/", { replace: true }); return; }
 
     if (status === "Pending") { navigate("/membership/pending", { replace: true }); return; }
     if (status === "Expired") { navigate("/membership/expired", { replace: true }); return; }
@@ -182,9 +178,6 @@ export default function MembershipPayment() {
           </p>
         </div>
 
-        {/* ══════════════════════════════════════════════════════════════ */}
-        {/* FREE vs PAID comparison table                                  */}
-        {/* ══════════════════════════════════════════════════════════════ */}
         <div style={{
           background: "var(--color-surface)",
           border: "1px solid var(--color-border)",
