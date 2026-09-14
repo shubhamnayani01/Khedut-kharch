@@ -1,5 +1,5 @@
 import {
-  
+
   createContext,
   useCallback,
   useContext,
@@ -36,6 +36,9 @@ interface AuthContextValue {
   membership: UserMembership | null;
   membershipLoading: boolean;
   isAdmin: boolean;
+  isInTrial: boolean;
+  trialDaysLeft: number;
+  isReadOnly: boolean;
   signInWithGoogle: () => Promise<void>;
   signOutUser: () => Promise<void>;
   submitMembershipPayment: (opts: {
@@ -106,6 +109,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setMembershipLoading(true);
     const userDocRef = doc(db, "users", user.uid);
 
+    const TRIAL_DAYS = 7;
+    const TRIAL_MS = TRIAL_DAYS * 24 * 60 * 60 * 1000;
+
     const unsubscribe = onSnapshot(
       userDocRef,
       async (snap) => {
@@ -116,6 +122,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
 
         const data = snap.data();
+
+        // ── New user: no membershipStatus yet → start free trial ──
+        if (!data.membershipStatus) {
+          try {
+            await updateDoc(userDocRef, {
+              membershipStatus: "Trial",
+              trialStartedAt: serverTimestamp(),
+              membershipType: "Annual",
+              membershipAmount: 300,
+              renewalCount: 0,
+            });
+          } catch (err) {
+            console.error("Failed to start trial:", err);
+          }
+          // onSnapshot will fire again with the updated doc
+          return;
+        }
 
         // Build membership object from Firestore doc
         const raw: Partial<UserMembership> = {
@@ -132,9 +155,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           approvedBy: data.approvedBy ?? undefined,
           renewalCount: typeof data.renewalCount === "number" ? data.renewalCount : 0,
           donationStatus: data.donationStatus ?? undefined,
+          trialStartedAt: data.trialStartedAt?.toMillis?.() ?? data.trialStartedAt ?? undefined,
         };
 
-        // Auto-expire: if Active but expiry has passed, update Firestore and local state
+        // ── Auto-expire paid membership ──
         if (
           raw.membershipStatus === "Active" &&
           raw.membershipExpiresAt &&
@@ -145,6 +169,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             await updateDoc(userDocRef, { membershipStatus: "Expired" });
           } catch (err) {
             console.error("Failed to auto-expire membership:", err);
+          }
+        }
+
+        // ── Auto-expire free trial ──
+        if (
+          raw.membershipStatus === "Trial" &&
+          raw.trialStartedAt &&
+          Date.now() > raw.trialStartedAt + TRIAL_MS
+        ) {
+          raw.membershipStatus = "TrialExpired";
+          try {
+            await updateDoc(userDocRef, { membershipStatus: "TrialExpired" });
+          } catch (err) {
+            console.error("Failed to expire trial:", err);
           }
         }
 
@@ -275,6 +313,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } as UserMembership));
   }, [user]);
 
+  const TRIAL_MS = 7 * 24 * 60 * 60 * 1000;
+  const isInTrial = !isAdmin && membership?.membershipStatus === "Trial";
+  const isReadOnly = !isAdmin && membership?.membershipStatus === "TrialExpired";
+  const trialDaysLeft = isInTrial && membership?.trialStartedAt
+    ? Math.max(0, Math.ceil((membership.trialStartedAt + TRIAL_MS - Date.now()) / 86400000))
+    : 0;
+
   const value = useMemo(
     () => ({
       user,
@@ -282,12 +327,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       membership,
       membershipLoading,
       isAdmin,
+      isInTrial,
+      trialDaysLeft,
+      isReadOnly,
       signInWithGoogle,
       signOutUser,
       submitMembershipPayment,
       skipDonation,
     }),
-    [user, loading, membership, membershipLoading, isAdmin, signInWithGoogle, signOutUser, submitMembershipPayment, skipDonation]
+    [user, loading, membership, membershipLoading, isAdmin, isInTrial, trialDaysLeft, isReadOnly, signInWithGoogle, signOutUser, submitMembershipPayment, skipDonation]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -5,7 +5,7 @@ import { TopBar, Screen } from "../../components/ui/AppShell";
 import { Button } from "../../components/ui/Button";
 import { Dialog } from "../../components/ui/Dialog";
 import { TextInput, NumberInput } from "../../components/ui/Field";
-import { TrashIcon } from "../../components/icons/UIIcons";
+import { TrashIcon, AlertIcon } from "../../components/icons/UIIcons";
 import { formatCurrency, formatDateDMY, todayISO } from "../../lib/format";
 import { useToast } from "../../context/ToastContext";
 
@@ -29,7 +29,7 @@ export default function BhaagidarDetails() {
   if (!season || !profile) {
     return (
       <>
-        <TopBar title="ભાગીદાર વિગત" onBack={() => navigate("/")} />
+        <TopBar title="ભાગીદાર વિગત" onBack={() => navigate("/bhaagidar")} />
         <Screen>
           <p className="text-[var(--color-ink-faint)] pt-8 text-center">માહિતી મળી નથી.</p>
         </Screen>
@@ -78,7 +78,7 @@ export default function BhaagidarDetails() {
 
   return (
     <>
-      <TopBar title={profile.name} onBack={() => navigate("/")} right={
+      <TopBar title={profile.name} onBack={() => navigate("/bhaagidar")} right={
          <button onClick={handleDelete} className="p-2 text-[var(--color-loss-500)]"><TrashIcon size={20} /></button>
       } />
       <Screen>
@@ -101,7 +101,7 @@ export default function BhaagidarDetails() {
            {!season.harvest ? (
              <div className="space-y-4">
                 <div className="bg-white/10 p-3 rounded-lg border border-white/20 flex items-start gap-2 text-[14px]">
-                  <span>⚠️</span>
+                  <span className="flex-shrink-0 text-yellow-500"><AlertIcon size={18} /></span>
                   <span>પાક વેચાણની માહિતી હજુ ઉમેરવામાં આવી નથી</span>
                 </div>
                 

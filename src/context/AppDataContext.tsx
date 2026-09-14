@@ -322,14 +322,26 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
   }, [saveToFirestore, seasons]);
 
   const deleteSeason = useCallback((id: string) => {
+    // Capture related IDs before clearing state
+    const expenseIds = expenses.filter(e => e.seasonId === id).map(e => e.id);
+    const workerIds = workers.filter(w => w.seasonId === id).map(w => w.id);
+    const bhaagidarIds = bhaagidars.filter(b => b.seasonId === id).map(b => b.id);
+    const ledgerIds = advanceLedgers.filter(a => a.seasonId === id).map(a => a.id);
+
     setSeasons(prev => prev.filter(s => s.id !== id));
     setExpenses(prev => prev.filter(e => e.seasonId !== id));
     setWorkers(prev => prev.filter(w => w.seasonId !== id));
     setBhaagidars(prev => prev.filter(b => b.seasonId !== id));
     setAdvanceLedgers(prev => prev.filter(a => a.seasonId !== id));
     if (settings.activeSeasonId === id) setActiveSeason(undefined);
+
+    // Delete from Firestore — season doc + all related sub-collections
     void deleteFromFirestore("seasons", id);
-  }, [deleteFromFirestore, settings.activeSeasonId, setActiveSeason]);
+    expenseIds.forEach(eid => void deleteFromFirestore("expenses", eid));
+    workerIds.forEach(wid => void deleteFromFirestore("workers", wid));
+    bhaagidarIds.forEach(bid => void deleteFromFirestore("bhaagidars", bid));
+    ledgerIds.forEach(lid => void deleteFromFirestore("advanceLedgers", lid));
+  }, [deleteFromFirestore, settings.activeSeasonId, setActiveSeason, expenses, workers, bhaagidars, advanceLedgers]);
 
   const getSeason = useCallback((id: string) => seasons.find(s => s.id === id), [seasons]);
 

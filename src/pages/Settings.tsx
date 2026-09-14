@@ -1,5 +1,5 @@
 import { useState, useRef, type ReactNode } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAppData } from "../context/AppDataContext";
 import { useToast } from "../context/ToastContext";
 import { useInstallPrompt } from "../hooks/useInstallPrompt";
@@ -306,6 +306,10 @@ export default function Settings() {
           <p className="text-[13.5px] text-[var(--color-ink-faint)] leading-relaxed mt-2">
             Kutch Khedut Kharch — Community project with cloud sync & backup.
           </p>
+          <div className="flex items-center gap-4 mt-4 pt-3 border-t border-[var(--color-border)]">
+            <Link to="/privacy-policy" className="text-[13px] font-medium text-[var(--color-crop-600)] hover:underline">Privacy Policy</Link>
+            <Link to="/terms" className="text-[13px] font-medium text-[var(--color-crop-600)] hover:underline">Terms & Conditions</Link>
+          </div>
         </Card>
 
         <button

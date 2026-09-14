@@ -260,16 +260,17 @@ export default function MembershipPending() {
             marginBottom: "20px",
           }}
         >
-          <p
+          <div
             style={{
+              display: "flex", alignItems: "flex-start", gap: "8px",
               fontSize: "13px",
               color: "var(--color-ink-faint)",
               lineHeight: "1.6",
-              margin: 0,
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}><div style={{ marginTop: '2px' }}><MessageCircleIcon size={16} /></div> સ્વીકૃતિ સામાન્ય રીતે 1–24 કલાકમાં મળે છે. કોઈ સવાલ હોય તો WhatsApp પર સંપર્ક કરો.</div>
-          </p>
+            <div style={{ marginTop: "2px", flexShrink: 0 }}><MessageCircleIcon size={16} /></div>
+            <span>સ્વીકૃતિ સામાન્ય રીતે 1–24 કલાકમાં મળે છે. કોઈ સવાલ હોય તો WhatsApp પર સંપર્ક કરો.</span>
+          </div>
         </div>
 
         <button

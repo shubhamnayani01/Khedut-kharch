@@ -5,6 +5,8 @@ import { Screen, TopBar } from "../../components/ui/AppShell";
 import { UploadIcon } from "../../components/icons/UIIcons";
 import { FileTextIcon } from "../../components/icons/ModuleIcons";
 import { db, auth } from "../../firebase";
+import { useAuth } from "../../context/AuthContext";
+import { useWalletDocuments } from "../../hooks/useWalletDocuments";
 import type { DocumentCategory } from "../../types";
 import { makeId } from "../../lib/id";
 
@@ -22,6 +24,8 @@ const CATEGORIES: DocumentCategory[] = [
 ];
 
 const MAX_FILE_SIZE = 500 * 1024; // 500 KB
+const DEFAULT_DOC_LIMIT = 5;
+const DONOR_DOC_LIMIT = 30;
 
 /** Reads a File and returns a Base64 data URL string. */
 function fileToBase64(file: File): Promise<string> {
@@ -35,11 +39,16 @@ function fileToBase64(file: File): Promise<string> {
 
 export default function UploadDocument() {
   const navigate = useNavigate();
+  const { membership, isAdmin } = useAuth();
+  const { documents } = useWalletDocuments();
   const [file, setFile] = useState<File | null>(null);
   const [name, setName] = useState("");
   const [category, setCategory] = useState<DocumentCategory>("Aadhaar");
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const hasHighLimit = isAdmin || membership?.donationStatus === "Approved";
+  const docLimit = hasHighLimit ? DONOR_DOC_LIMIT : DEFAULT_DOC_LIMIT;
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -65,9 +74,13 @@ export default function UploadDocument() {
     const user = auth.currentUser;
     if (!user) return;
 
+    if (documents.length >= docLimit) {
+      alert(`તમારી લિમિટ પૂરી થઈ ગઈ છે (Max ${docLimit} દસ્તાવેજ). વધારે સાચવવા માટે કોઈ દસ્તાવેજ ડીલીટ કરો.`);
+      return;
+    }
+
     setUploading(true);
     try {
-      // Convert file to Base64 data URL — no Firebase Storage needed
       const base64Data = await fileToBase64(file);
       const docId = makeId();
 
@@ -78,7 +91,7 @@ export default function UploadDocument() {
         category,
         size: file.size,
         fileType: file.type,
-        base64Data,           // stored directly in Firestore
+        base64Data,
         createdAt: Date.now(),
       });
 
@@ -129,6 +142,9 @@ export default function UploadDocument() {
                 </>
               )}
             </div>
+            <p className="text-center text-[12px] mt-2 font-medium" style={{ color: documents.length >= docLimit ? "var(--color-loss-600)" : "var(--color-ink-faint)" }}>
+              તમારી લિમિટ: {documents.length} / {docLimit} દસ્તાવેજ
+            </p>
             <input
               type="file"
               ref={fileInputRef}

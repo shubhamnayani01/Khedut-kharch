@@ -236,6 +236,29 @@ export default function Account() {
             </button>
           </div>
         </Card>
+
+        {/* Data & Account Erasure Notice (Google OAuth / DPDP Compliance) */}
+        <Card className="p-4 mb-5 border-amber-200/60 bg-amber-50/40">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h3 className="text-[14px] font-semibold text-amber-900 flex items-center gap-1.5">
+                એકાઉન્ટ અને ડેટા હટાવો (Delete Account)
+              </h3>
+              <p className="text-[12px] text-[var(--color-ink-faint)] mt-0.5">
+                તમારો તમામ ક્લાઉડ ડેટા અને એકાઉન્ટ કાયમ માટે ડિલીટ કરવા માટે વિનંતી મોકલો.
+              </p>
+            </div>
+            <button
+              onClick={() => {
+                setSupportText("હું મારું એકાઉન્ટ અને તમામ ક્લાઉડ ડેટા કાયમ માટે ડિલીટ કરવા માંગુ છું. (Account Deletion Request)");
+                setSupportOpen(true);
+              }}
+              className="px-3 py-1.5 rounded-lg border border-amber-300 text-amber-800 font-medium text-[12.5px] shrink-0 active:scale-95 transition-transform"
+            >
+              વિનંતી મોકલો
+            </button>
+          </div>
+        </Card>
       </Screen>
 
       <BottomNav />

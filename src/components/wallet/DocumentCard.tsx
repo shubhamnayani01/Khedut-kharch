@@ -1,6 +1,6 @@
 
 import type { UserDocument } from "../../types";
-import { TrashIcon, DownloadIcon } from "../icons/UIIcons";
+import { TrashIcon, DownloadIcon, EyeIcon } from "../icons/UIIcons";
 import { FileTextIcon } from "../icons/ModuleIcons";
 
 function formatBytes(bytes: number, decimals = 2) {
@@ -35,7 +35,7 @@ export function DocumentCard({
   const handleDownload = () => {
     const ext = doc.fileType.split("/").pop() ?? "bin";
     const a = document.createElement("a");
-    a.href = doc.base64Data;
+    a.href = doc.base64Data || "";
     a.download = `${doc.name}.${ext}`;
     a.click();
   };
@@ -98,7 +98,7 @@ export function DocumentCard({
           onClick={handlePreview}
           className="flex items-center gap-1.5 h-8 px-3 rounded-full bg-[var(--color-paper-dim)] text-[var(--color-ink-soft)] text-[12px] font-semibold active:scale-95 transition-transform"
         >
-          <span>👁</span>
+          <span><EyeIcon size={16} /></span>
           જુઓ
         </button>
 

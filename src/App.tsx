@@ -22,6 +22,8 @@ import Wallet from "./pages/wallet/Wallet";
 import UploadDocument from "./pages/wallet/UploadDocument";
 import InventoryTab from "./pages/inventory/InventoryTab";
 import InventoryForm from "./pages/inventory/InventoryForm";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import Terms from "./pages/Terms";
 
 import ExpensesTab from "./pages/expenses/ExpensesTab";
 import WorkersTab from "./pages/workers/WorkersTab";
@@ -71,6 +73,8 @@ export default function App() {
             <Route path="/membership/payment" element={<MembershipPayment />} />
             <Route path="/membership/pending" element={<MembershipPending />} />
             <Route path="/membership/expired" element={<MembershipExpired />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/terms" element={<Terms />} />
             {/* Renewal reuses the payment page (it detects expired status) */}
             <Route path="/membership/renewal" element={<MembershipExpired />} />
 

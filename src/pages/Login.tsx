@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { 
   LeafIcon, 
@@ -163,8 +163,8 @@ export default function Login() {
                 </>
               )}
             </button>
-            <p className="text-[12px] text-[var(--color-ink-faint)] mt-4">
-              તમારો ડેટા સંપૂર્ણપણે સુરક્ષિત છે.
+            <p className="text-[12px] text-[var(--color-ink-faint)] mt-4 leading-relaxed">
+              લૉગઇન કરીને તમે અમારી <Link to="/terms" className="underline text-[var(--color-crop-600)]">નિયમો અને શરતો</Link> અને <Link to="/privacy-policy" className="underline text-[var(--color-crop-600)]">ગોપનીયતા નીતિ</Link> સાથે સંમત થાઓ છો.
             </p>
           </div>
         </div>
@@ -254,11 +254,16 @@ export default function Login() {
         </div>
 
         {/* Footer */}
-        <div className="mt-16 text-center pb-8 border-t border-[var(--color-border)] pt-8">
+        <div className="mt-16 text-center pb-8 border-t border-[var(--color-border)] pt-8 flex flex-col items-center gap-3">
           <p className="text-[13px] text-[var(--color-ink-faint)]">
             &copy; 2026 Khedut Kharch. All rights reserved. <br/>
             Made for farmers in Kachchh.
           </p>
+          <div className="flex items-center gap-4 text-[13px] font-medium text-[var(--color-ink-soft)]">
+            <Link to="/privacy-policy" className="hover:text-[var(--color-crop-600)] transition-colors">Privacy Policy</Link>
+            <span>•</span>
+            <Link to="/terms" className="hover:text-[var(--color-crop-600)] transition-colors">Terms & Conditions</Link>
+          </div>
         </div>
 
       </div>

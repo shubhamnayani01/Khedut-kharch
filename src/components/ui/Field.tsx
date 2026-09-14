@@ -8,8 +8,8 @@ function FieldShell({
   children,
 }: {
   label: string;
-  error?: string;
-  hint?: string;
+  error?: React.ReactNode;
+  hint?: React.ReactNode;
   required?: boolean;
   children: React.ReactNode;
 }) {
@@ -30,7 +30,7 @@ const controlBase =
 
 export const TextInput = React.forwardRef<
   HTMLInputElement,
-  React.InputHTMLAttributes<HTMLInputElement> & { label: string; error?: string; hint?: string; required?: boolean }
+  React.InputHTMLAttributes<HTMLInputElement> & { label: string; error?: React.ReactNode; hint?: React.ReactNode; required?: boolean }
 >(({ label, error, hint, required, className = "", ...rest }, ref) => (
   <FieldShell label={label} error={error} hint={hint} required={required}>
     <input
@@ -44,7 +44,7 @@ TextInput.displayName = "TextInput";
 
 export const NumberInput = React.forwardRef<
   HTMLInputElement,
-  React.InputHTMLAttributes<HTMLInputElement> & { label: string; error?: string; hint?: string; required?: boolean }
+  React.InputHTMLAttributes<HTMLInputElement> & { label: string; error?: React.ReactNode; hint?: React.ReactNode; required?: boolean }
 >(({ label, error, hint, required, className = "", ...rest }, ref) => (
   <FieldShell label={label} error={error} hint={hint} required={required}>
     <input
@@ -60,7 +60,7 @@ NumberInput.displayName = "NumberInput";
 
 export const TextArea = React.forwardRef<
   HTMLTextAreaElement,
-  React.TextareaHTMLAttributes<HTMLTextAreaElement> & { label: string; error?: string; hint?: string; required?: boolean }
+  React.TextareaHTMLAttributes<HTMLTextAreaElement> & { label: string; error?: React.ReactNode; hint?: React.ReactNode; required?: boolean }
 >(({ label, error, hint, required, className = "", ...rest }, ref) => (
   <FieldShell label={label} error={error} hint={hint} required={required}>
     <textarea
@@ -75,7 +75,7 @@ TextArea.displayName = "TextArea";
 
 export const Select = React.forwardRef<
   HTMLSelectElement,
-  React.SelectHTMLAttributes<HTMLSelectElement> & { label: string; error?: string; hint?: string; required?: boolean }
+  React.SelectHTMLAttributes<HTMLSelectElement> & { label: string; error?: React.ReactNode; hint?: React.ReactNode; required?: boolean }
 >(({ label, error, hint, required, className = "", children, ...rest }, ref) => (
   <FieldShell label={label} error={error} hint={hint} required={required}>
     <select

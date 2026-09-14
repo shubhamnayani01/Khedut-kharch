@@ -1,10 +1,20 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { TrialBanner } from "../ui/TrialBanner";
 
 /**
  * Wraps protected routes. Redirects based on auth + membership status.
- * All checks happen client-side; Firestore security rules enforce server-side.
+ *
+ * Status state machine:
+ *   Trial       → full access + trial countdown banner
+ *   TrialExpired → read-only access + red lockout banner
+ *   Active      → full access, no banner
+ *   Pending     → /membership/pending
+ *   Rejected    → /membership/payment
+ *   Expired     → /membership/expired  (paid membership expired)
+ *   Banned      → /login
+ *   null        → wait (trial will be auto-started by AuthContext)
  */
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const { user, loading, membership, membershipLoading } = useAuth();
@@ -18,11 +28,9 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    if (!membership) {
-      // No membership doc at all → go to payment page
-      navigate("/membership/payment", { replace: true });
-      return;
-    }
+    // null membership = AuthContext is about to write "Trial" status.
+    // Don't redirect — just wait for the next snapshot.
+    if (!membership) return;
 
     const status = membership.membershipStatus;
 
@@ -41,12 +49,13 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
       return;
     }
 
+    // Paid membership expired (not trial) → renewal page
     if (status === "Expired") {
       navigate("/membership/expired", { replace: true });
       return;
     }
 
-    // Defensive: double-check expiry even if status says Active
+    // Defensive: double-check paid membership expiry even if status says Active
     if (
       status === "Active" &&
       membership.membershipExpiresAt &&
@@ -54,6 +63,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     ) {
       navigate("/membership/expired", { replace: true });
     }
+    // Trial + TrialExpired: both allowed through (handled by TrialBanner below)
   }, [user, loading, membership, membershipLoading, navigate]);
 
   // Show loading while resolving auth + membership
@@ -66,15 +76,26 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // If not active, don't render children (navigation effect will redirect)
-  if (
-    !user ||
-    !membership ||
-    membership.membershipStatus !== "Active" ||
-    (membership.membershipExpiresAt && membership.membershipExpiresAt < Date.now())
-  ) {
+  const status = membership?.membershipStatus;
+
+  // Allowed statuses: Active, Trial, TrialExpired
+  const isAllowed =
+    !!user &&
+    !!membership &&
+    (status === "Active" || status === "Trial" || status === "TrialExpired") &&
+    !(status === "Active" && membership.membershipExpiresAt && membership.membershipExpiresAt < Date.now());
+
+  if (!isAllowed) {
+    // navigation effect will redirect; render nothing in the meantime
     return null;
   }
 
-  return <>{children}</>;
+  return (
+    <div style={{ display: "flex", flexDirection: "column", minHeight: "100dvh" }}>
+      <TrialBanner />
+      <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+        {children}
+      </div>
+    </div>
+  );
 }

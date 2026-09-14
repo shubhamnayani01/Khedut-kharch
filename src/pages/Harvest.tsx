@@ -41,7 +41,7 @@ export default function Harvest() {
   if (!season) {
     return (
       <>
-        <TopBar title="પાક વેચાણ" />
+        <TopBar title="પાક વેચાણ" onBack={() => navigate(`/crop/${id}`)} />
         <Screen withNav={false}>
           <p className="text-[var(--color-ink-faint)] pt-8 text-center">ખેતી મળી નથી.</p>
         </Screen>
@@ -62,7 +62,7 @@ export default function Harvest() {
 
   return (
     <>
-      <TopBar title="પાક વેચાણ" />
+      <TopBar title="પાક વેચાણ" onBack={() => navigate(`/crop/${id}`)} />
       <Screen withNav={false}>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 pb-8">
           <TextInput

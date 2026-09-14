@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import {
   collection,
   getDocs,
@@ -10,7 +10,8 @@ import {
 import { db } from "../../firebase";
 import { useAuth } from "../../context/AuthContext";
 import type { MembershipStatus } from "../../types";
-import { ShieldIcon, RefreshIcon, CheckCircleIcon, XCircleIcon, MessageCircleIcon, CheckIcon, TrashIcon, LockIcon } from "../../components/icons/UIIcons";
+import { ShieldIcon, RefreshIcon, CheckCircleIcon, XCircleIcon, MessageCircleIcon, CheckIcon, TrashIcon, LockIcon, BellIcon, UserIcon, UsersIcon, HourglassIcon, RupeeIcon, AlertIcon, HeartIcon } from "../../components/icons/UIIcons";
+import { useAdminNotifications } from "../../hooks/useAdminNotifications";
 
 interface SupportTicket {
   id: string;
@@ -42,7 +43,7 @@ interface MemberUser {
   donationStatus?: string;
 }
 
-type Tab = "Pending" | "Active" | "Expired" | "Rejected" | "Banned";
+type Tab = "Pending" | "Active" | "Expired" | "Rejected" | "Banned" | "Expiring";
 
 function toMs(val: unknown): number | undefined {
   if (!val) return undefined;
@@ -63,8 +64,214 @@ function fmtDateTime(ms?: number): string {
   return new Date(ms).toLocaleString("gu-IN");
 }
 
+const ADMIN_PIN = "0110";
+const MAX_ATTEMPTS = 3;
+const LOCKOUT_SECONDS = 30;
+const LOCKOUT_KEY = "admin_lockout_until";
+const ATTEMPTS_KEY = "admin_lockout_attempts";
+
+function AdminPinLock({ onUnlock }: { onUnlock: () => void }) {
+  const [pin, setPin] = useState(["" , "", "", ""]);
+  const [shake, setShake] = useState(false);
+  const [error, setError] = useState("");
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  // Derive lockout state from sessionStorage on every render tick
+  const getLockoutRemaining = () => {
+    const until = parseInt(sessionStorage.getItem(LOCKOUT_KEY) ?? "0", 10);
+    return Math.max(0, Math.ceil((until - Date.now()) / 1000));
+  };
+
+  const [countdown, setCountdown] = useState(() => getLockoutRemaining());
+  const [attempts, setAttempts] = useState(() => {
+    return parseInt(sessionStorage.getItem(ATTEMPTS_KEY) ?? "0", 10);
+  });
+
+  const locked = countdown > 0;
+
+  // Focus first input on mount (only if not locked)
+  useEffect(() => {
+    if (!locked) inputRefs.current[0]?.focus();
+  }, [locked]);
+
+  // Tick the countdown every second using the real clock
+  useEffect(() => {
+    if (!locked) return;
+    const interval = setInterval(() => {
+      const remaining = getLockoutRemaining();
+      setCountdown(remaining);
+      if (remaining === 0) {
+        sessionStorage.removeItem(LOCKOUT_KEY);
+        sessionStorage.removeItem(ATTEMPTS_KEY);
+        clearInterval(interval);
+        setTimeout(() => inputRefs.current[0]?.focus(), 50);
+      }
+    }, 500); // poll every 500ms so it's accurate
+    return () => clearInterval(interval);
+  }, [locked]);
+
+  const handleDigit = (index: number, value: string) => {
+    if (locked) return;
+    const digit = value.replace(/\D/g, "").slice(-1);
+    const next = [...pin];
+    next[index] = digit;
+    setPin(next);
+    if (digit && index < 3) {
+      inputRefs.current[index + 1]?.focus();
+    }
+    if (digit && index === 3) {
+      const entered = [...next].join("");
+      if (entered === ADMIN_PIN) {
+        sessionStorage.removeItem(LOCKOUT_KEY);
+        sessionStorage.removeItem(ATTEMPTS_KEY);
+        onUnlock();
+      } else {
+        const newAttempts = attempts + 1;
+        setAttempts(newAttempts);
+        sessionStorage.setItem(ATTEMPTS_KEY, String(newAttempts));
+        setShake(true);
+        setTimeout(() => setShake(false), 600);
+        if (newAttempts >= MAX_ATTEMPTS) {
+          const until = Date.now() + LOCKOUT_SECONDS * 1000;
+          sessionStorage.setItem(LOCKOUT_KEY, String(until));
+          setCountdown(LOCKOUT_SECONDS);
+          setError(`ઘણા ખોટા પ્રયાસ — ${LOCKOUT_SECONDS} સેકન્ડ રાહ જુઓ.`);
+        } else {
+          setError(`ખોટો PIN. ${MAX_ATTEMPTS - newAttempts} પ્રયાસ બાકી.`);
+        }
+        setPin(["", "", "", ""]);
+        setTimeout(() => inputRefs.current[0]?.focus(), 50);
+      }
+    }
+  };
+
+  const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Backspace" && !pin[index] && index > 0) {
+      inputRefs.current[index - 1]?.focus();
+    }
+  };
+
+  return (
+    <div style={{
+      position: "fixed", inset: 0, zIndex: 9999,
+      background: "linear-gradient(135deg, #0d1f12 0%, #1a2e1f 50%, #0a1a0d 100%)",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      padding: "20px",
+    }}>
+      <style>{`
+        @keyframes pinShake {
+          0%, 100% { transform: translateX(0); }
+          15% { transform: translateX(-10px); }
+          30% { transform: translateX(10px); }
+          45% { transform: translateX(-8px); }
+          60% { transform: translateX(8px); }
+          75% { transform: translateX(-4px); }
+          90% { transform: translateX(4px); }
+        }
+        @keyframes pinFadeIn {
+          from { opacity: 0; transform: translateY(24px) scale(0.97); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes lockPulse {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(74,222,128,0.25); }
+          50% { box-shadow: 0 0 0 16px rgba(74,222,128,0); }
+        }
+        .pin-input:focus { outline: none; border-color: #4ade80 !important; background: rgba(74,222,128,0.08) !important; }
+        .pin-digit-btn { transition: transform 0.1s; }
+        .pin-digit-btn:active { transform: scale(0.92); }
+      `}</style>
+
+      <div style={{
+        width: "100%", maxWidth: "340px",
+        background: "rgba(255,255,255,0.05)",
+        backdropFilter: "blur(20px)",
+        WebkitBackdropFilter: "blur(20px)",
+        borderRadius: "28px",
+        border: "1px solid rgba(255,255,255,0.1)",
+        padding: "40px 32px 36px",
+        boxShadow: "0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(74,222,128,0.1)",
+        animation: "pinFadeIn 0.4s cubic-bezier(0.34,1.56,0.64,1) both",
+        textAlign: "center",
+      }}>
+        {/* Lock icon */}
+        <div style={{
+          width: "72px", height: "72px", borderRadius: "50%",
+          background: "linear-gradient(135deg, rgba(74,222,128,0.2), rgba(34,197,94,0.1))",
+          border: "1.5px solid rgba(74,222,128,0.35)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          margin: "0 auto 20px",
+          animation: "lockPulse 2.5s ease-in-out infinite",
+        }}>
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+        </div>
+
+        <h1 style={{ fontSize: "22px", fontWeight: 700, color: "white", margin: "0 0 6px", letterSpacing: "-0.3px" }}>
+          Admin Panel
+        </h1>
+        <p style={{ fontSize: "13.5px", color: "rgba(255,255,255,0.45)", margin: "0 0 32px" }}>
+          ખેડૂત ખર્ચ — PIN દાખલ કરો
+        </p>
+
+        {/* PIN dots */}
+        <div
+          style={{
+            display: "flex", gap: "12px", justifyContent: "center", marginBottom: "10px",
+            animation: shake ? "pinShake 0.5s ease" : "none",
+          }}
+        >
+          {pin.map((digit, i) => (
+            <input
+              key={i}
+              ref={(el) => { inputRefs.current[i] = el; }}
+              type="password"
+              inputMode="numeric"
+              maxLength={1}
+              value={digit}
+              onChange={(e) => handleDigit(i, e.target.value)}
+              onKeyDown={(e) => handleKeyDown(i, e)}
+              disabled={locked}
+              className="pin-input"
+              style={{
+                width: "58px", height: "58px",
+                borderRadius: "14px",
+                border: `2px solid ${digit ? "rgba(74,222,128,0.6)" : "rgba(255,255,255,0.12)"}`,
+                background: digit ? "rgba(74,222,128,0.08)" : "rgba(255,255,255,0.04)",
+                color: "white",
+                fontSize: "24px",
+                textAlign: "center",
+                fontWeight: 700,
+                transition: "all 0.2s",
+                cursor: locked ? "not-allowed" : "text",
+              }}
+            />
+          ))}
+        </div>
+
+        {/* Error / countdown */}
+        <div style={{ minHeight: "28px", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "8px" }}>
+          {locked ? (
+            <p style={{ fontSize: "13px", color: "#f87171", margin: 0 }}>
+              🔒 {countdown}s પછી ફરી પ્રયાસ કરો
+            </p>
+          ) : error ? (
+            <p style={{ fontSize: "13px", color: "#f87171", margin: 0 }}>{error}</p>
+          ) : null}
+        </div>
+
+        <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.25)", margin: "16px 0 0" }}>
+          4-digit PIN દાખલ કરો
+        </p>
+      </div>
+    </div>
+  );
+}
+
 export default function AdminPanel() {
   const { user } = useAuth();
+  const [pinVerified, setPinVerified] = useState(false);
   const [users, setUsers] = useState<MemberUser[]>([]);
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
   const [viewMode, setViewMode] = useState<"memberships" | "feedback">("memberships");
@@ -75,6 +282,28 @@ export default function AdminPanel() {
   const [selectedProof, setSelectedProof] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [error, setError] = useState("");
+  const [notifOpen, setNotifOpen] = useState(false);
+
+  const { notifs, unreadCount, markRead, markAllRead } = useAdminNotifications(pinVerified);
+
+  // ── Session timeout: auto-lock PIN after 10 min of inactivity ──
+  const inactivityTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const resetInactivityTimer = useCallback(() => {
+    if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
+    inactivityTimer.current = setTimeout(() => {
+      setPinVerified(false);
+    }, 10 * 60 * 1000); // 10 minutes
+  }, []);
+  useEffect(() => {
+    if (!pinVerified) return;
+    const events = ["click", "keydown", "touchstart", "scroll"];
+    events.forEach(e => window.addEventListener(e, resetInactivityTimer));
+    resetInactivityTimer();
+    return () => {
+      events.forEach(e => window.removeEventListener(e, resetInactivityTimer));
+      if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
+    };
+  }, [pinVerified, resetInactivityTimer]);
 
   const grantSupporterStatus = async (uid: string, amount = 300) => {
     setActionBusy(uid + "_supporter");
@@ -183,9 +412,14 @@ export default function AdminPanel() {
   }, []);
 
   useEffect(() => {
+    if (!pinVerified) return;
     if (viewMode === "memberships") void fetchUsers();
     else void fetchTickets();
-  }, [viewMode, fetchUsers, fetchTickets]);
+  }, [pinVerified, viewMode, fetchUsers, fetchTickets]);
+
+  if (!pinVerified) {
+    return <AdminPinLock onUnlock={() => setPinVerified(true)} />;
+  }
 
   const resolveTicket = async (id: string) => {
     setActionBusy(id + "_resolve");
@@ -271,7 +505,15 @@ export default function AdminPanel() {
   };
 
   const filtered = users.filter((u) => {
-    const matchesTab = u.membershipStatus === tab;
+    let matchesTab: boolean;
+    if (tab === "Expiring") {
+      matchesTab =
+        u.membershipStatus === "Active" &&
+        !!u.membershipExpiresAt &&
+        u.membershipExpiresAt - Date.now() < 30 * 24 * 60 * 60 * 1000;
+    } else {
+      matchesTab = u.membershipStatus === tab;
+    }
     const q = searchQuery.trim().toLowerCase();
     if (!q) return matchesTab;
     return matchesTab && (
@@ -335,11 +577,24 @@ export default function AdminPanel() {
     }
   };
 
-  const tabCount = (t: Tab) => users.filter((u) => u.membershipStatus === t).length;
+  // ── Derived stats ──
+  const totalUsers = users.length;
+  const activeCount = users.filter(u => u.membershipStatus === "Active").length;
+  const pendingCount = users.filter(u => u.membershipStatus === "Pending").length;
+  const totalRevenue = users
+    .filter(u => u.membershipStatus === "Active" && u.paymentSubmittedAt)
+    .reduce((sum, u) => sum + (u.membershipAmount ?? 0), 0);
+  const expiringCount = users.filter(u => {
+    if (u.membershipStatus !== "Active") return false;
+    const exp = u.membershipExpiresAt;
+    if (!exp) return false;
+    return exp - Date.now() < 30 * 24 * 60 * 60 * 1000;
+  }).length;
 
   const TABS: { key: Tab; label: string; color: string }[] = [
     { key: "Pending", label: "Pending", color: "var(--color-saffron-500)" },
     { key: "Active", label: "Active", color: "var(--color-crop-500)" },
+    { key: "Expiring", label: "Expiring Soon", color: "#f97316" },
     { key: "Expired", label: "Expired", color: "var(--color-loss-500)" },
     { key: "Rejected", label: "Rejected", color: "var(--color-ink-faint)" },
     { key: "Banned", label: "Banned", color: "var(--color-loss-600)" },
@@ -392,6 +647,8 @@ export default function AdminPanel() {
               ખેડૂત ખર્ચ — Membership Management
             </p>
           </div>
+
+          {/* Refresh */}
           <button
             onClick={() => {
               if (viewMode === "memberships") fetchUsers();
@@ -411,7 +668,157 @@ export default function AdminPanel() {
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><RefreshIcon size={14} /> Refresh</div>
           </button>
+
+          {/* Bell / Notifications */}
+          <button
+            onClick={() => { setNotifOpen(o => !o); if (!notifOpen) markAllRead(); }}
+            style={{
+              position: "relative",
+              width: "38px", height: "38px",
+              borderRadius: "10px",
+              border: "1px solid var(--color-border)",
+              background: notifOpen ? "var(--color-crop-50)" : "var(--color-paper)",
+              color: notifOpen ? "var(--color-crop-600)" : "var(--color-ink-soft)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              cursor: "pointer",
+              flexShrink: 0,
+              transition: "all 0.15s",
+            }}
+            title="Notifications"
+          >
+            <BellIcon size={18} />
+            {unreadCount > 0 && (
+              <span style={{
+                position: "absolute", top: "-5px", right: "-5px",
+                minWidth: "18px", height: "18px",
+                borderRadius: "99px",
+                background: "var(--color-loss-500)",
+                color: "white",
+                fontSize: "10px", fontWeight: 700,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                padding: "0 4px",
+                border: "2px solid var(--color-surface)",
+                animation: "bellPulse 1s ease infinite",
+              }}>
+                {unreadCount > 9 ? "9+" : unreadCount}
+              </span>
+            )}
+          </button>
         </div>
+
+        {/* Notification Panel */}
+        {notifOpen && (
+          <div style={{
+            position: "absolute", top: "60px", right: 0, left: 0,
+            zIndex: 50,
+            background: "var(--color-surface)",
+            borderBottom: "1px solid var(--color-border)",
+            boxShadow: "0 8px 32px rgba(0,0,0,0.15)",
+            maxHeight: "420px", overflowY: "auto",
+          }}>
+            <div style={{ maxWidth: "900px", margin: "0 auto", padding: "0 16px" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 0 10px" }}>
+                <p style={{ fontSize: "14px", fontWeight: 700, color: "var(--color-ink)", margin: 0, display: "flex", alignItems: "center", gap: "6px" }}>
+                  <BellIcon size={16} /> Notifications
+                </p>
+                {notifs.length > 0 && (
+                  <button onClick={markAllRead} style={{ fontSize: "12px", color: "var(--color-crop-600)", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+                    બધા વાંચ્યા
+                  </button>
+                )}
+              </div>
+
+              {notifs.length === 0 ? (
+                <div style={{ textAlign: "center", padding: "28px 0", color: "var(--color-ink-faint)", fontSize: "13px" }}>
+                  કોઈ notification નથી
+                </div>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px", paddingBottom: "12px" }}>
+                  {notifs.map(n => (
+                    <div
+                      key={n.id}
+                      onClick={() => markRead(n.id)}
+                      style={{
+                        display: "flex", flexDirection: "column", gap: "8px",
+                        padding: "12px",
+                        borderRadius: "12px",
+                        background: n.read ? "var(--color-paper)" : "var(--color-crop-50)",
+                        border: `1px solid ${n.read ? "var(--color-border)" : "var(--color-crop-200, #bbf7d0)"}`,
+                        cursor: "default",
+                        transition: "background 0.2s",
+                      }}
+                    >
+                      <div style={{ display: "flex", alignItems: "flex-start", gap: "10px" }}>
+                        {/* Icon */}
+                        <div style={{
+                          width: "36px", height: "36px", borderRadius: "50%", flexShrink: 0,
+                          background: n.type === "new_payment" ? "var(--color-saffron-100)" : "var(--color-crop-100)",
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                        }}>
+                          {n.type === "new_payment"
+                            ? <RupeeIcon size={20} className="text-[var(--color-saffron-600)]" />
+                            : <UserIcon size={16} className="text-[var(--color-crop-600)]" />}
+                        </div>
+
+                        {/* Content */}
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <p style={{ fontSize: "13px", fontWeight: 600, color: "var(--color-ink)", margin: "0 0 2px", display: "flex", alignItems: "center", gap: "4px" }}>
+                            {n.type === "new_payment" ? <><RupeeIcon size={14} /> નવી ચૂકવણી</> : <><UserIcon size={14} /> નવો યુઝર</>}
+                          </p>
+                          <p style={{ fontSize: "12.5px", color: "var(--color-ink-soft)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                            {n.name}
+                            {n.type === "new_payment" && n.amount && ` — ₹${n.amount}`}
+                          </p>
+                          <p style={{ fontSize: "11px", color: "var(--color-ink-faint)", margin: "2px 0 0" }}>
+                            {new Date(n.timestamp).toLocaleString("gu-IN")}
+                          </p>
+                        </div>
+
+                        {/* Unread dot */}
+                        {!n.read && (
+                          <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "var(--color-crop-500)", flexShrink: 0, marginTop: "4px" }} />
+                        )}
+                      </div>
+
+                      {/* Approve / Reject buttons for payment notifications */}
+                      {n.type === "new_payment" && (
+                        <div style={{ display: "flex", gap: "8px", paddingLeft: "46px" }}>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); void approveMembership(n.uid); markRead(n.id); setNotifOpen(false); setTab("Pending"); setViewMode("memberships"); }}
+                            disabled={!!actionBusy}
+                            style={{
+                              flex: 1, height: "34px", borderRadius: "8px",
+                              background: "linear-gradient(135deg, var(--color-crop-500), var(--color-crop-600))",
+                              color: "white", border: "none",
+                              fontSize: "12.5px", fontWeight: 600, cursor: "pointer",
+                              display: "flex", alignItems: "center", justifyContent: "center", gap: "5px",
+                            }}
+                          >
+                            <CheckCircleIcon size={13} /> Approve
+                          </button>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); void rejectMembership(n.uid); markRead(n.id); setNotifOpen(false); setTab("Pending"); setViewMode("memberships"); }}
+                            disabled={!!actionBusy}
+                            style={{
+                              flex: 1, height: "34px", borderRadius: "8px",
+                              background: "var(--color-loss-100)",
+                              color: "var(--color-loss-600)",
+                              border: "1px solid var(--color-loss-300, #fca5a5)",
+                              fontSize: "12.5px", fontWeight: 600, cursor: "pointer",
+                              display: "flex", alignItems: "center", justifyContent: "center", gap: "5px",
+                            }}
+                          >
+                            <XCircleIcon size={13} /> Reject
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </header>
 
       <div
@@ -432,6 +839,46 @@ export default function AdminPanel() {
             }}
           >
             <p style={{ fontSize: "13.5px", color: "var(--color-loss-600)", margin: 0 }}>{error}</p>
+          </div>
+        )}
+
+        {/* ── Stats Cards ── */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "20px" }}>
+          {[
+            { label: "કુલ યુઝર", value: totalUsers, icon: <UsersIcon size={20} />, color: "var(--color-crop-500)" },
+            { label: "Active Members", value: activeCount, icon: <CheckCircleIcon size={20} />, color: "var(--color-crop-600)" },
+            { label: "Pending", value: pendingCount, icon: <HourglassIcon size={20} />, color: "var(--color-saffron-500)" },
+            { label: "કુલ Revenue", value: `₹${totalRevenue}`, icon: <RupeeIcon size={20} />, color: "#16a34a" },
+          ].map((s, idx) => (
+            <div key={idx} style={{
+              background: "var(--color-surface)",
+              border: "1px solid var(--color-border)",
+              borderRadius: "14px",
+              padding: "14px",
+              boxShadow: "var(--shadow-card)",
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
+                <span style={{ display: "flex", alignItems: "center", color: s.color }}>{s.icon}</span>
+                <p style={{ fontSize: "12px", color: "var(--color-ink-faint)", margin: 0 }}>{s.label}</p>
+              </div>
+              <p style={{ fontSize: "22px", fontWeight: 700, color: s.color, margin: 0 }}>{s.value}</p>
+            </div>
+          ))}
+        </div>
+        {expiringCount > 0 && (
+          <div style={{
+            background: "#fff7ed", border: "1px solid #fed7aa",
+            borderRadius: "10px", padding: "10px 14px", marginBottom: "16px",
+            display: "flex", alignItems: "center", gap: "8px"
+          }}>
+            <AlertIcon size={20} className="text-[#ea580c]" />
+            <p style={{ fontSize: "13px", color: "#c2410c", margin: 0 }}>
+              <strong>{expiringCount}</strong> સભ્ય(ઓ)ની membership 30 દિવસમાં expire થશે
+            </p>
+            <button onClick={() => { setTab("Expiring"); setViewMode("memberships"); }}
+              style={{ marginLeft: "auto", fontSize: "12px", color: "#c2410c", background: "none", border: "none", cursor: "pointer", fontWeight: 600 }}>
+              જુઓ →
+            </button>
           </div>
         )}
 
@@ -543,7 +990,7 @@ export default function AdminPanel() {
                       fontSize: "12px",
                     }}
                   >
-                    {tabCount(t.key)}
+                    {t.key === "Expiring" ? expiringCount : users.filter(u => u.membershipStatus === t.key).length}
                   </span>
                 </button>
               ))}
@@ -715,7 +1162,7 @@ export default function AdminPanel() {
                             gap: "6px",
                           }}
                         >
-                          {actionBusy === u.uid + "_supporter" ? "..." : "💚 Mark as Supporter / Donor (સહયોગી બનાવો)"}
+                          {actionBusy === u.uid + "_supporter" ? "..." : <span style={{ display: "flex", alignItems: "center", gap: "6px" }}><HeartIcon size={16} /> Mark as Supporter / Donor (સહયોગી બનાવો)</span>}
                         </button>
                       </div>
                     ) : (
@@ -1089,6 +1536,10 @@ export default function AdminPanel() {
         @keyframes pulse {
           0%, 100% { opacity: 1; }
           50% { opacity: 0.5; }
+        }
+        @keyframes bellPulse {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.25); }
         }
       `}</style>
     </div>

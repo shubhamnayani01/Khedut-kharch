@@ -74,7 +74,7 @@ export default function ExpenseHistory() {
   if (!season) {
     return (
       <>
-        <TopBar title="ખર્ચનો ઇતિહાસ" />
+        <TopBar title="ખર્ચનો ઇતિહાસ" onBack={() => navigate(`/crop/${id}`)} />
         <Screen withNav={false}>
           <p className="text-[var(--color-ink-faint)] pt-8 text-center">ખેતી મળી નથી.</p>
         </Screen>
@@ -86,6 +86,7 @@ export default function ExpenseHistory() {
     <>
       <TopBar
         title="ખર્ચનો ઇતિહાસ"
+        onBack={() => navigate(`/crop/${id}`)}
         right={
           <button
             onClick={() => setShowFilters((v) => !v)}

@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useAppData } from "../context/AppDataContext";
 import { TopBar, Screen } from "../components/ui/AppShell";
 import { Button } from "../components/ui/Button";
@@ -8,7 +8,8 @@ import { EXPENSE_CATEGORIES } from "../types";
 import { DownloadIcon, MessageCircleIcon } from "../components/icons/UIIcons";
 
 export default function Report() {
-  const { id } = useParams();
+  const navigate = useNavigate();
+  const   { id } = useParams();
   const { getSeason, expensesForSeason, workersForSeason, bhaagidarsForSeason, advanceLedgers } = useAppData();
   const season = getSeason(id!);
   const expenses = season ? expensesForSeason(season.id) : [];
@@ -18,7 +19,7 @@ export default function Report() {
   if (!season) {
     return (
       <>
-        <TopBar title="રિપોર્ટ" />
+        <TopBar title="રિપોર્ટ" onBack={() => navigate(`/crop/${id}`)} />
         <Screen withNav={false}>
           <p className="text-[var(--color-ink-faint)] pt-8 text-center">ખેતી મળી નથી.</p>
         </Screen>
@@ -99,6 +100,7 @@ export default function Report() {
     <>
       <TopBar
         title="રિપોર્ટ"
+        onBack={() => navigate(`/crop/${id}`)}
         right={
           <div className="flex items-center gap-1">
             <button
@@ -215,6 +217,9 @@ export default function Report() {
 
           <p className="text-center text-[10.5px] text-gray-400 mt-8">
             ખેડૂત ખર્ચ નોંધ એપ્લિકેશન દ્વારા બનાવેલ · {formatDateDMY(new Date().toISOString().slice(0, 10))}
+          </p>
+          <p className="text-center text-[9.5px] text-gray-400 mt-1">
+            અસ્વીકરણ: આ રિપોર્ટ માત્ર અંગત નોંધ માટે છે. કાનૂની અથવા સત્તાવાર ટેક્સ ઓડિટ દસ્તાવેજ નથી.
           </p>
         </div>
       </Screen>

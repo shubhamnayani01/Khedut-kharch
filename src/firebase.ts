@@ -11,9 +11,11 @@ const firebaseConfig = {
   appId: "1:652906682156:web:aa5ab9199190ed44a13e89",
 };
 
+// import { getStorage } from "firebase/storage";
+
 const app = initializeApp(firebaseConfig);
 
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 // Firebase Storage is NOT used. All documents are stored as Base64 strings in Firestore.
-// This keeps the app fully functional on the Firebase Spark (free) plan.
+// This keeps the app fully functional on the Firebase Spark (free) plan.

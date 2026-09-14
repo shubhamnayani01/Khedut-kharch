@@ -11,7 +11,7 @@ import { expenseSchema, type ExpenseFormInput, type ExpenseFormValues } from "..
 import { todayISO } from "../lib/format";
 import { EXPENSE_CATEGORIES } from "../types";
 import { CategoryIcon } from "../components/icons/CategoryIcons";
-import { CameraIcon, CloseIcon, NotebookIcon } from "../components/icons/UIIcons";
+import { CameraIcon, CloseIcon, NotebookIcon, AlertIcon } from "../components/icons/UIIcons";
 import { storage } from "../lib/storage";
 import { compressImage } from "../lib/image";
 
@@ -92,7 +92,7 @@ export default function AddExpense() {
   if (!season) {
     return (
       <>
-        <TopBar title="ખર્ચ ઉમેરો" />
+        <TopBar title="ખર્ચ ઉમેરો" onBack={() => navigate(`/crop/${id}`)} />
         <Screen withNav={false}>
           <p className="text-[var(--color-ink-faint)] pt-8 text-center">ખેતી મળી નથી.</p>
         </Screen>
@@ -146,7 +146,7 @@ export default function AddExpense() {
 
   return (
     <>
-      <TopBar title={isEdit ? "ખર્ચ એડિટ કરો" : "ખર્ચ ઉમેરો"} />
+      <TopBar title={isEdit ? "ખર્ચ એડિટ કરો" : "ખર્ચ ઉમેરો"} onBack={() => navigate(`/crop/${id}`)} />
       <Screen withNav={false}>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 pb-8">
           <TextInput
@@ -243,11 +243,11 @@ export default function AddExpense() {
                     placeholder="કેટલું વાપર્યું?"
                     min="0.1"
                     step="any"
-                    error={isStockExceeded ? `⚠️ ગોડાઉનમાં ફક્ત ${availableStock} ${selectedStockItem.unit} બાકી છે. તમે ${stockQuantityUsed} ${selectedStockItem.unit} વાપરી શકતા નથી.` : undefined}
+                    error={isStockExceeded ? <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><AlertIcon size={14} className="text-[#dc2626]" /> ગોડાઉનમાં ફક્ત {availableStock} {selectedStockItem.unit} બાકી છે. તમે {stockQuantityUsed} {selectedStockItem.unit} વાપરી શકતા નથી.</span> : undefined}
                   />
                   {availableStock <= 0 ? (
                     <p className="mt-1.5 text-[12.5px] font-medium text-[var(--color-loss-600)]">
-                      ⚠️ આ આઇટમનો સ્ટોક પૂરો થઈ ગયો છે! (0 {selectedStockItem.unit} બાકી)
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><AlertIcon size={14} className="text-[#dc2626]" /> આ આઇટમનો સ્ટોક પૂરો થઈ ગયો છે! (0 {selectedStockItem.unit} બાકી)</span>
                     </p>
                   ) : (
                     <p className="mt-1 text-[12px] text-[var(--color-ink-faint)]">

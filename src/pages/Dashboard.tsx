@@ -16,7 +16,7 @@ import { useTranslation } from "../lib/i18n";
 
 export default function Dashboard() {
   const { seasons, expenses, workers, advanceLedgers, isLoaded } = useAppData();
-  const { user, membership } = useAuth();
+  const { user, membership, isReadOnly } = useAuth();
   const navigate = useNavigate();
   const { t } = useTranslation();
 
@@ -73,7 +73,7 @@ export default function Dashboard() {
         <div className="pt-2 pb-5 flex items-center justify-between">
           <div>
             <p className="text-[14px] text-[var(--color-ink-faint)]">
-              {t("greeting")}{user?.displayName ? `, ${user.displayName.split(" ")[0]}` : ""} 🙏
+              {t("greeting")}{user?.displayName ? `, ${user.displayName.split(" ")[0]}` : ""}
             </p>
             <h1 className="text-[24px] font-bold text-[var(--color-ink)] mt-0.5">{t("appTitle")}</h1>
           </div>
@@ -201,7 +201,7 @@ export default function Dashboard() {
           </div>
         )}
       </Screen>
-      <Fab onClick={() => navigate("/new-season")} />
+      <Fab onClick={() => isReadOnly ? navigate("/membership/payment") : navigate("/new-season")} />
       <BottomNav />
 
       <Dialog

@@ -95,7 +95,7 @@ export interface Expense {
 export type SeasonStatus = "active" | "harvested";
 
 export interface Harvest {
-  harvestDate: string; // ISO yyyy-mm-dd
+  harvestDate: string;
   totalProductionKg: number;
   sellingPricePerKg: number;
   otherIncome: number;
@@ -107,9 +107,9 @@ export interface FarmingSeason {
   fieldName: string;
   areaBigha?: number;
   areaLabel?: string;
-  sowingDate: string; // ISO yyyy-mm-dd
+  sowingDate: string;
   notes?: string;
-  colorTag: string; // key into CROP_COLORS
+  colorTag: string;
   status: SeasonStatus;
   harvest?: Harvest;
   createdAt: number;
@@ -162,10 +162,11 @@ export interface UserDocument {
   uid: string;
   name: string;
   category: DocumentCategory;
-  size: number;       // bytes
-  fileType: string;   // e.g. "image/jpeg", "application/pdf"
-  base64Data: string; // full data URL: "data:<mime>;base64,..."
-  createdAt: number;  // ms since epoch
+  size: number;       
+  fileType: string;  
+  base64Data?: string; 
+  fileUrl?: string;  
+  createdAt: number;  
 }
 
 // ─── Membership ───────────────────────────────────────────────────────────────
@@ -176,7 +177,7 @@ export const ADMIN_EMAILS = [
 ];
 export const ADMIN_EMAIL = "shubhamnayani01@gmail.com";
 
-export type MembershipStatus = "Pending" | "Active" | "Expired" | "Rejected" | "Banned";
+export type MembershipStatus = "Pending" | "Active" | "Expired" | "Rejected" | "Banned" | "Trial" | "TrialExpired";
 
 // ─── Donation ─────────────────────────────────────────────────────────────────
 
@@ -196,15 +197,15 @@ export interface UserMembership {
   membershipStatus: MembershipStatus;
   membershipType: "Annual";
   membershipAmount: 300;
-  paymentProof?: string;         // Firebase Storage download URL
+  paymentProof?: string;
   paymentMethod?: string;
   paymentReference?: string;
-  paymentSubmittedAt?: number;   // timestamp ms
+  paymentSubmittedAt?: number;   
   membershipStartedAt?: number;
   membershipExpiresAt?: number;
   membershipApprovedAt?: number;
   approvedBy?: string;
   renewalCount: number;
-  donationStatus?: DonationStatus; // lightweight mirror of latest donation status
+  donationStatus?: DonationStatus; 
+  trialStartedAt?: number;       
 }
-
