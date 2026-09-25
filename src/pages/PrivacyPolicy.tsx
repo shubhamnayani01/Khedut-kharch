@@ -61,7 +61,15 @@ export default function PrivacyPolicy() {
           </section>
 
           <section className="space-y-3">
-            <h2 className="text-[15px] font-bold text-[var(--color-crop-600)]">૬. ડેટા અને એકાઉન્ટ ડિલીટ કરવાનો અધિકાર (Data Erasure)</h2>
+            <h2 className="text-[15px] font-bold text-[var(--color-crop-600)]">૬. કૂકીઝ (Cookies and Local Storage)</h2>
+            <p className="text-[14px] text-[var(--color-ink-soft)] leading-relaxed">
+              અમે કોઈ જ થર્ડ-પાર્ટી ટ્રેકિંગ કૂકીઝ (Tracking Cookies) નો ઉપયોગ કરતા નથી. 
+              એપને યોગ્ય રીતે ચલાવવા અને તમને લોગ-ઇન રાખવા માટે માત્ર અતિ આવશ્યક લોકલ સ્ટોરેજ (Local Storage) નો ઉપયોગ થાય છે.
+            </p>
+          </section>
+
+          <section className="space-y-3">
+            <h2 className="text-[15px] font-bold text-[var(--color-crop-600)]">૭. ડેટા અને એકાઉન્ટ ડિલીટ કરવાનો અધિકાર (Data Erasure)</h2>
             <p className="text-[14px] text-[var(--color-ink-soft)] leading-relaxed">
               ભારતીય DPDP Act ૨૦૨૩ અને ગૂગલ નીતિઓ અનુસાર, યુઝરને પોતાનો તમામ ક્લાઉડ ડેટા અને એકાઉન્ટ ડિલીટ કરવાનો સંપૂર્ણ અધિકાર છે. 
               તમે એપના Account / Settings સેક્શનમાં આપેલી વિનંતી દ્વારા અથવા સીધો <strong>shubhamnayani01@gmail.com</strong> પર ઈમેલ કરીને ડેટા ડિલીટ કરાવી શકો છો.
@@ -69,10 +77,12 @@ export default function PrivacyPolicy() {
           </section>
 
           <section className="space-y-3 border-t border-[var(--color-border)] pt-4">
-            <h2 className="text-[15px] font-bold text-[var(--color-crop-600)]">૭. સંપર્ક અને અધિકારી (Grievance Support)</h2>
+            <h2 className="text-[15px] font-bold text-[var(--color-crop-600)]">૮. ડેટા પ્રોટેક્શન અને ગ્રીવન્સ ઓફિસર (Grievance Support)</h2>
             <p className="text-[14px] text-[var(--color-ink-soft)] leading-relaxed">
-              કોઈપણ પ્રકારની ફરિયાદ, પેમેન્ટ કે ડેટા સંબંધી સમસ્યા માટે તમે અમારો સંપર્ક કરી શકો છો:<br />
-              • ઈમેલ: <strong>shubhamnayani01@gmail.com</strong><br />
+              DPDP Act ૨૦૨૩ મુજબ, કોઈપણ પ્રકારની ફરિયાદ, પેમેન્ટ કે ડેટા સંબંધી સમસ્યા માટે તમે અમારા ડેટા ફિડ્યુશિયરીનો સંપર્ક કરી શકો છો:<br /><br />
+              <strong>Shubham Nayani (Grievance Officer)</strong><br />
+              • સરનામું: Kotda Jadodar, Kachchh, Gujarat, 370605<br />
+              • ઈમેલ: shubhamnayani01@gmail.com<br />
               • મોબાઈલ નંબર: (+91) 94272 09737
             </p>
           </section>

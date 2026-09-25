@@ -242,14 +242,14 @@ export default function Login() {
 
         {/* Pricing */}
         <div className="text-center">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-[var(--color-saffron-100)] text-[var(--color-saffron-600)] mb-4">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-[var(--color-crop-100)] text-[var(--color-crop-600)] mb-4">
             <CheckCircleIcon size={28} strokeWidth={2.5} />
           </div>
           <h2 className="text-[22px] font-bold text-[var(--color-ink)] mb-3">
-            વાપરવા માટે સંપૂર્ણ મફત
+            ફ્રી અને પ્રીમિયમ પ્લાન
           </h2>
           <p className="text-[15px] text-[var(--color-ink-soft)] leading-relaxed mb-6 max-w-[360px] mx-auto">
-            ખેડૂત ખર્ચ એપ વાપરવા માટે મફત છે. પ્રોજેક્ટને ચાલુ રાખવા અને સર્વર ખર્ચ માટે તમે <strong className="text-[var(--color-ink)]">માત્ર ₹300</strong> નું સ્વૈચ્છિક દાન કરી શકો છો.
+            એપનો મૂળભૂત ઉપયોગ મફત છે. ક્લાઉડ બેકઅપ, PDF રિપોર્ટ અને અનલિમિટેડ પાક જેવી પ્રીમિયમ સુવિધાઓ માટે તમે <strong className="text-[var(--color-ink)]">માત્ર ₹300</strong> ચૂકવીને અપગ્રેડ કરી શકો છો.
           </p>
         </div>
 

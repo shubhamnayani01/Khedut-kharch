@@ -5,12 +5,16 @@ import { Button } from "../components/ui/Button";
 import { formatCurrency, formatDateDMY, formatDateLong } from "../lib/format";
 import { categoryTotals, seasonIncome, seasonProfit, totalExpenses, profitPercentage, totalWorkerCost, totalBhaagidaarAdvance } from "../lib/calc";
 import { EXPENSE_CATEGORIES } from "../types";
-import { DownloadIcon, MessageCircleIcon } from "../components/icons/UIIcons";
+import { DownloadIcon, MessageCircleIcon, LockIcon } from "../components/icons/UIIcons";
+import { useAuth } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
 
 export default function Report() {
   const navigate = useNavigate();
   const   { id } = useParams();
   const { getSeason, expensesForSeason, workersForSeason, bhaagidarsForSeason, advanceLedgers } = useAppData();
+  const { isPremium } = useAuth();
+  const { show } = useToast();
   const season = getSeason(id!);
   const expenses = season ? expensesForSeason(season.id) : [];
   const workers = season ? workersForSeason(season.id) : [];
@@ -79,7 +83,21 @@ export default function Report() {
 
   reportItems.sort((a, b) => a.date.localeCompare(b.date));
 
+  const handlePrint = () => {
+    if (!isPremium) {
+      show("આ સુવિધા માત્ર પ્રીમિયમ એકાઉન્ટ માટે છે.");
+      navigate("/membership/payment");
+      return;
+    }
+    window.print();
+  };
+
   const handleWhatsAppShare = () => {
+    if (!isPremium) {
+      show("આ સુવિધા માત્ર પ્રીમિયમ એકાઉન્ટ માટે છે.");
+      navigate("/membership/payment");
+      return;
+    }
     const summaryText =
       `🌾 *ખેડૂત ખર્ચ નોંધ — પાક રિપોર્ટ* 🌾\n\n` +
       `🌱 *પાક:* ${season.cropName}\n` +
@@ -111,25 +129,27 @@ export default function Report() {
               <MessageCircleIcon size={20} />
             </button>
             <button
-              onClick={() => window.print()}
+              onClick={handlePrint}
               className="w-10 h-10 flex items-center justify-center rounded-full text-[var(--color-crop-500)]"
               title="PDF ડાઉનલોડ કરો"
             >
-              <DownloadIcon size={20} />
+              {!isPremium ? <LockIcon size={20} /> : <DownloadIcon size={20} />}
             </button>
           </div>
         }
       />
       <Screen withNav={false}>
         <div className="mb-4 space-y-2 print:hidden">
-          <Button fullWidth size="lg" onClick={() => window.print()}>
-            <DownloadIcon size={18} /> PDF તરીકે સાચવો / છાપો
+          <Button fullWidth size="lg" onClick={handlePrint} variant={!isPremium ? "outline" : "primary"}>
+            {!isPremium ? <LockIcon size={18} /> : <DownloadIcon size={18} />} PDF તરીકે સાચવો / છાપો
           </Button>
           <button
             onClick={handleWhatsAppShare}
-            className="w-full h-12 flex items-center justify-center gap-2 rounded-[var(--radius-control)] bg-emerald-600 text-white font-semibold text-[15px] shadow-sm active:bg-emerald-700 transition-colors"
+            className={`w-full h-12 flex items-center justify-center gap-2 rounded-[var(--radius-control)] font-semibold text-[15px] shadow-sm transition-colors ${
+              !isPremium ? "bg-[var(--color-surface)] text-[var(--color-ink)] border border-[var(--color-border)]" : "bg-emerald-600 text-white active:bg-emerald-700"
+            }`}
           >
-            <MessageCircleIcon size={20} /> WhatsApp પર સાચાં આંકડા શેર કરો
+            {!isPremium ? <LockIcon size={20} /> : <MessageCircleIcon size={20} />} WhatsApp પર શેર કરો
           </button>
           <p className="text-center text-[12.5px] text-[var(--color-ink-faint)] mt-1">
             પ્રિન્ટ સ્ક્રીનમાં "Save as PDF" પસંદ કરો.

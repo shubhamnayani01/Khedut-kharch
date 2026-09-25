@@ -39,7 +39,7 @@ function fileToBase64(file: File): Promise<string> {
 
 export default function UploadDocument() {
   const navigate = useNavigate();
-  const { membership, isAdmin } = useAuth();
+  const { isPremium } = useAuth();
   const { documents } = useWalletDocuments();
   const [file, setFile] = useState<File | null>(null);
   const [name, setName] = useState("");
@@ -47,7 +47,7 @@ export default function UploadDocument() {
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const hasHighLimit = isAdmin || membership?.donationStatus === "Approved";
+  const hasHighLimit = isPremium;
   const docLimit = hasHighLimit ? DONOR_DOC_LIMIT : DEFAULT_DOC_LIMIT;
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -75,7 +75,13 @@ export default function UploadDocument() {
     if (!user) return;
 
     if (documents.length >= docLimit) {
-      alert(`તમારી લિમિટ પૂરી થઈ ગઈ છે (Max ${docLimit} દસ્તાવેજ). વધારે સાચવવા માટે કોઈ દસ્તાવેજ ડીલીટ કરો.`);
+      if (!isPremium) {
+        if (window.confirm(`ફ્રી લિમિટ પૂરી થઈ ગઈ છે (Max ${DEFAULT_DOC_LIMIT} દસ્તાવેજ). શું તમે અપગ્રેડ કરવા માંગો છો?`)) {
+          navigate("/membership/payment");
+        }
+      } else {
+        alert(`તમારી લિમિટ પૂરી થઈ ગઈ છે (Max ${DONOR_DOC_LIMIT} દસ્તાવેજ). વધારે સાચવવા માટે કોઈ દસ્તાવેજ ડીલીટ કરો.`);
+      }
       return;
     }
 

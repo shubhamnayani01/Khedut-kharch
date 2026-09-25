@@ -123,6 +123,32 @@ export interface AppSettings {
   activeSeasonId?: string;
 }
 
+// ─── Expense Templates ───────────────────────────────────────────────────────
+
+export interface ExpenseTemplate {
+  id: string;
+  name: string;
+  category: ExpenseCategory;
+  amount: number;
+  description?: string;
+  createdAt: number;
+}
+
+// ─── Farm Fields ──────────────────────────────────────────────────────────────
+
+export type FieldOwnership = "owned" | "leased" | "shared";
+
+export interface FarmField {
+  id: string;
+  name: string;
+  areaBigha?: number;
+  areaLabel?: string;
+  ownershipType?: FieldOwnership;
+  notes?: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
 export interface BackupPayload {
   version: 1;
   exportedAt: string;
@@ -132,6 +158,7 @@ export interface BackupPayload {
   bhaagidars: BhaagidarProfile[];
   advanceLedgers: AdvanceLedger[];
   inventoryItems: InventoryItem[];
+  fields?: FarmField[];
   settings: AppSettings;
 }
 

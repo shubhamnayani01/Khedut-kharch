@@ -24,6 +24,9 @@ import InventoryTab from "./pages/inventory/InventoryTab";
 import InventoryForm from "./pages/inventory/InventoryForm";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Terms from "./pages/Terms";
+import NotificationsSettings from "./pages/NotificationsSettings";
+import FieldsTab from "./pages/fields/FieldsTab";
+import FieldForm from "./pages/fields/FieldForm";
 
 import ExpensesTab from "./pages/expenses/ExpensesTab";
 import WorkersTab from "./pages/workers/WorkersTab";
@@ -292,6 +295,41 @@ export default function App() {
               }
             />
 
+            {/* ─── Fields ──────────────────────────────────────────── */}
+            <Route
+              path="/fields"
+              element={
+                <AuthGuard>
+                  <FieldsTab />
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="/fields/new"
+              element={
+                <AuthGuard>
+                  <FieldForm />
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="/fields/:id/edit"
+              element={
+                <AuthGuard>
+                  <FieldForm />
+                </AuthGuard>
+              }
+            />
+
+            {/* ─── Notification Settings ────────────────────────────── */}
+            <Route
+              path="/settings/notifications"
+              element={
+                <AuthGuard>
+                  <NotificationsSettings />
+                </AuthGuard>
+              }
+            />
 
             {/* Catch-all → home (AuthGuard will redirect appropriately) */}
             <Route path="*" element={<Navigate to="/" replace />} />

@@ -36,9 +36,8 @@ interface AuthContextValue {
   membership: UserMembership | null;
   membershipLoading: boolean;
   isAdmin: boolean;
-  isInTrial: boolean;
-  trialDaysLeft: number;
-  isReadOnly: boolean;
+  isInTrial: boolean; // Retained as "Free" user status
+  isPremium: boolean;
   signInWithGoogle: () => Promise<void>;
   signOutUser: () => Promise<void>;
   submitMembershipPayment: (opts: {
@@ -109,9 +108,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setMembershipLoading(true);
     const userDocRef = doc(db, "users", user.uid);
 
-    const TRIAL_DAYS = 7;
-    const TRIAL_MS = TRIAL_DAYS * 24 * 60 * 60 * 1000;
-
     const unsubscribe = onSnapshot(
       userDocRef,
       async (snap) => {
@@ -172,19 +168,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
         }
 
-        // ── Auto-expire free trial ──
-        if (
-          raw.membershipStatus === "Trial" &&
-          raw.trialStartedAt &&
-          Date.now() > raw.trialStartedAt + TRIAL_MS
-        ) {
-          raw.membershipStatus = "TrialExpired";
-          try {
-            await updateDoc(userDocRef, { membershipStatus: "TrialExpired" });
-          } catch (err) {
-            console.error("Failed to expire trial:", err);
-          }
-        }
+        // (Trial auto-expiry logic removed to support indefinite Free Tier)
 
         // Only expose membership object if a status exists
         if (raw.membershipStatus) {
@@ -313,12 +297,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } as UserMembership));
   }, [user]);
 
-  const TRIAL_MS = 7 * 24 * 60 * 60 * 1000;
   const isInTrial = !isAdmin && membership?.membershipStatus === "Trial";
-  const isReadOnly = !isAdmin && membership?.membershipStatus === "TrialExpired";
-  const trialDaysLeft = isInTrial && membership?.trialStartedAt
-    ? Math.max(0, Math.ceil((membership.trialStartedAt + TRIAL_MS - Date.now()) / 86400000))
-    : 0;
+  const isPremium = isAdmin || membership?.membershipStatus === "Active";
 
   const value = useMemo(
     () => ({
@@ -328,14 +308,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       membershipLoading,
       isAdmin,
       isInTrial,
-      trialDaysLeft,
-      isReadOnly,
+      isPremium,
       signInWithGoogle,
       signOutUser,
       submitMembershipPayment,
       skipDonation,
     }),
-    [user, loading, membership, membershipLoading, isAdmin, isInTrial, trialDaysLeft, isReadOnly, signInWithGoogle, signOutUser, submitMembershipPayment, skipDonation]
+    [user, loading, membership, membershipLoading, isAdmin, isInTrial, isPremium, signInWithGoogle, signOutUser, submitMembershipPayment, skipDonation]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

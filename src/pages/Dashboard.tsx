@@ -13,16 +13,22 @@ import { totalExpenses, totalWorkerCost, totalBhaagidaarAdvance } from "../lib/c
 import { useAuth } from "../context/AuthContext";
 import { HeaderActions } from "../components/HeaderActions";
 import { useTranslation } from "../lib/i18n";
+import { fireWeeklyReminderIfDue, fireMembershipReminderIfDue } from "../hooks/useReminderNotifications";
 
 export default function Dashboard() {
   const { seasons, expenses, workers, advanceLedgers, isLoaded } = useAppData();
-  const { user, membership, isReadOnly } = useAuth();
+  const { user, membership } = useAuth();
   const navigate = useNavigate();
   const { t } = useTranslation();
 
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<"all" | "active" | "harvested">("all");
   const [showThanks, setShowThanks] = useState(false);
+
+  useEffect(() => {
+    fireWeeklyReminderIfDue();
+    fireMembershipReminderIfDue(membership?.membershipExpiresAt);
+  }, []);
 
   useEffect(() => {
     if (
@@ -118,6 +124,20 @@ export default function Dashboard() {
                 <h3 className="text-[14.5px] font-semibold text-[var(--color-ink)] mb-1">{t("stockGodown")}</h3>
                 <p className="text-[12px] text-[var(--color-ink-faint)] leading-tight">{t("stockDesc")}</p>
               </button>
+
+              <button
+                onClick={() => navigate("/fields")}
+                className="flex flex-col items-start p-4 rounded-[var(--radius-card)] bg-[var(--color-surface)] border border-[var(--color-border)] shadow-sm active:scale-95 transition-transform text-left"
+              >
+                <div className="w-10 h-10 rounded-full bg-[var(--color-saffron-50,_#fffbeb)] flex items-center justify-center text-[var(--color-saffron-500,_#f59e0b)] mb-3">
+                  <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                    <circle cx="12" cy="10" r="3" />
+                  </svg>
+                </div>
+                <h3 className="text-[14.5px] font-semibold text-[var(--color-ink)] mb-1">મારા ખેતર</h3>
+                <p className="text-[12px] text-[var(--color-ink-faint)] leading-tight">ખેતર નોંધ કરો, ઝડપથી ઉપયોગ કરો</p>
+              </button>
             </div>
           </div>
         )}
@@ -201,7 +221,7 @@ export default function Dashboard() {
           </div>
         )}
       </Screen>
-      <Fab onClick={() => isReadOnly ? navigate("/membership/payment") : navigate("/new-season")} />
+      <Fab onClick={() => navigate("/new-season")} />
       <BottomNav />
 
       <Dialog

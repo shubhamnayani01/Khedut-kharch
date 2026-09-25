@@ -7,9 +7,8 @@ import { TrialBanner } from "../ui/TrialBanner";
  * Wraps protected routes. Redirects based on auth + membership status.
  *
  * Status state machine:
- *   Trial       → full access + trial countdown banner
- *   TrialExpired → read-only access + red lockout banner
- *   Active      → full access, no banner
+ *   Trial       → Free access indefinitely (UpgradeBanner shown)
+ *   Active      → Premium access, no banner
  *   Pending     → /membership/pending
  *   Rejected    → /membership/payment
  *   Expired     → /membership/expired  (paid membership expired)
@@ -78,7 +77,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
 
   const status = membership?.membershipStatus;
 
-  // Allowed statuses: Active, Trial, TrialExpired
+  // Allowed statuses: Active, Trial, TrialExpired (legacy)
   const isAllowed =
     !!user &&
     !!membership &&
