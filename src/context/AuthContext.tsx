@@ -78,7 +78,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [user]
   );
 
-  // Listen to auth state
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(
       auth,
@@ -101,7 +100,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return unsubscribe;
   }, []);
 
-  // Real-time Firestore listener for membership fields
   useEffect(() => {
     if (!user) return;
 
@@ -119,7 +117,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         const data = snap.data();
 
-        // ── New user: no membershipStatus yet → start free trial ──
         if (!data.membershipStatus) {
           try {
             await updateDoc(userDocRef, {
@@ -132,11 +129,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           } catch (err) {
             console.error("Failed to start trial:", err);
           }
-          // onSnapshot will fire again with the updated doc
           return;
         }
 
-        // Build membership object from Firestore doc
         const raw: Partial<UserMembership> = {
           membershipStatus: (data.membershipStatus as MembershipStatus) ?? undefined,
           membershipType: "Annual",
@@ -154,7 +149,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           trialStartedAt: data.trialStartedAt?.toMillis?.() ?? data.trialStartedAt ?? undefined,
         };
 
-        // ── Auto-expire paid membership ──
         if (
           raw.membershipStatus === "Active" &&
           raw.membershipExpiresAt &&
@@ -168,9 +162,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
         }
 
-        // (Trial auto-expiry logic removed to support indefinite Free Tier)
-
-        // Only expose membership object if a status exists
         if (raw.membershipStatus) {
           setMembership(raw as UserMembership);
         } else {
@@ -249,7 +240,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         reader.readAsDataURL(fileToUpload);
       });
 
-      // Current membership data for renewal count
       const currentCount = membership?.renewalCount ?? 0;
       const isRenewal = membership?.membershipStatus === "Expired" || membership?.membershipStatus === "Rejected";
 
@@ -262,7 +252,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         paymentReference,
         paymentSubmittedAt: serverTimestamp(),
         renewalCount: isRenewal ? currentCount + 1 : currentCount,
-        // Clear previous approval fields on new submission
         membershipStartedAt: null,
         membershipExpiresAt: null,
         membershipApprovedAt: null,
@@ -275,7 +264,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const skipDonation = useCallback(async () => {
     if (!user) throw new Error("Not authenticated");
 
-    // Write to Firestore
     await setDoc(doc(db, "users", user.uid), {
       membershipStatus: "Active",
       membershipStartedAt: serverTimestamp(),
@@ -283,10 +271,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       donationStatus: "Skipped",
     }, { merge: true });
 
-    // Optimistically update local state RIGHT NOW so that when we navigate("/")
-    // the AuthGuard sees Active status immediately — without waiting for the
-    // Firestore onSnapshot to fire (which can take 200-500ms, causing a redirect loop).
-    setMembership((prev) => ({
+      setMembership((prev) => ({
       membershipType: "Annual",
       membershipAmount: 300,
       renewalCount: prev?.renewalCount ?? 0,

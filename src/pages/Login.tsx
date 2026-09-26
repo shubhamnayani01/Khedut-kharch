@@ -15,7 +15,7 @@ import {
 } from "../components/icons/UIIcons";
 
 export default function Login() {
-  const { user, loading, membership, membershipLoading, signInWithGoogle, signOutUser } = useAuth();
+  const { user, loading, membership, membershipLoading, isAdmin, signInWithGoogle, signOutUser } = useAuth();
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -24,6 +24,11 @@ export default function Login() {
   useEffect(() => {
     if (loading || membershipLoading) return;
     if (!user) return;
+
+    if (isAdmin) {
+      navigate("/", { replace: true });
+      return;
+    }
 
     if (!membership) {
       navigate("/membership/payment", { replace: true });
@@ -37,9 +42,10 @@ export default function Login() {
       setError("તમારું એકાઉન્ટ બ્લોક કરવામાં આવ્યું છે. (Your account has been banned.)");
       void signOutUser();
     } else {
-      navigate("/membership/payment", { replace: true });
+      // Free users (Trial, TrialExpired) or unknown statuses go directly to dashboard
+      navigate("/", { replace: true });
     }
-  }, [user, loading, membership, membershipLoading, navigate, signOutUser]);
+  }, [user, loading, membership, membershipLoading, isAdmin, navigate, signOutUser]);
 
   const handleSignIn = async () => {
     setBusy(true);

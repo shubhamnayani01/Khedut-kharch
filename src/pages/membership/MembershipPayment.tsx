@@ -458,6 +458,20 @@ export default function MembershipPayment() {
           >
             {submitting ? "સબમિટ કરી રહ્યા છે..." : "ચુકવણી સ્વીકૃત માટે સબમિટ કરો →"}
           </button>
+
+          <button
+            id="skip-membership-btn"
+            onClick={() => navigate("/")}
+            style={{
+              width: "100%", height: "52px", borderRadius: "14px",
+              background: "var(--color-paper-dim)", color: "var(--color-ink-soft)",
+              border: "1px solid var(--color-border)", cursor: "pointer",
+              fontSize: "15px", fontWeight: 600, marginTop: "14px",
+              transition: "all 0.2s", touchAction: "manipulation",
+            }}
+          >
+            ફ્રી પ્લાન ચાલુ રાખો (Continue for Free)
+          </button>
         </div>
 
         {/* Fine print */}
