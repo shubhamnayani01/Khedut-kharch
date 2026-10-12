@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useAppData } from "../context/AppDataContext";
 import { useToast } from "../context/ToastContext";
 import { TopBar, Screen } from "../components/ui/AppShell";
@@ -15,6 +15,9 @@ import { CategoryIcon } from "../components/icons/CategoryIcons";
 import { CameraIcon, CloseIcon, NotebookIcon, AlertIcon } from "../components/icons/UIIcons";
 import { storage } from "../lib/storage";
 import { compressImage } from "../lib/image";
+import { VoiceExpenseButton, VoiceExpenseModal } from "../components/VoiceExpenseInput";
+import type { ParsedVoiceExpense } from "../lib/voiceParser";
+
 
 // ─── Small inline icons ────────────────────────────────────────────────────────
 
@@ -183,6 +186,7 @@ function SaveTemplateDialog({
 export default function AddExpense() {
   const navigate = useNavigate();
   const { id, expenseId } = useParams();
+  const [searchParams] = useSearchParams();
   const { getSeason, addExpense, updateExpense, expenses, inventoryItems, expenseTemplates, addExpenseTemplate, deleteExpenseTemplate } = useAppData();
   const { show } = useToast();
   const season = getSeason(id!);
@@ -193,6 +197,9 @@ export default function AddExpense() {
   const [photo, setPhoto] = useState<string | undefined>(existing?.billPhoto);
   const [photoBusy, setPhotoBusy] = useState(false);
   const [showSaveTemplate, setShowSaveTemplate] = useState(false);
+  // Auto-open voice modal when navigated from PWA shortcut (?voice=1)
+  const [showVoiceModal, setShowVoiceModal] = useState(() => searchParams.get("voice") === "1");
+
 
   const [useStock, setUseStock] = useState(Boolean(existing?.inventoryItemId));
   const [selectedStockId, setSelectedStockId] = useState<string | undefined>(existing?.inventoryItemId);
@@ -287,6 +294,20 @@ export default function AddExpense() {
     show(`"${t.name}" ટેમ્પ્લેટ લગાડ્યું`);
   };
 
+  const handleApplyVoiceExpense = (parsed: ParsedVoiceExpense) => {
+    if (parsed.category) {
+      setValue("category", parsed.category);
+    }
+    if (parsed.amount !== undefined && parsed.amount > 0) {
+      setValue("amount", parsed.amount as any);
+    }
+    if (parsed.description) {
+      setValue("description", parsed.description);
+    }
+    show("વોઇસ નોટથી વિગતો ભરાઈ ગઈ! તપાસીને સાચવો.");
+  };
+
+
   const handleSaveTemplate = (name: string) => {
     const values = getValues();
     const amt = Number(values.amount);
@@ -345,6 +366,11 @@ export default function AddExpense() {
       <TopBar title={isEdit ? "ખર્ચ એડિટ કરો" : "ખર્ચ ઉમેરો"} onBack={() => navigate(`/crop/${id}`)} />
       <Screen withNav={false}>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 pb-8">
+          {/* Gujarati Voice Expense Button — prominently shown when adding expense */}
+          {!isEdit && (
+            <VoiceExpenseButton onClick={() => setShowVoiceModal(true)} />
+          )}
+
           <TextInput
             label="તારીખ"
             type="date"
@@ -353,6 +379,7 @@ export default function AddExpense() {
             error={errors.date?.message}
             {...register("date")}
           />
+
 
           {/* Template picker — only shown when adding (not editing) */}
           {!isEdit && (
@@ -584,6 +611,14 @@ export default function AddExpense() {
         onClose={() => setShowSaveTemplate(false)}
         defaultName={suggestedTemplateName}
       />
+
+      {/* Voice Expense modal */}
+      <VoiceExpenseModal
+        isOpen={showVoiceModal}
+        onClose={() => setShowVoiceModal(false)}
+        onApply={handleApplyVoiceExpense}
+      />
     </>
   );
 }
+

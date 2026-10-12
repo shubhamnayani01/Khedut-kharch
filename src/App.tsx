@@ -35,6 +35,7 @@ import BhaagidarTab from "./pages/bhaagidar/BhaagidarTab";
 import AddBhaagidar from "./pages/bhaagidar/AddBhaagidar";
 import BhaagidarDetails from "./pages/bhaagidar/BhaagidarDetails";
 import MoreMenu from "./pages/MoreMenu";
+import QuickAdd from "./pages/QuickAdd";
 
 const Statistics = lazy(() => import("./pages/Statistics"));
 
@@ -327,6 +328,16 @@ export default function App() {
               element={
                 <AuthGuard>
                   <NotificationsSettings />
+                </AuthGuard>
+              }
+            />
+
+            {/* ─── PWA Home Screen Shortcut ─────────────────────────── */}
+            <Route
+              path="/quick-add"
+              element={
+                <AuthGuard>
+                  <QuickAdd />
                 </AuthGuard>
               }
             />

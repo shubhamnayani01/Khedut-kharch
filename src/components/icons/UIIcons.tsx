@@ -415,3 +415,33 @@ export function CoffeeIcon(p: IconProps) {
     </svg>
   );
 }
+
+export function MicIcon(p: IconProps) {
+  return (
+    <svg {...svgProps(p.size, p.strokeWidth)} className={p.className}>
+      <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
+      <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+      <line x1="12" x2="12" y1="19" y2="22" />
+      <line x1="8" x2="16" y1="22" y2="22" />
+    </svg>
+  );
+}
+
+export function KeyboardIcon(p: IconProps) {
+  return (
+    <svg {...svgProps(p.size, p.strokeWidth)} className={p.className}>
+      <rect x="2" y="6" width="20" height="12" rx="2" />
+      <path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M6 14h12" />
+    </svg>
+  );
+}
+
+export function LightbulbIcon(p: IconProps) {
+  return (
+    <svg {...svgProps(p.size, p.strokeWidth)} className={p.className}>
+      <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" />
+      <path d="M9 18h6" />
+      <path d="M10 22h4" />
+    </svg>
+  );
+}

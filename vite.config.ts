@@ -26,6 +26,24 @@ export default defineConfig({
           { src: '/icons/icon-maskable-192.png', sizes: '192x192', type: 'image/png', purpose: 'maskable' },
           { src: '/icons/icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
+        // ── PWA App Shortcuts (Android long-press on home screen icon) ──
+        shortcuts: [
+          {
+            name: 'ઝડપી ખર્ચ ઉમેરો',
+            short_name: 'ખર્ચ ઉમેરો',
+            description: 'સૌથી છેલ્લી ચાલુ ખેતીમાં ખર્ચ ઝડપથી ઉમેરો',
+            url: '/#/quick-add',
+            icons: [{ src: '/icons/shortcut-add.svg', sizes: '96x96', type: 'image/svg+xml' }],
+          },
+          {
+            name: 'વૉઇસ એન્ટ્રી',
+            short_name: 'વૉઇસ',
+            description: 'બોલીને ખર્ચ ઉમેરો — ઝડપથી!',
+            url: '/#/quick-add?voice=1',
+            icons: [{ src: '/icons/shortcut-voice.svg', sizes: '96x96', type: 'image/svg+xml' }],
+          },
+        ],
+
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,ttf,woff,woff2}'],
