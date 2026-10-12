@@ -5,7 +5,7 @@ import { Screen, Fab, BottomNav } from "../components/ui/AppShell";
 import { SeasonCard } from "../components/SeasonCard";
 import { EmptyState } from "../components/ui/EmptyState";
 import { Dialog } from "../components/ui/Dialog";
-import { SearchIcon, NotebookIcon, CloseIcon, CheckCircleIcon } from "../components/icons/UIIcons";
+import { SearchIcon, NotebookIcon, CloseIcon, CheckCircleIcon, CalculatorIcon } from "../components/icons/UIIcons";
 import { WalletIcon } from "../components/icons/ModuleIcons";
 import { CategoryIcon } from "../components/icons/CategoryIcons";
 import { formatCurrency } from "../lib/format";
@@ -137,6 +137,17 @@ export default function Dashboard() {
                 </div>
                 <h3 className="text-[14.5px] font-semibold text-[var(--color-ink)] mb-1">મારા ખેતર</h3>
                 <p className="text-[12px] text-[var(--color-ink-faint)] leading-tight">ખેતર નોંધ કરો, ઝડપથી ઉપયોગ કરો</p>
+              </button>
+
+              <button
+                onClick={() => navigate("/calculator")}
+                className="flex flex-col items-start p-4 rounded-[var(--radius-card)] bg-[var(--color-surface)] border border-[var(--color-border)] shadow-sm active:scale-95 transition-transform text-left"
+              >
+                <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600 mb-3">
+                  <CalculatorIcon size={20} />
+                </div>
+                <h3 className="text-[14.5px] font-semibold text-[var(--color-ink)] mb-1">ખેતી કેલ્ક્યુલેટર</h3>
+                <p className="text-[12px] text-[var(--color-ink-faint)] leading-tight">જમીન, મજૂરી અને ખાતર ગણતરી</p>
               </button>
             </div>
           </div>

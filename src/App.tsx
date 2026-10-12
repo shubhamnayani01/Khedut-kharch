@@ -36,6 +36,7 @@ import AddBhaagidar from "./pages/bhaagidar/AddBhaagidar";
 import BhaagidarDetails from "./pages/bhaagidar/BhaagidarDetails";
 import MoreMenu from "./pages/MoreMenu";
 import QuickAdd from "./pages/QuickAdd";
+import Calculator from "./pages/Calculator";
 
 const Statistics = lazy(() => import("./pages/Statistics"));
 
@@ -328,6 +329,16 @@ export default function App() {
               element={
                 <AuthGuard>
                   <NotificationsSettings />
+                </AuthGuard>
+              }
+            />
+
+            {/* ─── Krishi Calculator ───────────────────────────────── */}
+            <Route
+              path="/calculator"
+              element={
+                <AuthGuard>
+                  <Calculator />
                 </AuthGuard>
               }
             />
