@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { SettingsIcon, UserIcon } from "./icons/UIIcons";
@@ -16,6 +16,22 @@ export function HeaderActions({
   const location = useLocation();
   const { user } = useAuth();
   const [imageError, setImageError] = useState(false);
+  const [isOnline, setIsOnline] = useState(
+    typeof navigator !== "undefined" && typeof navigator.onLine === "boolean" ? navigator.onLine : true
+  );
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
 
   const isSettingsPage = location.pathname === "/settings";
   const isAccountPage = location.pathname === "/account";
@@ -25,6 +41,17 @@ export function HeaderActions({
 
   return (
     <div className={`flex items-center gap-2 shrink-0 ${className}`}>
+      {/* Online/Offline minimal dot indicator - no text */}
+      <span
+        title={isOnline ? "Online" : "Offline"}
+        aria-label={isOnline ? "Online" : "Offline"}
+        className={`w-2.5 h-2.5 rounded-full transition-colors duration-300 ${
+          isOnline
+            ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"
+            : "bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]"
+        }`}
+      />
+
       {!shouldHideSettings && (
         <button
           onClick={() => navigate("/settings")}

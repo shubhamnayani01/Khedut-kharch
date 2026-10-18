@@ -6,21 +6,21 @@ import { XCircleIcon, CheckIcon, PinIcon, PaperclipIcon, CloseIcon, HourglassIco
 type FeatureRow = { label: string; free: boolean | string; paid: boolean | string };
 
 const FEATURES: FeatureRow[] = [
-  { label: "ખર્ચ નોંધ",                    free: "7 દિવસ",    paid: "અમર્યાદિત" },
-  { label: "આવક નોંધ",                     free: "7 દિવસ",    paid: "અમર્યાદિત" },
-  { label: "મજૂરી વ્યવસ્થાપન",               free: "7 દિવસ",    paid: "અમર્યાદિત" },
-  { label: "ભાગીદાર હિસાબ",                 free: "7 દિવસ",    paid: "અમર્યાદિત" },
-  { label: "નફો/ખોટ ગ્રાફ",                  free: "7 દિવસ",    paid: "અમર્યાદિત" },
-  { label: "WhatsApp શેર",                  free: "7 દિવસ",    paid: "અમર્યાદિત" },
-  { label: "ખેડૂત વૉલેટ (ડૉક.)",            free: "5 ડૉક.",    paid: "30 ડૉક." },
-  { label: "ક્લાઉડ બેકઅપ",                   free: true,       paid: true },
+  { label: "ખર્ચ નોંધ",                    free: true,       paid: true },
+  { label: "આવક નોંધ",                     free: true,       paid: true },
+  { label: "મજૂરી વ્યવસ્થાપન",               free: true,       paid: true },
+  { label: "ભાગીદાર હિસાબ",                 free: true,       paid: true },
+  { label: "નફો/ખોટ ગ્રાફ",                  free: true,       paid: true },
+  { label: "એક સાથે ચાલુ ખેતી",             free: "3 ખેતી",   paid: "અમર્યાદિત" },
+  { label: "ખેડૂત વૉલેટ (ડૉક.)",            free: "5 ડૉક.",   paid: "30 ડૉક." },
   { label: "ઑફલાઇન ઉપયોગ",                  free: true,       paid: true },
-  { label: "7 દિવસ પછી ઉમેરો/ફેરફાર",       free: false,      paid: true },
+  { label: "ક્લાઉડ બેકઅપ / સિંક",            free: false,      paid: true },
+  { label: "WhatsApp / PDF શેર",            free: false,      paid: true },
   { label: "365 દિવસ પ્રીમિયમ સહાય",        free: false,      paid: true },
 ];
 
 export default function MembershipPayment() {
-  const { user, loading, membership, membershipLoading, submitMembershipPayment, signOutUser } = useAuth();
+  const { user, loading, membership, membershipLoading, submitMembershipPayment, signOutUser, skipDonation } = useAuth();
   const navigate = useNavigate();
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -461,7 +461,15 @@ export default function MembershipPayment() {
 
           <button
             id="skip-membership-btn"
-            onClick={() => navigate("/")}
+            onClick={async () => {
+              try {
+                await skipDonation();
+                navigate("/", { replace: true });
+              } catch (err) {
+                console.error("Skip donation failed:", err);
+                setError("ફ્રી પ્લાન ચાલુ કરવામાં ભૂલ. ફરી પ્રયાસ કરો.");
+              }
+            }}
             style={{
               width: "100%", height: "52px", borderRadius: "14px",
               background: "var(--color-paper-dim)", color: "var(--color-ink-soft)",

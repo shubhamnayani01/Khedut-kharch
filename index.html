@@ -16,6 +16,14 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      (function () {
+        var p = location.pathname;
+        if (p && p !== '/' && !location.hash) {
+          location.replace('/' + '#' + p + location.search);
+        }
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

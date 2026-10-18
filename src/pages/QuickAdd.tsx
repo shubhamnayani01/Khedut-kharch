@@ -3,12 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { useAppData } from "../context/AppDataContext";
 import { MicIcon, PlusIcon, AlertIcon } from "../components/icons/UIIcons";
 
-/**
- * QuickAdd — PWA Home Screen Shortcut landing page.
- * Opened via long-press on the app icon → "ઝડપી ખર્ચ ઉમેરો"
- * Finds the most recent ACTIVE season and navigates to its expense form
- * with the voice modal pre-opened (?voice=1).
- */
 export default function QuickAdd() {
   const { seasons, isLoaded } = useAppData();
   const navigate = useNavigate();
@@ -17,20 +11,17 @@ export default function QuickAdd() {
   useEffect(() => {
     if (!isLoaded) return;
 
-    // Pick the most recently created active season
     const active = seasons
       .filter((s) => s.status === "active")
       .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
 
     if (active.length > 0) {
-      // Navigate to the expense add form with voice flag
       navigate(`/crop/${active[0].id}/expense/new?voice=1`, { replace: true });
     } else {
       setNoActive(true);
     }
   }, [isLoaded, seasons, navigate]);
 
-  // ── Loading skeleton ────────────────────────────────────────────────
   if (!isLoaded) {
     return (
       <div className="min-h-dvh flex flex-col items-center justify-center gap-4 bg-[var(--color-paper)] px-6">
@@ -47,8 +38,6 @@ export default function QuickAdd() {
       </div>
     );
   }
-
-  // ── No active season ────────────────────────────────────────────────
   if (noActive) {
     return (
       <div className="min-h-dvh flex flex-col items-center justify-center gap-5 bg-[var(--color-paper)] px-8 text-center">

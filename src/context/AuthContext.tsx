@@ -29,6 +29,30 @@ import {
 import { auth, db } from "../firebase";
 import type { UserMembership, MembershipStatus } from "../types";
 import { ADMIN_EMAILS } from "../types";
+import emailjs from "@emailjs/browser";
+import { EMAILJS_CONFIG, EMAIL_ENABLED } from "../lib/emailConfig";
+
+async function notifyAdminPaymentEmail(name: string, email: string, amount: number, method: string, reference: string) {
+  if (!EMAIL_ENABLED) return;
+  try {
+    await emailjs.send(
+      EMAILJS_CONFIG.SERVICE_ID,
+      EMAILJS_CONFIG.TEMPLATE_ID,
+      {
+        user_name: name,
+        user_email: email,
+        amount: `₹${amount}`,
+        method: method || "N/A",
+        reference: reference || "N/A",
+        time: new Date().toLocaleString("gu-IN"),
+        to_email: EMAILJS_CONFIG.ADMIN_EMAIL,
+      },
+      EMAILJS_CONFIG.PUBLIC_KEY
+    );
+  } catch (err) {
+    console.error("Direct EmailJS payment notification failed:", err);
+  }
+}
 
 interface AuthContextValue {
   user: User | null;
@@ -257,6 +281,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         membershipApprovedAt: null,
         approvedBy: null,
       });
+
+      // Send email notification to admin immediately upon payment submission
+      void notifyAdminPaymentEmail(
+        user.displayName ?? user.email ?? "Unknown User",
+        user.email ?? "No Email",
+        paymentAmount,
+        paymentMethod,
+        paymentReference
+      );
     },
     [user, membership]
   );

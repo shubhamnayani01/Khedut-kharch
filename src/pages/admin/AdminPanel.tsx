@@ -43,7 +43,7 @@ interface MemberUser {
   donationStatus?: string;
 }
 
-type Tab = "Pending" | "Active" | "Expired" | "Rejected" | "Banned" | "Expiring";
+type Tab = "All" | "Pending" | "Active" | "Trial" | "Expiring" | "Expired" | "Rejected" | "Banned";
 
 function toMs(val: unknown): number | undefined {
   if (!val) return undefined;
@@ -352,13 +352,13 @@ export default function AdminPanel() {
       const list: MemberUser[] = [];
       snap.forEach((docSnap) => {
         const d = docSnap.data();
-        if (!d.membershipStatus) return;
+        const status = (d.membershipStatus as MembershipStatus) || "Trial";
         list.push({
           uid: docSnap.id,
           name: d.name ?? null,
           email: d.email ?? null,
           photoURL: d.photoURL ?? null,
-          membershipStatus: d.membershipStatus as MembershipStatus,
+          membershipStatus: status,
           membershipAmount: d.membershipAmount ?? 300,
           paymentProof: d.paymentProof ?? undefined,
           paymentMethod: d.paymentMethod ?? undefined,
@@ -372,7 +372,7 @@ export default function AdminPanel() {
           donationStatus: d.donationStatus ?? undefined,
         });
       });
-      // Sort by most recently submitted
+      // Sort by most recently submitted or active
       list.sort((a, b) => (b.paymentSubmittedAt ?? 0) - (a.paymentSubmittedAt ?? 0));
       setUsers(list);
     } catch (err) {
@@ -506,7 +506,9 @@ export default function AdminPanel() {
 
   const filtered = users.filter((u) => {
     let matchesTab: boolean;
-    if (tab === "Expiring") {
+    if (tab === "All") {
+      matchesTab = true;
+    } else if (tab === "Expiring") {
       matchesTab =
         u.membershipStatus === "Active" &&
         !!u.membershipExpiresAt &&
@@ -592,8 +594,10 @@ export default function AdminPanel() {
   }).length;
 
   const TABS: { key: Tab; label: string; color: string }[] = [
+    { key: "All", label: "બધા (All)", color: "var(--color-crop-600)" },
     { key: "Pending", label: "Pending", color: "var(--color-saffron-500)" },
     { key: "Active", label: "Active", color: "var(--color-crop-500)" },
+    { key: "Trial", label: "Trial / Free", color: "#0284c7" },
     { key: "Expiring", label: "Expiring Soon", color: "#f97316" },
     { key: "Expired", label: "Expired", color: "var(--color-loss-500)" },
     { key: "Rejected", label: "Rejected", color: "var(--color-ink-faint)" },
@@ -990,7 +994,7 @@ export default function AdminPanel() {
                       fontSize: "12px",
                     }}
                   >
-                    {t.key === "Expiring" ? expiringCount : users.filter(u => u.membershipStatus === t.key).length}
+                    {t.key === "All" ? users.length : t.key === "Expiring" ? expiringCount : users.filter(u => u.membershipStatus === t.key).length}
                   </span>
                 </button>
               ))}
@@ -1325,8 +1329,8 @@ export default function AdminPanel() {
                       </div>
                     )}
 
-                    {/* Approve action for Rejected/Expired/Banned too */}
-                    {(u.membershipStatus === "Rejected" || u.membershipStatus === "Expired" || u.membershipStatus === "Banned") && (
+                    {/* Approve action for Trial / TrialExpired / Rejected / Expired / Banned */}
+                    {(u.membershipStatus === "Trial" || u.membershipStatus === "TrialExpired" || u.membershipStatus === "Rejected" || u.membershipStatus === "Expired" || u.membershipStatus === "Banned") && (
                       <button
                         id={`approve-${u.uid}`}
                         onClick={() => approveMembership(u.uid)}

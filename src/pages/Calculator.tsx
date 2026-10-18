@@ -121,13 +121,13 @@ export default function Calculator() {
   const getSqFt = (val: number, unit: typeof landUnit): number => {
     switch (unit) {
       case "vigha":
-        return val * 23760;
+        return val * 27007.2; // 1 vigha = 16 gunthas = 0.62 acres (27,007.2 sq.ft)
       case "acre":
-        return val * 43560;
+        return val * 43560; // 1 acre = 43,560 sq.ft (1.613 vighas)
       case "guntha":
-        return val * 1089;
+        return val * 1089; // 1 guntha = 1,089 sq.ft (0.025 acres, 0.04 vighas)
       case "hectare":
-        return val * 107639;
+        return val * 107639; // 1 hectare = 107,639 sq.ft (2.471 acres, 98.84 gunthas, 3.99 vighas)
       case "sqft":
       default:
         return val;
@@ -136,7 +136,7 @@ export default function Calculator() {
 
   const sqFtValue = typeof landInput === "number" && landInput > 0 ? getSqFt(landInput, landUnit) : 0;
   const landResults = {
-    vigha: sqFtValue / 23760,
+    vigha: sqFtValue / 27007.2,
     acre: sqFtValue / 43560,
     guntha: sqFtValue / 1089,
     sqft: sqFtValue,
@@ -611,9 +611,9 @@ export default function Calculator() {
                 <div className="p-3 bg-[var(--color-paper-dim)] rounded-xl">
                   <span className="text-[11px] text-[var(--color-ink-faint)] font-medium block">એકર</span>
                   <strong className="text-[18px] text-[var(--color-ink)] font-bold tnum">
-                    {landResults.acre.toFixed(2)}
+                    {landResults.acre.toFixed(3)}
                   </strong>
-                  <span className="text-[10px] text-[var(--color-ink-faint)] block mt-0.5">એકર (40 ગુંઠા)</span>
+                  <span className="text-[10px] text-[var(--color-ink-faint)] block mt-0.5">એકર (૧.૬૧૩ વિઘા / ૪૦ ગુંઠા)</span>
                 </div>
 
                 <div className="p-3 bg-[var(--color-paper-dim)] rounded-xl">
@@ -621,20 +621,20 @@ export default function Calculator() {
                   <strong className="text-[18px] text-[var(--color-ink)] font-bold tnum">
                     {landResults.guntha.toFixed(2)}
                   </strong>
-                  <span className="text-[10px] text-[var(--color-ink-faint)] block mt-0.5">ગુંઠા</span>
+                  <span className="text-[10px] text-[var(--color-ink-faint)] block mt-0.5">ગુંઠા (૧૬ ગુંઠા = ૧ વિઘા)</span>
                 </div>
 
                 <div className="p-3 bg-[var(--color-paper-dim)] rounded-xl">
                   <span className="text-[11px] text-[var(--color-ink-faint)] font-medium block">હેક્ટર</span>
                   <strong className="text-[18px] text-[var(--color-ink)] font-bold tnum">
-                    {landResults.hectare.toFixed(3)}
+                    {landResults.hectare.toFixed(4)}
                   </strong>
-                  <span className="text-[10px] text-[var(--color-ink-faint)] block mt-0.5">હેક્ટર</span>
+                  <span className="text-[10px] text-[var(--color-ink-faint)] block mt-0.5">હેક્ટર (૩.૯૯ વિઘા)</span>
                 </div>
               </div>
 
               <div className="mt-3 p-2.5 bg-amber-50/70 rounded-xl border border-amber-200/50 text-[11px] text-amber-900 leading-relaxed">
-                ℹ️ <strong>માહિતી:</strong> ગુજરાતમાં સામાન્ય રીતે <strong>૧ એકર = ૨.૫ વિઘા = ૪૦ ગુંઠા</strong> (૪૩,૫૬ો ચોરસ ફૂટ) ગણવામાં આવે છે.
+                ℹ️ <strong>માહિતી:</strong> ૧ વિઘા = ૧૬ ગુંઠા = ૦.૬૨ એકર = ૦.૧૬૧૮ હેક્ટર | ૧ એકર = ૧.૬૧૩ વિઘા = ૪૦ ગુંઠા | ૧ હેક્ટર = ૨.૪૭૧ એકર = ૯૮.૮૪ ગુંઠા = ૩.૯૯ વિઘા.
               </div>
             </div>
           </div>
