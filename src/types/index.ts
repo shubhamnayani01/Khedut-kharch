@@ -220,6 +220,20 @@ export interface DonationRecord {
   createdAt: number;
 }
 
+export interface UserProfile {
+  uid: string;
+  name: string | null;
+  phoneNumber?: string | null;
+  email?: string | null;
+  age?: number | null;
+  village?: string | null;
+  taluka?: string | null;
+  district?: string | null;
+  landSizeAcres?: number | null;
+  hasCompletedProfile?: boolean;
+  photoURL?: string | null;
+}
+
 export interface UserMembership {
   membershipStatus: MembershipStatus;
   membershipType: "Annual";

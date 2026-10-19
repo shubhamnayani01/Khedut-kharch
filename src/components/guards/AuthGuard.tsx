@@ -1,7 +1,8 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { TrialBanner } from "../ui/TrialBanner";
+import { ProfileSetupModal } from "../ProfileSetupModal";
 
 /**
  * Wraps protected routes. Redirects based on auth + membership status.
@@ -16,8 +17,9 @@ import { TrialBanner } from "../ui/TrialBanner";
  *   null        → wait (trial will be auto-started by AuthContext)
  */
 export function AuthGuard({ children }: { children: React.ReactNode }) {
-  const { user, loading, membership, membershipLoading } = useAuth();
+  const { user, userProfile, loading, membership, membershipLoading } = useAuth();
   const navigate = useNavigate();
+  const [profileDismissed, setProfileDismissed] = useState(false);
 
   useEffect(() => {
     if (loading || membershipLoading) return;
@@ -85,12 +87,25 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     !(status === "Active" && membership.membershipExpiresAt && membership.membershipExpiresAt < Date.now());
 
   if (!isAllowed) {
-    // navigation effect will redirect; render nothing in the meantime
+
     return null;
   }
 
+  // Show profile setup modal if user signed in without a completed profile (Email OTP or Phone)
+  const isEmailOrPhoneUser = !user?.providerData?.some(p => p.providerId === "google.com");
+  const needsProfileSetup =
+    isEmailOrPhoneUser &&
+    !!user &&
+    !!userProfile &&
+    userProfile.hasCompletedProfile !== true &&
+    !profileDismissed;
+
   return (
     <div style={{ display: "flex", flexDirection: "column", minHeight: "100dvh" }}>
+      <ProfileSetupModal
+        isOpen={needsProfileSetup}
+        onComplete={() => setProfileDismissed(true)}
+      />
       <TrialBanner />
       <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
         {children}

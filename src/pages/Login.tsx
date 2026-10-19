@@ -11,16 +11,43 @@ import {
   ChartIcon, 
   CheckCircleIcon,
   MessageCircleIcon,
-  ShieldIcon
+  ShieldIcon,
+  RefreshIcon
 } from "../components/icons/UIIcons";
 
 export default function Login() {
-  const { user, loading, membership, membershipLoading, isAdmin, signInWithGoogle, signOutUser } = useAuth();
+  const {
+    user,
+    loading,
+    membership,
+    membershipLoading,
+    isAdmin,
+    signInWithGoogle,
+    sendEmailOtp,
+    verifyEmailOtp,
+    signOutUser,
+  } = useAuth();
   const navigate = useNavigate();
+
+  const [authMode, setAuthMode] = useState<"email" | "google">("email");
+  const [email, setEmail] = useState("");
+  const [otpCode, setOtpCode] = useState("");
+  const [step, setStep] = useState<"email_input" | "otp_input">("email_input");
+
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [resendTimer, setResendTimer] = useState(0);
 
-  // Redirect if already authenticated with active membership
+  // Timer countdown for resending OTP
+  useEffect(() => {
+    if (resendTimer <= 0) return;
+    const timer = setInterval(() => {
+      setResendTimer((prev) => prev - 1);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [resendTimer]);
+
+  // Redirect if already authenticated
   useEffect(() => {
     if (loading || membershipLoading) return;
     if (!user) return;
@@ -47,7 +74,63 @@ export default function Login() {
     }
   }, [user, loading, membership, membershipLoading, isAdmin, navigate, signOutUser]);
 
-  const handleSignIn = async () => {
+  const handleSendEmailOtp = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setError("");
+
+    const cleanEmail = email.trim();
+    if (!cleanEmail || !cleanEmail.includes("@") || !cleanEmail.includes(".")) {
+      setError("કૃપા કરીને સાચું ઈમેલ એડ્રેસ દાખલ કરો.");
+      return;
+    }
+
+    setBusy(true);
+
+    try {
+      await sendEmailOtp(cleanEmail);
+      setStep("otp_input");
+      setResendTimer(60);
+    } catch (err: unknown) {
+      console.error("Email OTP Send Error:", err);
+      const msg = (err as Error)?.message;
+      if (msg === "GOOGLE_ACCOUNT_EXISTS") {
+        setError("GOOGLE_ACCOUNT_EXISTS");
+      } else {
+        setError("ઈમેલ પર OTP મોકલવામાં ભૂલ આવી. કૃપા કરીને ઈમેલ તપાસો અથવા ફરી પ્રયાસ કરો.");
+      }
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleVerifyEmailOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (otpCode.trim().length !== 6) {
+      setError("કૃપા કરીને 6 આંકડાનો OTP દાખલ કરો.");
+      return;
+    }
+
+    setBusy(true);
+    setError("");
+    try {
+      await verifyEmailOtp(email.trim(), otpCode.trim());
+      // Navigation is handled by the redirect useEffect above
+    } catch (err: unknown) {
+      console.error("Email OTP Verify Error:", err);
+      const msg = (err as Error)?.message;
+      if (msg === "OTP_INVALID") {
+        setError("ખોટો OTP કોડ છે. તમારા ઈમેલમાંથી સાચો કોડ દાખલ કરો.");
+      } else if (msg === "OTP_EXPIRED") {
+        setError("OTP નો સમય (10 મિનિટ) પૂરો થઈ ગયો છે. નવો OTP મંગાવો.");
+      } else {
+        setError("ચકાસણી નિષ્ફળ ગઈ. ફરી પ્રયાસ કરો.");
+      }
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
     setBusy(true);
     setError("");
     try {
@@ -135,40 +218,235 @@ export default function Login() {
 
           {/* Call to Action Box */}
           <div className="bg-white/60 backdrop-blur-md rounded-2xl p-6 border border-white/40 shadow-[var(--shadow-card)]">
-            {error && (
+            {error === "GOOGLE_ACCOUNT_EXISTS" ? (
+              <div className="bg-emerald-50 border border-emerald-300 rounded-2xl p-4 mb-5 text-left shadow-sm">
+                <div className="flex items-start gap-2.5 mb-3">
+                  <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 mt-0.5 text-emerald-700">
+                    <ShieldIcon size={18} />
+                  </div>
+                  <div>
+                    <h4 className="text-[14.5px] font-bold text-emerald-900 leading-snug">
+                      તમારું એકાઉન્ટ Google સાથે જોડાયેલું છે
+                    </h4>
+                    <p className="text-[12.5px] text-emerald-700 mt-1 leading-relaxed">
+                      <span className="font-semibold text-emerald-900">{email}</span> માટે પાસવર્ડ કે OTP ની જરૂર નથી! નીચે એક ક્લિકમાં તમારા જૂના એકાઉન્ટમાં સીધા પ્રવેશ કરો:
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleGoogleSignIn}
+                  disabled={busy}
+                  className="w-full flex items-center justify-center gap-2.5 h-12 rounded-xl text-white font-bold text-[14.5px] transition-all duration-200"
+                  style={{
+                    background: "linear-gradient(135deg, #10b981, #059669)",
+                    boxShadow: "0 4px 14px -3px rgba(5, 150, 105, 0.4)",
+                  }}
+                >
+                  <svg width="18" height="18" viewBox="0 0 48 48">
+                    <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                    <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                    <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                    <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                  </svg>
+                  <span>Google દ્વારા સીધા પ્રવેશ કરો</span>
+                </button>
+              </div>
+            ) : error ? (
               <div className="bg-[var(--color-loss-100)] border border-[var(--color-loss-400)] rounded-xl p-3 mb-4 text-[13.5px] text-[var(--color-loss-600)] text-left flex items-start gap-2">
                 <CheckCircleIcon size={18} className="shrink-0 mt-0.5 opacity-0" />
                 <span>{error}</span>
               </div>
-            )}
+            ) : null}
             
-            <button
-              id="google-signin-btn"
-              onClick={handleSignIn}
-              disabled={busy}
-              className="w-full flex items-center justify-center gap-3 h-14 rounded-xl text-white font-semibold text-[16px] transition-all duration-300"
-              style={{
-                background: busy
-                  ? "var(--color-paper-dim)"
-                  : "linear-gradient(135deg, var(--color-crop-500), var(--color-crop-600))",
-                boxShadow: busy ? "none" : "0 8px 20px -6px rgba(47,107,79,0.5)",
-                cursor: busy ? "not-allowed" : "pointer",
-              }}
-            >
-              {busy ? (
-                <>
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  <span>લૉગઇન થઈ રહ્યું છે...</span>
-                </>
-              ) : (
-                <>
-                  <svg width="24" height="24" viewBox="0 0 48 48">
-                    <path fill="#fff" d="M44.5 20H24v8.5h11.8C34.7 33.9 30 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 4.1 29.6 2 24 2 11.8 2 2 11.8 2 24s9.8 22 22 22c11 0 21-8 21-22 0-1.3-.2-2.7-.5-4z" />
-                  </svg>
-                  <span>Google સાથે શરૂઆત કરો</span>
-                </>
-              )}
-            </button>
+            {/* Auth Tab Switcher */}
+            <div className="flex bg-[var(--color-paper-light)] p-1 rounded-xl mb-6 border border-[var(--color-border)]">
+              <button
+                type="button"
+                onClick={() => { setAuthMode("email"); setError(""); }}
+                className={`flex-1 py-2.5 rounded-lg text-[14px] font-bold transition-all flex items-center justify-center gap-2 ${
+                  authMode === "email"
+                    ? "bg-white text-[var(--color-crop-600)] shadow-sm"
+                    : "text-[var(--color-ink-soft)] hover:text-[var(--color-ink)]"
+                }`}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect width="20" height="16" x="2" y="4" rx="2"/>
+                  <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+                </svg>
+                <span>ઈમેલ (Email OTP)</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => { setAuthMode("google"); setError(""); }}
+                className={`flex-1 py-2.5 rounded-lg text-[14px] font-bold transition-all flex items-center justify-center gap-2 ${
+                  authMode === "google"
+                    ? "bg-white text-[var(--color-crop-600)] shadow-sm"
+                    : "text-[var(--color-ink-soft)] hover:text-[var(--color-ink)]"
+                }`}
+              >
+                <svg width="16" height="16" viewBox="0 0 48 48">
+                  <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                  <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                  <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                  <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                </svg>
+                <span>Google</span>
+              </button>
+            </div>
+
+            {/* Email OTP Section */}
+            {authMode === "email" && (
+              <div>
+                {step === "email_input" ? (
+                  <form onSubmit={handleSendEmailOtp} className="space-y-4">
+                    <div className="text-left">
+                      <label className="block text-[13px] font-bold text-[var(--color-ink)] mb-1.5">
+                        તમારું ઈમેલ એડ્રેસ દાખલ કરો:
+                      </label>
+                      <input
+                        type="email"
+                        required
+                        autoFocus
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="દા.ત. khedut@gmail.com"
+                        className="w-full h-13 px-4 rounded-xl border border-[var(--color-border)] focus:border-[var(--color-crop-500)] focus:ring-2 focus:ring-[var(--color-crop-100)] outline-none text-[15px] font-semibold text-[var(--color-ink)] bg-white transition-all"
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={busy || !email.includes("@")}
+                      className="w-full flex items-center justify-center gap-3 h-13 rounded-xl text-white font-bold text-[16px] transition-all duration-300"
+                      style={{
+                        background: busy || !email.includes("@")
+                          ? "#cbd5e1"
+                          : "linear-gradient(135deg, var(--color-crop-500), var(--color-crop-600))",
+                        boxShadow: busy || !email.includes("@")
+                          ? "none"
+                          : "0 8px 20px -6px rgba(47,107,79,0.5)",
+                        cursor: busy || !email.includes("@") ? "not-allowed" : "pointer",
+                      }}
+                    >
+                      {busy ? (
+                        <>
+                          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          <span>OTP મોકલી રહ્યું છે...</span>
+                        </>
+                      ) : (
+                        <span>OTP મેળવો (Send OTP)</span>
+                      )}
+                    </button>
+                  </form>
+                ) : (
+                  <form onSubmit={handleVerifyEmailOtp} className="space-y-4">
+                    <div className="text-left">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="text-[13px] font-bold text-[var(--color-ink)]">
+                          6 આંકડાનો OTP દાખલ કરો:
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => { setStep("email_input"); setOtpCode(""); setError(""); }}
+                          className="text-[12px] font-bold text-[var(--color-crop-600)] hover:underline"
+                        >
+                          ઈમેલ બદલો
+                        </button>
+                      </div>
+                      <p className="text-[12px] text-[var(--color-ink-soft)] mb-2">
+                        <span className="font-semibold text-[var(--color-ink)]">{email}</span> પર મોકલેલ 6 આંકડાનો કોડ દાખલ કરો:
+                      </p>
+                      <input
+                        type="tel"
+                        inputMode="numeric"
+                        maxLength={6}
+                        autoFocus
+                        value={otpCode}
+                        onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ""))}
+                        placeholder="••••••"
+                        className="w-full h-13 px-4 rounded-xl border border-[var(--color-border)] focus:border-[var(--color-crop-500)] focus:ring-2 focus:ring-[var(--color-crop-100)] outline-none text-[22px] font-extrabold text-center tracking-[10px] text-[var(--color-ink)] bg-white transition-all"
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={busy || otpCode.trim().length !== 6}
+                      className="w-full flex items-center justify-center gap-3 h-13 rounded-xl text-white font-bold text-[16px] transition-all duration-300"
+                      style={{
+                        background: busy || otpCode.trim().length !== 6
+                          ? "#cbd5e1"
+                          : "linear-gradient(135deg, var(--color-crop-500), var(--color-crop-600))",
+                        boxShadow: busy || otpCode.trim().length !== 6
+                          ? "none"
+                          : "0 8px 20px -6px rgba(47,107,79,0.5)",
+                        cursor: busy || otpCode.trim().length !== 6 ? "not-allowed" : "pointer",
+                      }}
+                    >
+                      {busy ? (
+                        <>
+                          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          <span>ચકાસી રહ્યું છે...</span>
+                        </>
+                      ) : (
+                        <span>લૉગઇન ચકાસો (Verify & Sign In)</span>
+                      )}
+                    </button>
+
+                    <div className="text-center pt-1">
+                      {resendTimer > 0 ? (
+                        <p className="text-[12.5px] text-[var(--color-ink-faint)]">
+                          ફરીથી OTP મોકલો {resendTimer} સેકન્ડમાં
+                        </p>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => handleSendEmailOtp()}
+                          className="text-[13px] font-bold text-[var(--color-crop-600)] hover:underline inline-flex items-center gap-1"
+                        >
+                          <RefreshIcon size={14} />
+                          <span>ફરીથી OTP મોકલો (Resend OTP)</span>
+                        </button>
+                      )}
+                    </div>
+                  </form>
+                )}
+              </div>
+            )}
+
+            {/* Google Login Section */}
+            {authMode === "google" && (
+              <div>
+                <button
+                  id="google-signin-btn"
+                  onClick={handleGoogleSignIn}
+                  disabled={busy}
+                  className="w-full flex items-center justify-center gap-3 h-14 rounded-xl text-white font-semibold text-[16px] transition-all duration-300"
+                  style={{
+                    background: busy
+                      ? "var(--color-paper-dim)"
+                      : "linear-gradient(135deg, var(--color-crop-500), var(--color-crop-600))",
+                    boxShadow: busy ? "none" : "0 8px 20px -6px rgba(47,107,79,0.5)",
+                    cursor: busy ? "not-allowed" : "pointer",
+                  }}
+                >
+                  {busy ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span>લૉગઇન થઈ રહ્યું છે...</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg width="24" height="24" viewBox="0 0 48 48">
+                        <path fill="#fff" d="M44.5 20H24v8.5h11.8C34.7 33.9 30 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 4.1 29.6 2 24 2 11.8 2 2 11.8 2 24s9.8 22 22 22c11 0 21-8 21-22 0-1.3-.2-2.7-.5-4z" />
+                      </svg>
+                      <span>Google સાથે શરૂઆત કરો</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
+
             <p className="text-[12px] text-[var(--color-ink-faint)] mt-4 leading-relaxed">
               લૉગઇન કરીને તમે અમારી <Link to="/terms" className="underline text-[var(--color-crop-600)]">નિયમો અને શરતો</Link> અને <Link to="/privacy-policy" className="underline text-[var(--color-crop-600)]">ગોપનીયતા નીતિ</Link> સાથે સંમત થાઓ છો.
             </p>

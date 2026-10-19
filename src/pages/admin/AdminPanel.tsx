@@ -27,7 +27,12 @@ interface SupportTicket {
 interface MemberUser {
   uid: string;
   name: string | null;
+  phoneNumber?: string | null;
   email: string | null;
+  age?: number | null;
+  village?: string | null;
+  taluka?: string | null;
+  landSizeAcres?: number | null;
   photoURL: string | null;
   membershipStatus: MembershipStatus;
   membershipAmount: number;
@@ -356,7 +361,12 @@ export default function AdminPanel() {
         list.push({
           uid: docSnap.id,
           name: d.name ?? null,
+          phoneNumber: d.phoneNumber ?? null,
           email: d.email ?? null,
+          age: typeof d.age === "number" ? d.age : null,
+          village: d.village ?? null,
+          taluka: d.taluka ?? null,
+          landSizeAcres: typeof d.landSizeAcres === "number" ? d.landSizeAcres : null,
           photoURL: d.photoURL ?? null,
           membershipStatus: status,
           membershipAmount: d.membershipAmount ?? 300,
@@ -1106,8 +1116,27 @@ export default function AdminPanel() {
                             whiteSpace: "nowrap",
                           }}
                         >
-                          {u.email ?? u.uid}
+                          {u.phoneNumber ? `📱 ${u.phoneNumber}` : (u.email ?? u.uid)}
                         </p>
+                        {(u.village || u.age || u.landSizeAcres) && (
+                          <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginTop: "4px" }}>
+                            {u.village && (
+                              <span style={{ fontSize: "11px", background: "rgba(47,107,79,0.08)", color: "var(--color-crop-600)", padding: "1px 6px", borderRadius: "4px" }}>
+                                📍 {u.village}{u.taluka ? `, ${u.taluka}` : ""}
+                              </span>
+                            )}
+                            {u.age && (
+                              <span style={{ fontSize: "11px", background: "rgba(0,0,0,0.05)", color: "var(--color-ink-soft)", padding: "1px 6px", borderRadius: "4px" }}>
+                                ઉંમર: {u.age}
+                              </span>
+                            )}
+                            {u.landSizeAcres && (
+                              <span style={{ fontSize: "11px", background: "rgba(234,179,8,0.12)", color: "#b45309", padding: "1px 6px", borderRadius: "4px" }}>
+                                🌾 {u.landSizeAcres} વીઘા
+                              </span>
+                            )}
+                          </div>
+                        )}
                       </div>
                       {/* Status badge */}
                       <span

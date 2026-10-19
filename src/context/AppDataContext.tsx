@@ -83,7 +83,7 @@ interface AppDataContextValue {
 const AppDataContext = createContext<AppDataContextValue | null>(null);
 
 export function AppDataProvider({ children }: { children: React.ReactNode }) {
-  const { isPremium } = useAuth();
+  const { user, isPremium } = useAuth();
 
   const [seasons, setSeasons] = useState<FarmingSeason[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
@@ -286,16 +286,14 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
       });
     };
 
-    const currentUser = auth.currentUser;
-    if (currentUser) {
-      void runCloudLoad();
-      return;
-    }
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user && !cloudLoadAttempted.current) void runCloudLoad();
+      if (user) {
+        cloudLoadAttempted.current = false;
+        void runCloudLoad();
+      }
     });
     return unsubscribe;
-  }, [isLoaded, isPremium, loadSeasonsFromFirestore, loadCollection, normalizeFirestoreExpense, normalizeWorker, normalizeBhaagidar, normalizeAdvanceLedger, normalizeInventoryItem, normalizeField]);
+  }, [isLoaded, isPremium, user, loadSeasonsFromFirestore, loadCollection, normalizeFirestoreExpense, normalizeWorker, normalizeBhaagidar, normalizeAdvanceLedger, normalizeInventoryItem, normalizeField]);
 
   useEffect(() => { if (isLoaded) storage.setSeasons(seasons); }, [seasons, isLoaded]);
   useEffect(() => { if (isLoaded) storage.setExpenses(expenses); }, [expenses, isLoaded]);
@@ -388,7 +386,6 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     setAdvanceLedgers(prev => prev.filter(a => a.seasonId !== id));
     if (settings.activeSeasonId === id) setActiveSeason(undefined);
 
-    // Delete from Firestore — season doc + all related sub-collections
     void deleteFromFirestore("seasons", id);
     expenseIds.forEach(eid => void deleteFromFirestore("expenses", eid));
     workerIds.forEach(wid => void deleteFromFirestore("workers", wid));

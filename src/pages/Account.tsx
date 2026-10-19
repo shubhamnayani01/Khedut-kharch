@@ -18,7 +18,7 @@ import { WalletIcon } from "../components/icons/ModuleIcons";
 import { useTranslation } from "../lib/i18n";
 
 export default function Account() {
-  const { user, signOutUser, isAdmin, membership } = useAuth();
+  const { user, userProfile, signOutUser, isAdmin, membership } = useAuth();
   const { submitSupportTicket } = useAppData();
   const navigate = useNavigate();
   const { show } = useToast();
@@ -105,7 +105,7 @@ export default function Account() {
                 )}
               </div>
               <p className="text-[13.5px] text-[var(--color-ink-faint)] truncate mt-0.5">
-                {user?.email ?? "No Email"}
+                {userProfile?.email || user?.email || "No Email"}
               </p>
               <div className="flex items-center gap-1.5 mt-2 text-[12px] text-[var(--color-ink-soft)] bg-[var(--color-paper-dim)] px-2.5 py-1 rounded-md w-fit">
                 <ShieldIcon size={14} className="text-emerald-600" />
@@ -115,7 +115,6 @@ export default function Account() {
           </div>
         </Card>
 
-        {/* Membership & Support Status Card */}
         <div className="mb-2">
           <p className="text-[12.5px] font-semibold text-[var(--color-ink-faint)] uppercase tracking-wide mb-2 px-1">
             {t("membershipStatus")}
@@ -184,7 +183,6 @@ export default function Account() {
           )}
         </Card>
 
-        {/* Quick Management Options */}
         <div className="mb-2">
           <p className="text-[12.5px] font-semibold text-[var(--color-ink-faint)] uppercase tracking-wide mb-2 px-1">
             {t("accountManagement")}
