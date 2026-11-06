@@ -206,26 +206,26 @@ export default function Calculator() {
         {activeTab === "mann" && (
           <div className="space-y-4">
             {/* Customizable 1 Mann = ? KG Config Banner */}
-            <div className="p-3.5 bg-amber-50/80 border border-amber-200/80 rounded-2xl flex items-center justify-between gap-3">
+            <div className="mann-banner p-3.5 rounded-2xl flex items-center justify-between gap-3">
               <div className="flex-1">
-                <span className="text-[12px] font-bold text-amber-900 block">
+                <span className="text-[12px] font-bold text-amber-900 dark:text-amber-200 block">
                   ૧ મણનું પ્રમાણ (કિલોગ્રામ):
                 </span>
-                <span className="text-[11px] text-amber-700 block">
+                <span className="text-[11px] text-amber-700 dark:text-amber-300/80 block">
                   (સૌરાષ્ટ્ર/ગુજરાતમાં ૨૦ kg, કેટલાક વિસ્તારોમાં ૪૦ kg)
                 </span>
               </div>
-              <div className="flex items-center gap-1.5 shrink-0 bg-white px-2.5 py-1 rounded-xl border border-amber-300">
-                <span className="text-[13px] font-bold text-amber-950">૧ મણ =</span>
+              <div className="mann-pill flex items-center gap-1.5 shrink-0 px-2.5 py-1 rounded-xl shadow-xs">
+                <span className="text-[13px] font-bold text-amber-950 dark:text-amber-100">૧ મણ =</span>
                 <input
                   type="number"
                   min="1"
                   max="100"
                   value={kgPerMann}
                   onChange={(e) => setKgPerMann(e.target.value === "" ? "" : Number(e.target.value))}
-                  className="w-12 text-center text-[15px] font-bold text-amber-900 outline-none"
+                  className="w-12 text-center text-[15px] font-bold text-amber-950 dark:text-amber-100 bg-transparent outline-none"
                 />
-                <span className="text-[12px] font-bold text-amber-800">kg</span>
+                <span className="text-[12px] font-bold text-amber-800 dark:text-amber-300">kg</span>
               </div>
             </div>
 
@@ -242,8 +242,8 @@ export default function Calculator() {
                       onClick={() => setWeightMode("kg")}
                       className={`px-2.5 py-0.5 rounded-md transition-all ${
                         weightMode === "kg"
-                          ? "bg-[var(--color-crop-500)] text-white"
-                          : "text-[var(--color-ink-faint)]"
+                          ? "bg-[var(--color-crop-500)] text-white shadow-xs"
+                          : "text-[var(--color-ink-soft)] hover:text-[var(--color-ink)]"
                       }`}
                     >
                       કિલો (KG)
@@ -253,8 +253,8 @@ export default function Calculator() {
                       onClick={() => setWeightMode("mann")}
                       className={`px-2.5 py-0.5 rounded-md transition-all ${
                         weightMode === "mann"
-                          ? "bg-[var(--color-crop-500)] text-white"
-                          : "text-[var(--color-ink-faint)]"
+                          ? "bg-[var(--color-crop-500)] text-white shadow-xs"
+                          : "text-[var(--color-ink-soft)] hover:text-[var(--color-ink)]"
                       }`}
                     >
                       મણ (Mann)
@@ -270,7 +270,7 @@ export default function Calculator() {
                     value={inputWeight}
                     onChange={(e) => setInputWeight(e.target.value === "" ? "" : Number(e.target.value))}
                     placeholder={weightMode === "kg" ? "દા.ત. 1000" : "દા.ત. 50"}
-                    className="flex-1 h-12 px-3.5 bg-white border border-[var(--color-border)] rounded-xl text-[16px] font-bold outline-none focus:border-[var(--color-crop-500)]"
+                    className="calc-input flex-1 h-12 px-3.5 rounded-xl text-[16px] font-bold outline-none focus:border-[var(--color-crop-500)] transition-colors"
                   />
                   <span className="text-[14px] font-bold text-[var(--color-ink-soft)] px-2">
                     {weightMode === "kg" ? "કિલો" : "મણ"}
@@ -290,7 +290,7 @@ export default function Calculator() {
                     value={pricePerMann}
                     onChange={(e) => setPricePerMann(e.target.value === "" ? "" : Number(e.target.value))}
                     placeholder="દા.ત. 1650"
-                    className="flex-1 h-12 px-3.5 bg-white border border-[var(--color-border)] rounded-xl text-[16px] font-bold outline-none focus:border-[var(--color-crop-500)]"
+                    className="calc-input flex-1 h-12 px-3.5 rounded-xl text-[16px] font-bold outline-none focus:border-[var(--color-crop-500)] transition-colors"
                   />
                   <span className="text-[13px] font-bold text-[var(--color-ink-soft)] px-2">
                     ₹ / મણ
@@ -300,22 +300,22 @@ export default function Calculator() {
             </div>
 
             {/* Total Sale Result Card */}
-            <div className="p-5 bg-gradient-to-br from-[var(--color-crop-500)] to-[var(--color-crop-700)] text-white rounded-[var(--radius-card)] shadow-md">
-              <span className="text-[12.5px] opacity-90 block">કુલ વેચાણ રકમ:</span>
-              <strong className="text-[32px] font-bold tracking-tight block my-1 tnum">
+            <div className="crop-result-card p-5 border border-[#245740]/30 rounded-[var(--radius-card)] shadow-md">
+              <span className="text-[12.5px] text-emerald-100/90 dark:text-emerald-200/80 block font-medium">કુલ વેચાણ રકમ:</span>
+              <strong className="text-[32px] font-bold tracking-tight block my-1 tnum text-white dark:text-emerald-50">
                 {formatCurrency(Math.round(totalMannAmount))}
               </strong>
 
-              <div className="grid grid-cols-2 gap-2 pt-3 mt-2 border-t border-white/20 text-[12px]">
-                <div className="bg-white/10 p-2 rounded-lg">
-                  <span className="opacity-80 block text-[11px]">કુલ મણ:</span>
-                  <strong className="text-[15px] font-bold tnum">
+              <div className="grid grid-cols-2 gap-2 pt-3 mt-2 border-t border-white/20 dark:border-emerald-500/20 text-[12px]">
+                <div className="crop-result-subcard p-2.5 rounded-lg">
+                  <span className="text-emerald-100/80 dark:text-emerald-300/70 block text-[11px]">કુલ મણ:</span>
+                  <strong className="text-[15px] font-bold tnum text-white dark:text-emerald-100">
                     {totalWeightMann.toFixed(2)} મણ
                   </strong>
                 </div>
-                <div className="bg-white/10 p-2 rounded-lg">
-                  <span className="opacity-80 block text-[11px]">૧ કિલોનો ભાવ:</span>
-                  <strong className="text-[15px] font-bold tnum">
+                <div className="crop-result-subcard p-2.5 rounded-lg">
+                  <span className="text-emerald-100/80 dark:text-emerald-300/70 block text-[11px]">૧ કિલોનો ભાવ:</span>
+                  <strong className="text-[15px] font-bold tnum text-white dark:text-emerald-100">
                     ₹{ratePerKg.toFixed(2)} / kg
                   </strong>
                 </div>
@@ -334,7 +334,7 @@ export default function Calculator() {
                 className={`flex-1 py-2 rounded-lg font-bold text-[13px] transition-all ${
                   tractorMode === "time"
                     ? "bg-[var(--color-surface)] text-[var(--color-crop-700)] shadow-xs"
-                    : "text-[var(--color-ink-faint)]"
+                    : "text-[var(--color-ink-faint)] hover:text-[var(--color-ink)]"
                 }`}
               >
                 કલાક / સમય પ્રમાણે
@@ -345,7 +345,7 @@ export default function Calculator() {
                 className={`flex-1 py-2 rounded-lg font-bold text-[13px] transition-all ${
                   tractorMode === "vigha"
                     ? "bg-[var(--color-surface)] text-[var(--color-crop-700)] shadow-xs"
-                    : "text-[var(--color-ink-faint)]"
+                    : "text-[var(--color-ink-faint)] hover:text-[var(--color-ink)]"
                 }`}
               >
                 વિઘા દીઠ ભાડું
@@ -366,7 +366,7 @@ export default function Calculator() {
                         value={tractorHours}
                         onChange={(e) => setTractorHours(e.target.value === "" ? "" : Number(e.target.value))}
                         placeholder="કલાક"
-                        className="w-full h-11 px-3 bg-white border border-[var(--color-border)] rounded-xl text-[15px] font-bold outline-none focus:border-[var(--color-crop-500)]"
+                        className="calc-input w-full h-11 px-3 rounded-xl text-[15px] font-bold outline-none focus:border-[var(--color-crop-500)] transition-colors"
                       />
                       <span className="text-[11px] text-[var(--color-ink-faint)] mt-1 block">કલાક (Hours)</span>
                     </div>
@@ -378,7 +378,7 @@ export default function Calculator() {
                         value={tractorMinutes}
                         onChange={(e) => setTractorMinutes(e.target.value === "" ? "" : Number(e.target.value))}
                         placeholder="મિનિટ"
-                        className="w-full h-11 px-3 bg-white border border-[var(--color-border)] rounded-xl text-[15px] font-bold outline-none focus:border-[var(--color-crop-500)]"
+                        className="calc-input w-full h-11 px-3 rounded-xl text-[15px] font-bold outline-none focus:border-[var(--color-crop-500)] transition-colors"
                       />
                       <span className="text-[11px] text-[var(--color-ink-faint)] mt-1 block">મિનિટ (Minutes)</span>
                     </div>
@@ -395,7 +395,7 @@ export default function Calculator() {
                     value={ratePerHour}
                     onChange={(e) => setRatePerHour(e.target.value === "" ? "" : Number(e.target.value))}
                     placeholder="દા.ત. 800"
-                    className="w-full h-11 px-3 bg-white border border-[var(--color-border)] rounded-xl text-[15px] font-bold outline-none focus:border-[var(--color-crop-500)]"
+                    className="calc-input w-full h-11 px-3 rounded-xl text-[15px] font-bold outline-none focus:border-[var(--color-crop-500)] transition-colors"
                   />
                 </div>
               </div>
@@ -412,7 +412,7 @@ export default function Calculator() {
                     value={tractorVighas}
                     onChange={(e) => setTractorVighas(e.target.value === "" ? "" : Number(e.target.value))}
                     placeholder="દા.ત. 4"
-                    className="w-full h-11 px-3 bg-white border border-[var(--color-border)] rounded-xl text-[15px] font-bold outline-none focus:border-[var(--color-crop-500)]"
+                    className="calc-input w-full h-11 px-3 rounded-xl text-[15px] font-bold outline-none focus:border-[var(--color-crop-500)] transition-colors"
                   />
                 </div>
 
@@ -426,21 +426,21 @@ export default function Calculator() {
                     value={ratePerVigha}
                     onChange={(e) => setRatePerVigha(e.target.value === "" ? "" : Number(e.target.value))}
                     placeholder="દા.ત. 500"
-                    className="w-full h-11 px-3 bg-white border border-[var(--color-border)] rounded-xl text-[15px] font-bold outline-none focus:border-[var(--color-crop-500)]"
+                    className="calc-input w-full h-11 px-3 rounded-xl text-[15px] font-bold outline-none focus:border-[var(--color-crop-500)] transition-colors"
                   />
                 </div>
               </div>
             )}
 
             {/* Tractor Result Card */}
-            <div className="p-5 bg-gradient-to-br from-[var(--color-soil-500)] to-[#7c4d28] text-white rounded-[var(--radius-card)] shadow-md">
-              <span className="text-[12.5px] opacity-90 block">કુલ ટ્રેક્ટર ભાડું ચૂકવવાપાત્ર:</span>
-              <strong className="text-[32px] font-bold tracking-tight block my-1 tnum">
+            <div className="p-5 bg-gradient-to-br from-[#8b5e34] to-[#5a3818] dark:from-[#3a2211] dark:to-[#221307] border border-[#8b5e34]/30 dark:border-amber-700/30 text-white rounded-[var(--radius-card)] shadow-md">
+              <span className="text-[12.5px] text-amber-100/90 dark:text-amber-200/80 block font-medium">કુલ ટ્રેક્ટર ભાડું ચૂકવવાપાત્ર:</span>
+              <strong className="text-[32px] font-bold tracking-tight block my-1 tnum text-white dark:text-amber-50">
                 {formatCurrency(Math.round(tractorTotalCost))}
               </strong>
               {tractorMode === "time" && (
-                <div className="text-[12px] opacity-90 pt-2 border-t border-white/20">
-                  કુલ સમય: <strong>{tractorHours || 0} કલાક {tractorMinutes || 0} મિનિટ</strong> ({totalTimeHours.toFixed(2)} કલાક)
+                <div className="text-[12px] text-amber-100/90 dark:text-amber-200/80 pt-2 border-t border-white/20 dark:border-amber-500/20">
+                  કુલ સમય: <strong className="text-white dark:text-amber-100">{tractorHours || 0} કલાક {tractorMinutes || 0} મિનિટ</strong> ({totalTimeHours.toFixed(2)} કલાક)
                 </div>
               )}
             </div>
@@ -465,21 +465,21 @@ export default function Calculator() {
               <button
                 type="button"
                 onClick={handleClear}
-                className="col-span-2 h-13 rounded-xl bg-red-50 text-red-600 font-bold text-[17px] active:scale-95 transition-transform"
+                className="col-span-2 h-13 rounded-xl bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-900/50 font-bold text-[17px] active:scale-95 transition-transform shadow-xs"
               >
                 C (સાફ)
               </button>
               <button
                 type="button"
                 onClick={() => setCalcDisplay((d) => (d.startsWith("-") ? d.slice(1) : "-" + d))}
-                className="h-13 rounded-xl bg-gray-100 text-[var(--color-ink)] font-bold text-[17px] active:scale-95 transition-transform"
+                className="h-13 rounded-xl bg-gray-100 dark:bg-[var(--color-paper-dim)] text-[var(--color-ink)] border border-[var(--color-border)] font-bold text-[17px] active:scale-95 transition-transform shadow-xs"
               >
                 ±
               </button>
               <button
                 type="button"
                 onClick={() => handleOp("÷")}
-                className="h-13 rounded-xl bg-[var(--color-crop-50)] text-[var(--color-crop-700)] font-bold text-[20px] active:scale-95 transition-transform"
+                className="h-13 rounded-xl bg-[var(--color-crop-50)] text-[var(--color-crop-700)] border border-[var(--color-crop-500)]/30 font-bold text-[20px] active:scale-95 transition-transform shadow-xs"
               >
                 ÷
               </button>
@@ -489,7 +489,7 @@ export default function Calculator() {
                   key={d}
                   type="button"
                   onClick={() => handleDigit(d)}
-                  className="h-13 rounded-xl bg-white border border-[var(--color-border)] text-[var(--color-ink)] font-bold text-[20px] shadow-xs active:scale-95 transition-transform"
+                  className="h-13 rounded-xl bg-white dark:bg-[var(--color-paper-dim)] border border-[var(--color-border)] text-[var(--color-ink)] font-bold text-[20px] shadow-xs active:scale-95 transition-transform"
                 >
                   {d}
                 </button>
@@ -497,7 +497,7 @@ export default function Calculator() {
               <button
                 type="button"
                 onClick={() => handleOp("×")}
-                className="h-13 rounded-xl bg-[var(--color-crop-50)] text-[var(--color-crop-700)] font-bold text-[20px] active:scale-95 transition-transform"
+                className="h-13 rounded-xl bg-[var(--color-crop-50)] text-[var(--color-crop-700)] border border-[var(--color-crop-500)]/30 font-bold text-[20px] active:scale-95 transition-transform shadow-xs"
               >
                 ×
               </button>
@@ -507,7 +507,7 @@ export default function Calculator() {
                   key={d}
                   type="button"
                   onClick={() => handleDigit(d)}
-                  className="h-13 rounded-xl bg-white border border-[var(--color-border)] text-[var(--color-ink)] font-bold text-[20px] shadow-xs active:scale-95 transition-transform"
+                  className="h-13 rounded-xl bg-white dark:bg-[var(--color-paper-dim)] border border-[var(--color-border)] text-[var(--color-ink)] font-bold text-[20px] shadow-xs active:scale-95 transition-transform"
                 >
                   {d}
                 </button>
@@ -515,7 +515,7 @@ export default function Calculator() {
               <button
                 type="button"
                 onClick={() => handleOp("-")}
-                className="h-13 rounded-xl bg-[var(--color-crop-50)] text-[var(--color-crop-700)] font-bold text-[20px] active:scale-95 transition-transform"
+                className="h-13 rounded-xl bg-[var(--color-crop-50)] text-[var(--color-crop-700)] border border-[var(--color-crop-500)]/30 font-bold text-[20px] active:scale-95 transition-transform shadow-xs"
               >
                 -
               </button>
@@ -525,7 +525,7 @@ export default function Calculator() {
                   key={d}
                   type="button"
                   onClick={() => handleDigit(d)}
-                  className="h-13 rounded-xl bg-white border border-[var(--color-border)] text-[var(--color-ink)] font-bold text-[20px] shadow-xs active:scale-95 transition-transform"
+                  className="h-13 rounded-xl bg-white dark:bg-[var(--color-paper-dim)] border border-[var(--color-border)] text-[var(--color-ink)] font-bold text-[20px] shadow-xs active:scale-95 transition-transform"
                 >
                   {d}
                 </button>
@@ -533,7 +533,7 @@ export default function Calculator() {
               <button
                 type="button"
                 onClick={() => handleOp("+")}
-                className="h-13 rounded-xl bg-[var(--color-crop-50)] text-[var(--color-crop-700)] font-bold text-[20px] active:scale-95 transition-transform"
+                className="h-13 rounded-xl bg-[var(--color-crop-50)] text-[var(--color-crop-700)] border border-[var(--color-crop-500)]/30 font-bold text-[20px] active:scale-95 transition-transform shadow-xs"
               >
                 +
               </button>
@@ -541,21 +541,21 @@ export default function Calculator() {
               <button
                 type="button"
                 onClick={() => handleDigit("0")}
-                className="col-span-2 h-13 rounded-xl bg-white border border-[var(--color-border)] text-[var(--color-ink)] font-bold text-[20px] shadow-xs active:scale-95 transition-transform"
+                className="col-span-2 h-13 rounded-xl bg-white dark:bg-[var(--color-paper-dim)] border border-[var(--color-border)] text-[var(--color-ink)] font-bold text-[20px] shadow-xs active:scale-95 transition-transform"
               >
                 0
               </button>
               <button
                 type="button"
                 onClick={() => handleDigit(".")}
-                className="h-13 rounded-xl bg-white border border-[var(--color-border)] text-[var(--color-ink)] font-bold text-[20px] shadow-xs active:scale-95 transition-transform"
+                className="h-13 rounded-xl bg-white dark:bg-[var(--color-paper-dim)] border border-[var(--color-border)] text-[var(--color-ink)] font-bold text-[20px] shadow-xs active:scale-95 transition-transform"
               >
                 .
               </button>
               <button
                 type="button"
                 onClick={handleEqual}
-                className="h-13 rounded-xl bg-[var(--color-crop-500)] text-white font-bold text-[22px] shadow-sm active:scale-95 transition-transform"
+                className="h-13 rounded-xl bg-[var(--color-crop-500)] hover:bg-[var(--color-crop-600)] text-white font-bold text-[22px] shadow-sm active:scale-95 transition-transform"
               >
                 =
               </button>
@@ -578,18 +578,18 @@ export default function Calculator() {
                   value={landInput}
                   onChange={(e) => setLandInput(e.target.value === "" ? "" : Number(e.target.value))}
                   placeholder="માપ દાખલ કરો"
-                  className="flex-1 h-12 px-3.5 bg-white border border-[var(--color-border)] rounded-xl text-[16px] font-bold outline-none focus:border-[var(--color-crop-500)]"
+                  className="calc-input flex-1 h-12 px-3.5 rounded-xl text-[16px] font-bold outline-none focus:border-[var(--color-crop-500)] transition-colors"
                 />
                 <select
                   value={landUnit}
                   onChange={(e) => setLandUnit(e.target.value as any)}
-                  className="h-12 px-3 bg-white border border-[var(--color-border)] rounded-xl text-[14px] font-semibold outline-none focus:border-[var(--color-crop-500)]"
+                  className="calc-input h-12 px-3 rounded-xl text-[14px] font-semibold outline-none focus:border-[var(--color-crop-500)] transition-colors"
                 >
-                  <option value="vigha">વિઘા (Vigha)</option>
-                  <option value="acre">એકર (Acre)</option>
-                  <option value="guntha">ગુંઠા (Guntha)</option>
-                  <option value="hectare">હેક્ટર (Hectare)</option>
-                  <option value="sqft">ચોરસ ફૂટ (Sq. Ft)</option>
+                  <option value="vigha" className="bg-white dark:bg-[var(--color-surface)] text-[var(--color-ink)]">વિઘા (Vigha)</option>
+                  <option value="acre" className="bg-white dark:bg-[var(--color-surface)] text-[var(--color-ink)]">એકર (Acre)</option>
+                  <option value="guntha" className="bg-white dark:bg-[var(--color-surface)] text-[var(--color-ink)]">ગુંઠા (Guntha)</option>
+                  <option value="hectare" className="bg-white dark:bg-[var(--color-surface)] text-[var(--color-ink)]">હેક્ટર (Hectare)</option>
+                  <option value="sqft" className="bg-white dark:bg-[var(--color-surface)] text-[var(--color-ink)]">ચોરસ ફૂટ (Sq. Ft)</option>
                 </select>
               </div>
             </div>
@@ -600,7 +600,7 @@ export default function Calculator() {
               </h3>
 
               <div className="grid grid-cols-2 gap-2.5">
-                <div className="p-3 bg-[var(--color-crop-50)]/50 border border-[var(--color-crop-200)]/60 rounded-xl">
+                <div className="p-3 bg-[var(--color-crop-50)]/60 border border-[var(--color-crop-500)]/30 rounded-xl">
                   <span className="text-[11px] text-[var(--color-ink-faint)] font-medium block">વિઘા (ગુજરાત)</span>
                   <strong className="text-[18px] text-[var(--color-crop-700)] font-bold tnum">
                     {landResults.vigha.toFixed(2)}
@@ -608,7 +608,7 @@ export default function Calculator() {
                   <span className="text-[10px] text-[var(--color-ink-faint)] block mt-0.5">વિઘા</span>
                 </div>
 
-                <div className="p-3 bg-[var(--color-paper-dim)] rounded-xl">
+                <div className="p-3 bg-[var(--color-paper-dim)] border border-[var(--color-border)] rounded-xl">
                   <span className="text-[11px] text-[var(--color-ink-faint)] font-medium block">એકર</span>
                   <strong className="text-[18px] text-[var(--color-ink)] font-bold tnum">
                     {landResults.acre.toFixed(3)}
@@ -616,7 +616,7 @@ export default function Calculator() {
                   <span className="text-[10px] text-[var(--color-ink-faint)] block mt-0.5">એકર (૧.૬૧૩ વિઘા / ૪૦ ગુંઠા)</span>
                 </div>
 
-                <div className="p-3 bg-[var(--color-paper-dim)] rounded-xl">
+                <div className="p-3 bg-[var(--color-paper-dim)] border border-[var(--color-border)] rounded-xl">
                   <span className="text-[11px] text-[var(--color-ink-faint)] font-medium block">ગુંઠા</span>
                   <strong className="text-[18px] text-[var(--color-ink)] font-bold tnum">
                     {landResults.guntha.toFixed(2)}
@@ -624,7 +624,7 @@ export default function Calculator() {
                   <span className="text-[10px] text-[var(--color-ink-faint)] block mt-0.5">ગુંઠા (૧૬ ગુંઠા = ૧ વિઘા)</span>
                 </div>
 
-                <div className="p-3 bg-[var(--color-paper-dim)] rounded-xl">
+                <div className="p-3 bg-[var(--color-paper-dim)] border border-[var(--color-border)] rounded-xl">
                   <span className="text-[11px] text-[var(--color-ink-faint)] font-medium block">હેક્ટર</span>
                   <strong className="text-[18px] text-[var(--color-ink)] font-bold tnum">
                     {landResults.hectare.toFixed(4)}
@@ -633,7 +633,7 @@ export default function Calculator() {
                 </div>
               </div>
 
-              <div className="mt-3 p-2.5 bg-amber-50/70 rounded-xl border border-amber-200/50 text-[11px] text-amber-900 leading-relaxed">
+              <div className="mt-3 p-2.5 bg-amber-50/70 dark:bg-amber-950/30 rounded-xl border border-amber-200/50 dark:border-amber-800/40 text-[11px] text-amber-900 dark:text-amber-200/90 leading-relaxed">
                 ℹ️ <strong>માહિતી:</strong> ૧ વિઘા = ૧૬ ગુંઠા = ૦.૬૨ એકર = ૦.૧૬૧૮ હેક્ટર | ૧ એકર = ૧.૬૧૩ વિઘા = ૪૦ ગુંઠા | ૧ હેક્ટર = ૨.૪૭૧ એકર = ૯૮.૮૪ ગુંઠા = ૩.૯૯ વિઘા.
               </div>
             </div>
@@ -654,7 +654,7 @@ export default function Calculator() {
                   value={workersCount}
                   onChange={(e) => setWorkersCount(e.target.value === "" ? "" : Number(e.target.value))}
                   placeholder="દા.ત. 5"
-                  className="w-full h-11 px-3 bg-white border border-[var(--color-border)] rounded-xl text-[15px] font-semibold outline-none focus:border-[var(--color-crop-500)]"
+                  className="calc-input w-full h-11 px-3 rounded-xl text-[15px] font-semibold outline-none focus:border-[var(--color-crop-500)] transition-colors"
                 />
               </div>
 
@@ -668,7 +668,7 @@ export default function Calculator() {
                   value={dailyWage}
                   onChange={(e) => setDailyWage(e.target.value === "" ? "" : Number(e.target.value))}
                   placeholder="દા.ત. 400"
-                  className="w-full h-11 px-3 bg-white border border-[var(--color-border)] rounded-xl text-[15px] font-semibold outline-none focus:border-[var(--color-crop-500)]"
+                  className="calc-input w-full h-11 px-3 rounded-xl text-[15px] font-semibold outline-none focus:border-[var(--color-crop-500)] transition-colors"
                 />
               </div>
 
@@ -683,19 +683,19 @@ export default function Calculator() {
                   value={daysCount}
                   onChange={(e) => setDaysCount(e.target.value === "" ? "" : Number(e.target.value))}
                   placeholder="દા.ત. 2"
-                  className="w-full h-11 px-3 bg-white border border-[var(--color-border)] rounded-xl text-[15px] font-semibold outline-none focus:border-[var(--color-crop-500)]"
+                  className="calc-input w-full h-11 px-3 rounded-xl text-[15px] font-semibold outline-none focus:border-[var(--color-crop-500)] transition-colors"
                 />
               </div>
             </div>
 
-            <div className="p-5 bg-gradient-to-br from-[var(--color-crop-500)] to-[var(--color-crop-600)] text-white rounded-[var(--radius-card)] shadow-md">
-              <span className="text-[13px] opacity-90 block">કુલ મજૂરી ખર્ચ:</span>
-              <strong className="text-[28px] font-bold tracking-tight block my-1 tnum">
+            <div className="crop-result-card p-5 border border-[#245740]/30 rounded-[var(--radius-card)] shadow-md">
+              <span className="text-[13px] text-emerald-100/90 dark:text-emerald-200/80 block font-medium">કુલ મજૂરી ખર્ચ:</span>
+              <strong className="text-[28px] font-bold tracking-tight block my-1 tnum text-white dark:text-emerald-50">
                 {formatCurrency(totalLaborCost)}
               </strong>
-              <div className="pt-2 mt-2 border-t border-white/20 text-[12px] opacity-90 flex justify-between">
+              <div className="pt-2 mt-2 border-t border-white/20 dark:border-emerald-500/20 text-[12px] text-emerald-100/90 dark:text-emerald-200/80 flex justify-between">
                 <span>૧ દિવસનો કુલ ખર્ચ:</span>
-                <span className="font-bold tnum">
+                <span className="font-bold tnum text-white dark:text-emerald-100">
                   {formatCurrency((typeof workersCount === "number" ? workersCount : 0) * (typeof dailyWage === "number" ? dailyWage : 0))}
                 </span>
               </div>
@@ -718,7 +718,7 @@ export default function Calculator() {
                   value={fertArea}
                   onChange={(e) => setFertArea(e.target.value === "" ? "" : Number(e.target.value))}
                   placeholder="દા.ત. 5"
-                  className="w-full h-11 px-3 bg-white border border-[var(--color-border)] rounded-xl text-[15px] font-semibold outline-none focus:border-[var(--color-crop-500)]"
+                  className="calc-input w-full h-11 px-3 rounded-xl text-[15px] font-semibold outline-none focus:border-[var(--color-crop-500)] transition-colors"
                 />
               </div>
 
@@ -732,7 +732,7 @@ export default function Calculator() {
                   value={dosagePerVighaKg}
                   onChange={(e) => setDosagePerVighaKg(e.target.value === "" ? "" : Number(e.target.value))}
                   placeholder="દા.ત. 25 kg / વિઘા"
-                  className="w-full h-11 px-3 bg-white border border-[var(--color-border)] rounded-xl text-[15px] font-semibold outline-none focus:border-[var(--color-crop-500)]"
+                  className="calc-input w-full h-11 px-3 rounded-xl text-[15px] font-semibold outline-none focus:border-[var(--color-crop-500)] transition-colors"
                 />
               </div>
 
@@ -747,7 +747,7 @@ export default function Calculator() {
                     value={bagWeightKg}
                     onChange={(e) => setBagWeightKg(e.target.value === "" ? "" : Number(e.target.value))}
                     placeholder="દા.ત. 50"
-                    className="w-full h-11 px-3 bg-white border border-[var(--color-border)] rounded-xl text-[15px] font-semibold outline-none focus:border-[var(--color-crop-500)]"
+                    className="calc-input w-full h-11 px-3 rounded-xl text-[15px] font-semibold outline-none focus:border-[var(--color-crop-500)] transition-colors"
                   />
                 </div>
                 <div>
@@ -760,7 +760,7 @@ export default function Calculator() {
                     value={bagPrice}
                     onChange={(e) => setBagPrice(e.target.value === "" ? "" : Number(e.target.value))}
                     placeholder="દા.ત. 1350"
-                    className="w-full h-11 px-3 bg-white border border-[var(--color-border)] rounded-xl text-[15px] font-semibold outline-none focus:border-[var(--color-crop-500)]"
+                    className="calc-input w-full h-11 px-3 rounded-xl text-[15px] font-semibold outline-none focus:border-[var(--color-crop-500)] transition-colors"
                   />
                 </div>
               </div>
@@ -772,7 +772,7 @@ export default function Calculator() {
               </h3>
 
               <div className="grid grid-cols-2 gap-2.5 mb-3">
-                <div className="p-3 bg-[var(--color-crop-50)]/60 border border-[var(--color-crop-200)]/60 rounded-xl">
+                <div className="p-3 bg-[var(--color-crop-50)]/60 border border-[var(--color-crop-500)]/30 rounded-xl">
                   <span className="text-[11px] text-[var(--color-ink-faint)] font-medium block">કુલ ખાતર વજન</span>
                   <strong className="text-[18px] text-[var(--color-crop-700)] font-bold tnum">
                     {totalFertKg.toFixed(1)}
@@ -780,7 +780,7 @@ export default function Calculator() {
                   <span className="text-[10px] text-[var(--color-ink-faint)] block mt-0.5">કિલોગ્રામ (kg)</span>
                 </div>
 
-                <div className="p-3 bg-[var(--color-paper-dim)] rounded-xl">
+                <div className="p-3 bg-[var(--color-paper-dim)] border border-[var(--color-border)] rounded-xl">
                   <span className="text-[11px] text-[var(--color-ink-faint)] font-medium block">જરૂરી બોરી (કટ્ટા)</span>
                   <strong className="text-[18px] text-[var(--color-ink)] font-bold tnum">
                     {bagsNeeded.toFixed(1)}
@@ -789,14 +789,14 @@ export default function Calculator() {
                 </div>
               </div>
 
-              <div className="p-3.5 bg-[var(--color-soil-500)] text-white rounded-xl flex items-center justify-between">
+              <div className="p-3.5 bg-gradient-to-br from-[#8b5e34] to-[#5a3818] dark:from-[#3a2211] dark:to-[#221307] border border-[#8b5e34]/30 dark:border-amber-700/30 text-white rounded-xl flex items-center justify-between">
                 <div>
-                  <span className="text-[11.5px] opacity-90 block">કુલ અંદાજિત ખર્ચ:</span>
-                  <strong className="text-[20px] font-bold tnum">
+                  <span className="text-[11.5px] text-amber-100/90 dark:text-amber-200/80 block font-medium">કુલ અંદાજિત ખર્ચ:</span>
+                  <strong className="text-[20px] font-bold tnum text-white dark:text-amber-50">
                     {formatCurrency(Math.round(totalFertCost))}
                   </strong>
                 </div>
-                <div className="text-right text-[11.5px] opacity-90">
+                <div className="text-right text-[11.5px] text-amber-100/90 dark:text-amber-200/80">
                   <span>~ {Math.ceil(bagsNeeded)} આખી બોરી</span>
                 </div>
               </div>

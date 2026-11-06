@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* ---------- Fonts (self-hosted for offline use) ---------- */
 @font-face {
   font-family: "Noto Sans Gujarati";
@@ -141,4 +143,63 @@ button, input, select, textarea { font-family: inherit; touch-action: manipulati
 
 @media print {
   #app-shell-nav, #app-shell-fab { display: none !important; }
+}
+
+/* Calculator specific input styles for guaranteed dark mode contrast */
+.calc-input {
+  background-color: #ffffff;
+  color: var(--color-ink);
+  border: 1px solid var(--color-border);
+}
+
+.calc-input::placeholder {
+  color: var(--color-ink-faint);
+  opacity: 0.8;
+}
+
+.dark .calc-input {
+  background-color: var(--color-paper-dim) !important;
+  color: var(--color-ink) !important;
+  border-color: var(--color-border) !important;
+}
+
+.dark .calc-input::placeholder {
+  color: var(--color-ink-soft) !important;
+  opacity: 0.7;
+}
+
+.mann-banner {
+  background-color: rgba(254, 243, 199, 0.9);
+  border: 1px solid rgba(253, 230, 138, 0.8);
+}
+.dark .mann-banner {
+  background-color: rgba(69, 26, 3, 0.35) !important;
+  border-color: rgba(146, 64, 14, 0.5) !important;
+}
+
+.mann-pill {
+  background-color: #ffffff;
+  border: 1px solid rgb(252, 211, 77);
+}
+.dark .mann-pill {
+  background-color: rgba(120, 53, 15, 0.45) !important;
+  border-color: rgba(180, 83, 9, 0.6) !important;
+}
+
+.crop-result-card {
+  background: linear-gradient(135deg, #245740, #163829);
+  color: #ffffff;
+}
+.dark .crop-result-card {
+  background: linear-gradient(135deg, #163829, #0c1f16) !important;
+  border-color: rgba(16, 185, 129, 0.3) !important;
+}
+
+.crop-result-subcard {
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+.dark .crop-result-subcard {
+  background-color: rgba(0, 0, 0, 0.35) !important;
+  border-color: rgba(16, 185, 129, 0.2) !important;
 }
